@@ -13,6 +13,9 @@
 # github
 /.github
 
+# terminal
+WARP.md
+
 # testing
 /coverage
 
