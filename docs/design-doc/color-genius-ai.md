@@ -145,11 +145,7 @@ export interface Palette {
     saturation: number; // -1 to 1
     warmth: number;     // -1 to 1
   };
-  visibility: {
-    isPublic: boolean;
-    isSaved: boolean;
-    showInExplore: boolean;
-  };
+  isPublic: boolean;
   createdAt: Date;
   userId?: string;
 }
