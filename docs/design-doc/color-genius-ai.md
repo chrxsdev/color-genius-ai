@@ -653,7 +653,6 @@ class PaletteError extends Error {
 - PaletteGenerator produces valid JSON 95% of the time with structured output
 - Input sanitization prevents prompt injection attacks
 - Static fallbacks work when OpenAI API is unavailable
-- Cost per generation stays under $0.0005
 
 **Task 2.2: Supabase Edge Function Integration** (4 points)
 - Create Supabase Edge Function using PaletteGenerator

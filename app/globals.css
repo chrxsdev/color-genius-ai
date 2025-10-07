@@ -9,6 +9,10 @@
   --color-neutral: #e1e4d9;
   --color-neutral-variant: #c3c8bb;
   --color-background: #1a1c19;
+  --color-subtitle: #94a3b8;
+  --color-button-text: #0f172a;
+  --color-slider-label: #cbd5e1;
+  --color-control-text: #94a3b8;
   
   /* Legacy variables */
   --background: #1a1c19;
@@ -25,6 +29,10 @@
   --color-neutral-variant: #c3c8bb;
   --color-background: #1a1c19;
   --color-foreground: #e1e4d9;
+  --color-subtitle: #94a3b8;
+  --color-button-text: #0f172a;
+  --color-slider-label: #cbd5e1;
+  --color-control-text: #94a3b8;
   
   /* Font Families */
   --font-sans: var(--font-space-grotesk);
