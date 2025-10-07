@@ -489,7 +489,7 @@ Deno.serve(handler);
 
 ### Authentication and Authorization Model
 
-- **Supabase Auth Integration**: OAuth providers (Google, GitHub) + email/password
+- **Supabase Auth Integration**: Google OAuth
 - **Row-Level Security**: Palettes accessible only to creators
 - **JWT-based sessions**: Stateless authentication with automatic token refresh
 - **Role-based access**: Basic user role with optional premium features
@@ -567,17 +567,6 @@ function validateAIOutput(output: any): boolean {
 - **Bundle Size**: < 500KB initial JavaScript bundle
 - **Fallback Response**: < 50ms for static palettes when AI fails
 
-### Scaling Expectations
-
-- **Concurrent Users**: 1,000+ simultaneous users
-- **Daily Requests**: 50,000+ palette generations
-- **Database Growth**: 1M+ palettes stored
-- **Edge Function Limits**: 10,000 invocations/day (Supabase free tier)
-- **AI Cost Management**: 
-  - GPT-4o mini: ~$7.50 per 50K generations (extremely budget-friendly)
-  - Estimated cost: ~$0.0003 per palette generation
-  - Target: <$10/month for moderate portfolio traffic
-
 ### Availability and Fault Tolerance
 
 - **Uptime Target**: 99.9% availability
@@ -619,7 +608,7 @@ class PaletteError extends Error {
 ### Epic 1: Core Infrastructure (15 story points)
 
 **Task 1.1: Project Setup and Configuration** (3 points)
-- Initialize Next.js 14 with TypeScript
+- Initialize Next.js 15 with TypeScript
 - Configure Supabase client and environment variables
 - Set up Redux Toolkit with persistence
 - Configure Tailwind CSS and component library
@@ -773,7 +762,7 @@ class PaletteError extends Error {
 
 ### UX/Design Questions
 
-4. **Default Color Count**: What's the optimal default palette size?
+4. **Default Color Count and Font**: What's the optimal default palette size?
    - Colors:
     - Primary: #AAD291
     - Secondary: #BDCBB0
@@ -781,7 +770,7 @@ class PaletteError extends Error {
     - Error: #FFB4AB
     - Neutral: #E1E4D9
     - Neutral Variant: #C3C8BB
-   - Research needed: User testing for preferred palette sizes
+   - Font: Space Grotesk
 
 5. **Mobile Interaction Model**: How should sliders work on touch devices?
    - Options: Native sliders, custom gesture controls, tap-to-adjust
