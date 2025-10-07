@@ -770,6 +770,7 @@ class PaletteError extends Error {
     - Error: #FFB4AB
     - Neutral: #E1E4D9
     - Neutral Variant: #C3C8BB
+    - Background: #1A1C19
    - Font: Space Grotesk
 
 5. **Mobile Interaction Model**: How should sliders work on touch devices?

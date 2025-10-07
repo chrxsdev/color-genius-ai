@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react';
 
-interface HomePageProps {
+interface PalettePageProps {
   children?: ReactNode;
 }
 
-const HomePage = ({}: HomePageProps) => {
+const PalettePage = ({}: PalettePageProps) => {
   return (
-    <main>
-      <header>
-        <h1>Welcome to Color Genius AI</h1>
-        <p>Your AI-powered color palette generator</p>
-      </header>
-    </main>
+    <div className='flex flex-col items-center justify-center min-h-screen px-4'>
+      <h1 className='text-5xl md:text-7xl font-bold text-white text-center mb-4'>AI Color Palette Generator</h1>
+      <p className='text-xl md:text-2xl text-neutral text-center font-light'>
+        Describe the feeling or vibe you want to capture, and let AI create a palette that matches your vision.
+      </p>
+    </div>
   );
 };
 
-export default HomePage;
+export default PalettePage;
