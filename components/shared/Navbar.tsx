@@ -6,7 +6,7 @@ export const Navbar = () => {
     <header className='flex justify-between items-center px-4 md:px-8 lg:px-16 py-2 bg-background'>
       <Logo />
       <div className='flex items-center gap-4'>
-        <Link href='/explore' className='text-white hover:text-primary transition-colors px-4'>
+        <Link href='/explore' className='text-white text-sm hover:text-primary transition-colors px-4'>
           Explore
         </Link>
         <Link
