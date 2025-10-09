@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { HARMONY_TYPES, type HarmonyType } from '@/types/palette';
+import { ColorWheel } from '@/components/ui/ColorWheel';
 import { MdArrowDropDown } from 'react-icons/md';
 
 interface PalettePageProps {
@@ -19,6 +20,15 @@ const PalettePage = ({}: PalettePageProps) => {
   const [paletteName, setPaletteName] = useState('');
   const [colorSlots, setColorSlots] = useState(5);
 
+  // Mock colors for demonstration (will be replaced with AI-generated colors)
+  const [generatedColors, setGeneratedColors] = useState<string[]>([
+    '#AAD291',
+    '#BDCBB0',
+    '#A0CFCF',
+    '#FFB4AB',
+    '#E1E4D9',
+  ]);
+
   const handleGenerate = () => {
     console.log('Generating palette with:', { prompt, harmony });
     // TODO: Implement palette generation
@@ -27,6 +37,12 @@ const PalettePage = ({}: PalettePageProps) => {
   const handleGenerateName = () => {
     console.log('Generating palette name...');
     // TODO: Implement AI name generation
+  };
+
+  const handleColorChange = (index: number, newColor: string) => {
+    const newColors = [...generatedColors];
+    newColors[index] = newColor;
+    setGeneratedColors(newColors);
   };
 
   const incrementSlots = () => {
@@ -91,7 +107,7 @@ const PalettePage = ({}: PalettePageProps) => {
         </div>
 
         {/* Palette Controls Section */}
-        <div className='mt-10 space-y-8 rounded-xl border-2 border-neutral-variant p-6'>
+        <div className='mt-8 space-y-8 rounded-xl border-2 border-neutral-variant p-6'>
           <h3 className='text-xl font-bold text-white'>Palette Controls</h3>
 
           {/* Sliders Grid */}
@@ -185,6 +201,12 @@ const PalettePage = ({}: PalettePageProps) => {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Color Visualization Section */}
+        <div className='mt-10 space-y-8'>
+          <h3 className='text-xl font-bold text-white'>Color Visualization</h3>
+          <ColorWheel colors={generatedColors} size={400} onColorChange={handleColorChange} />
         </div>
       </div>
     </div>
