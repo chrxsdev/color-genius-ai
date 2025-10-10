@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: 'ColorGeniusAI',
   description: 'AI-powered color palette generator',
   keywords: ['AI', 'color palette', 'design', 'generator'],
-  authors: [{ name: 'ColorGenius Team' }],
+  authors: [{ name: 'chrxsdev' }],
 };
 
 export default function RootLayout({

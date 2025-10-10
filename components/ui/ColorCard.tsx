@@ -20,7 +20,7 @@ export const ColorCard = ({ color, name, format }: ColorCardProps) => {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  const colorValue = format === 'HEX' ? color : hexToRgb(color);
+  const colorValue = format === 'HEX' ? color.toLocaleUpperCase() : hexToRgb(color);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(colorValue);

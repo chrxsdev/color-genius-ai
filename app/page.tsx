@@ -276,13 +276,11 @@ const PalettePage = ({}: PalettePageProps) => {
 
           {/* Color Cards Grid */}
           <div className='mx-auto'>
-            <div className='flex flex-wrap justify-center items-center gap-8'>
-              {generatedColors.slice(0, 5).map((color, index) => (
+            <div className='grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-10 gap-x-2'>
+              {generatedColors.map((color, index) => (
                 <ColorCard key={index} color={color} name={colorNames[index]} format={colorFormat} />
               ))}
               {/* Add Color Button */}
-            </div>
-            <div className='flex justify-center items-center gap-8 my-10'>
               <AddColorButton onClick={handleAddColor} />
             </div>
           </div>
