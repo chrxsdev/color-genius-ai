@@ -5,7 +5,10 @@ import { useState } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { HARMONY_TYPES, type HarmonyType } from '@/types/palette';
 import { ColorWheel } from '@/components/ui/ColorWheel';
+import { ColorCard } from '@/components/ui/ColorCard';
+import { AddColorButton } from '@/components/ui/AddColorButton';
 import { MdArrowDropDown } from 'react-icons/md';
+import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 
 interface PalettePageProps {
   children?: ReactNode;
@@ -19,6 +22,7 @@ const PalettePage = ({}: PalettePageProps) => {
   const [warmth, setWarmth] = useState(50);
   const [paletteName, setPaletteName] = useState('');
   const [colorSlots, setColorSlots] = useState(5);
+  const [colorFormat, setColorFormat] = useState<'HEX' | 'RGB'>('HEX');
 
   // Mock colors for demonstration (will be replaced with AI-generated colors)
   const [generatedColors, setGeneratedColors] = useState<string[]>([
@@ -28,6 +32,9 @@ const PalettePage = ({}: PalettePageProps) => {
     '#FFB4AB',
     '#E1E4D9',
   ]);
+
+  // Mock color names (will be replaced with AI-generated names)
+  const colorNames = ['Sage Green', 'Misty Gray', 'Teal Dream', 'Coral Blush', 'Ivory Mist'];
 
   const handleGenerate = () => {
     console.log('Generating palette with:', { prompt, harmony });
@@ -53,9 +60,24 @@ const PalettePage = ({}: PalettePageProps) => {
     if (colorSlots > 4) setColorSlots(colorSlots - 1);
   };
 
+  const handleSave = () => {
+    console.log('Saving palette...');
+    // TODO: Implement save functionality
+  };
+
+  const handleExportSVG = () => {
+    console.log('Exporting as SVG...');
+    // TODO: Implement SVG export
+  };
+
+  const handleAddColor = () => {
+    console.log('Adding new color...');
+    // TODO: Implement add color functionality
+  };
+
   return (
     <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <div className='mx-auto max-w-4xl'>
+      <div className='mx-auto max-w-5xl'>
         {/* Header Section */}
         <div className='text-center mb-12'>
           <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
@@ -92,7 +114,10 @@ const PalettePage = ({}: PalettePageProps) => {
                   </option>
                 ))}
               </select>
-              <MdArrowDropDown size={25} className='absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none' />
+              <MdArrowDropDown
+                size={25}
+                className='absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none'
+              />
             </div>
           </div>
 
@@ -207,6 +232,60 @@ const PalettePage = ({}: PalettePageProps) => {
         <div className='mt-10 space-y-8'>
           <h3 className='text-xl font-bold text-white'>Color Visualization</h3>
           <ColorWheel colors={generatedColors} size={400} onColorChange={handleColorChange} />
+        </div>
+
+        {/* Generated Colors Section */}
+        <div className='mt-10 space-y-8 border-2 rounded-xl border-neutral-variant p-6'>
+          <h3 className='text-xl font-bold text-white'>Generated Colors</h3>
+          {/* Header with Format Select and Action Buttons */}
+          <div className='flex items-center justify-between'>
+            {/* Format Select */}
+            <div className='relative'>
+              <select
+                value={colorFormat}
+                onChange={(e) => setColorFormat(e.target.value as 'HEX' | 'RGB')}
+                className='md:w-32 rounded-xl border-2 border-neutral-variant bg-background h-10 pl-4 pr-10 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none appearance-none transition-all cursor-pointer'
+              >
+                <option value='HEX'>HEX</option>
+                <option value='RGB'>RGB</option>
+              </select>
+              <MdArrowDropDown
+                size={20}
+                className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none'
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className='flex items-center gap-3'>
+              <button
+                onClick={handleSave}
+                className='flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
+              >
+                <IoHeartOutline className='text-lg text-white' />
+                <span className='text-sm font-medium text-white'>Save</span>
+              </button>
+              <button
+                onClick={handleExportSVG}
+                className='flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
+              >
+                <IoImageOutline className='text-lg text-white' />
+                <span className='text-sm font-medium text-white'>Export SVG</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Color Cards Grid */}
+          <div className='mx-auto'>
+            <div className='flex flex-wrap justify-center items-center gap-8'>
+              {generatedColors.slice(0, 5).map((color, index) => (
+                <ColorCard key={index} color={color} name={colorNames[index]} format={colorFormat} />
+              ))}
+              {/* Add Color Button */}
+            </div>
+            <div className='flex justify-center items-center gap-8 my-10'>
+              <AddColorButton onClick={handleAddColor} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
