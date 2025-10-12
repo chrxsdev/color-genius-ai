@@ -1,5 +1,5 @@
 import { ColorItem, Format } from '@/types/palette';
-import { getColorValues } from './code-color-conversions';
+import { getColorValues } from '../code-color-conversions';
 
 export class CodeStyleGenerator {
   static generateTailwindV4Code = (colors: ColorItem[], format: Format): string => {

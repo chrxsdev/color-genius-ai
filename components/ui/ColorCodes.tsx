@@ -8,7 +8,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 import { ColorItem, Format } from '@/types/palette';
 import { CodeStyleFormat } from '@/types/format-style-code';
-import { CodeStyleGenerator } from '../../utils/code-style-generator';
+import { CodeStyleGenerator } from '../../utils/code-generators/code-style-generator';
 
 interface ColorCodesProps {
   colors: ColorItem[];
