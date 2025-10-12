@@ -1,44 +1,47 @@
-import { ColorItem } from '@/types/palette';
+import { ColorItem, Format } from '@/types/palette';
+import { getColorValues } from './code-color-conversions';
 
-export const generateTailwindV4Code = (colors: ColorItem[]): string => {
-  const colorVariables = colors
-    .map((item) => {
-      const name = item.name.toLowerCase().replace(/\s+/g, '-');
-      return `\t--color-${name}: ${item.color};`;
-    })
-    .join('\n');
+export class CodeStyleGenerator {
+  static generateTailwindV4Code = (colors: ColorItem[], format: Format): string => {
+    const colorVariables = colors
+      .map((color) => {
+        const { name, colorCode } = getColorValues(color, format);
+        return `\t--color-${name}: ${colorCode};`;
+      })
+      .join('\n');
 
-  return ['@import "tailwindcss";', '', '@theme inline {', colorVariables, '}'].join('\n');
-};
+    return ['@import "tailwindcss";', '', '@theme inline {', colorVariables, '}'].join('\n');
+  };
 
-export const generateTailwindV3Code = (colors: ColorItem[]): string => {
-  const colorEntries = colors
-    .map((item) => {
-      const name = item.name.toLowerCase().replace(/\s+/g, '-');
-      return `        '${name}': '${item.color}',`;
-    })
-    .join('\n');
+  static generateTailwindV3Code = (colors: ColorItem[], format: Format): string => {
+    const colorEntries = colors
+      .map((color) => {
+        const { name, colorCode } = getColorValues(color, format);
+        return `        '${name}': '${colorCode}',`;
+      })
+      .join('\n');
 
-  return [
-    'module.exports = {',
-    '  theme: {',
-    '    extend: {',
-    '      colors: {',
-    colorEntries,
-    '      }',
-    '    }',
-    '  }',
-    '}',
-  ].join('\n');
-};
+    return [
+      'module.exports = {',
+      '  theme: {',
+      '    extend: {',
+      '      colors: {',
+      colorEntries,
+      '      }',
+      '    }',
+      '  }',
+      '}',
+    ].join('\n');
+  };
 
-export const generateCSSCode = (colors: ColorItem[]): string => {
-  const cssVariables = colors
-    .map((item) => {
-      const name = item.name.toLowerCase().replace(/\s+/g, '-');
-      return `  --color-${name}: ${item.color};`;
-    })
-    .join('\n');
+  static generateCSSCode = (colors: ColorItem[], format: Format): string => {
+    const cssVariables = colors
+      .map((color) => {
+        const { name, colorCode } = getColorValues(color, format);
+        return `  --color-${name}: ${colorCode};`;
+      })
+      .join('\n');
 
-  return [':root {', cssVariables, '}'].join('\n');
-};
+    return [':root {', cssVariables, '}'].join('\n');
+  };
+}

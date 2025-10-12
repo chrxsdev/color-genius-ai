@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
-import { ColorItem, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
+import { ColorItem, Format, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
 import { ColorWheel } from '@/components/ui/ColorWheel';
 import { ColorCard } from '@/components/ui/ColorCard';
 import { AddColorButton } from '@/components/ui/AddColorButton';
@@ -23,7 +23,7 @@ const PalettePage = ({}: PalettePageProps) => {
   const [warmth, setWarmth] = useState(50);
   const [paletteName, setPaletteName] = useState('');
   const [colorSlots, setColorSlots] = useState(5);
-  const [colorFormat, setColorFormat] = useState<'HEX' | 'RGB'>('HEX');
+  const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
   // Mock colors for demonstration (will be replaced with AI-generated colors)
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([
@@ -291,7 +291,7 @@ const PalettePage = ({}: PalettePageProps) => {
             {/* Color Codes Section */}
             <div className='mt-20'>
               <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
-              <ColorCodes colors={generatedColors} />
+              <ColorCodes colors={generatedColors} format={colorFormat} />
             </div>
           </div>
         </div>

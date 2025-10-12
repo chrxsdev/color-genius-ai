@@ -2,6 +2,8 @@
  * Color conversion utilities for converting between HEX and HSL color formats
  */
 
+import { ColorItem, Format } from '@/types/palette';
+
 /**
  * Converts a HEX color string to HSL (Hue, Saturation, Lightness) values
  * @param hex - Hex color string (e.g., "#FF5733" or "FF5733")
@@ -80,4 +82,35 @@ export const hslToHex = (hue: number, saturation: number, lightness: number): st
   };
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+/**
+ * Converts a HEX color string to an RGB color string
+ * @param hex - Hex color string (e.g., "#FF5733" or "FF5733")
+ * @returns RGB color string (e.g., "rgb(255, 87, 51)")
+ */
+
+export const hexToRgb = (hex: string): string => {
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+/**
+ * Getting the color value based on the selected format
+ * @param color
+ * @param format
+ * @returns
+ */
+export const getColorValues = (colors: ColorItem, format: Format): { name: string; colorCode: string } => {
+
+  const name = colors.name.toLowerCase().replace(/\s+/g, '-');
+  const formatColor = format === 'HEX' ? colors.color.toLocaleUpperCase() : hexToRgb(colors.color);
+
+  return {
+    name,
+    colorCode: formatColor,
+  };
 };

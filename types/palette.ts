@@ -19,3 +19,5 @@ export interface ColorItem {
   color: string;
   name: string;
 }
+
+export type Format = 'HEX' | 'RGB';

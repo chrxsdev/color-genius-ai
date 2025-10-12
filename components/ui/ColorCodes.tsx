@@ -1,17 +1,18 @@
 'use client';
 
-import { generateTailwindV4Code, generateTailwindV3Code, generateCSSCode } from '@/utils/code-style-generator';
 import { useMemo, useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-import { ColorItem } from '@/types/palette';
+import { ColorItem, Format } from '@/types/palette';
 import { CodeStyleFormat } from '@/types/format-style-code';
+import { CodeStyleGenerator } from '../../utils/code-style-generator';
 
 interface ColorCodesProps {
   colors: ColorItem[];
+  format: Format;
 }
 
 interface StyleCodeItem {
@@ -23,26 +24,26 @@ interface StyleCode {
   [key: string]: StyleCodeItem;
 }
 
-export const ColorCodes = ({ colors }: ColorCodesProps) => {
+export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
   const [activeTab, setActiveTab] = useState<CodeStyleFormat>(CodeStyleFormat.TailwindV4);
   const [copied, setCopied] = useState(false);
 
   const styleCode: StyleCode = useMemo(() => {
     return {
       [CodeStyleFormat.TailwindV4]: {
-        code: generateTailwindV4Code(colors),
+        code: CodeStyleGenerator.generateTailwindV4Code(colors, format),
         language: 'css',
       },
       [CodeStyleFormat.TailwindV3]: {
-        code: generateTailwindV3Code(colors),
+        code: CodeStyleGenerator.generateTailwindV3Code(colors, format),
         language: 'javascript',
       },
       [CodeStyleFormat.CSS]: {
-        code: generateCSSCode(colors),
+        code: CodeStyleGenerator.generateCSSCode(colors, format),
         language: 'css',
       },
     };
-  }, [activeTab, colors]);
+  }, [activeTab, colors, format]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(styleCode[activeTab].code);

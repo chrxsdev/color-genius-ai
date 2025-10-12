@@ -2,7 +2,7 @@
 
 :root {
   /* Color Palette */
-  --color-primary: #aad291;
+  --color-primary: #aad292;
   --color-secondary: #bdcbb0;
   --color-tertiary: #a0cfcf;
   --color-error: #ffb4ab;
@@ -22,19 +22,19 @@
 
 @theme inline {
   /* Color System */
-  --color-primary: #aad291;
-  --color-secondary: #bdcbb0;
-  --color-tertiary: #a0cfcf;
-  --color-error: #ffb4ab;
-  --color-neutral: #e1e4d9;
-  --color-neutral-variant: #c3c8bb;
-  --color-background: #1a1c19;
-  --color-foreground: #e1e4d9;
-  --color-subtitle: #94a3b8;
-  --color-button-text: #0f172a;
-  --color-slider-label: #cbd5e1;
-  --color-control-text: #94a3b8;
-  --color-wheel-line: #475569;
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-tertiary: var(--color-tertiary);
+  --color-error: var(--color-error);
+  --color-neutral: var(--color-neutral);
+  --color-neutral-variant: var(--color-neutral-variant);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-subtitle: var(--color-subtitle);
+  --color-button-text: var(--color-button-text);
+  --color-slider-label: var(--color-slider-label);
+  --color-control-text: var(--color-control-text);
+  --color-wheel-line: var(--color-wheel-line);
   
   /* Font Families */
   --font-sans: var(--font-space-grotesk);

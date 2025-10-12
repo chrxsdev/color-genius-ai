@@ -2,23 +2,17 @@
 
 import { useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { hexToRgb } from '@/utils/code-color-conversions';
+import { Format } from '@/types/palette';
 
 interface ColorCardProps {
   color: string;
   name: string;
-  format: 'HEX' | 'RGB';
+  format: Format;
 }
 
 export const ColorCard = ({ color, name, format }: ColorCardProps) => {
   const [copied, setCopied] = useState(false);
-
-  const hexToRgb = (hex: string): string => {
-    const cleanHex = hex.replace('#', '');
-    const r = parseInt(cleanHex.substring(0, 2), 16);
-    const g = parseInt(cleanHex.substring(2, 4), 16);
-    const b = parseInt(cleanHex.substring(4, 6), 16);
-    return `rgb(${r}, ${g}, ${b})`;
-  };
 
   const colorValue = format === 'HEX' ? color.toLocaleUpperCase() : hexToRgb(color);
 
