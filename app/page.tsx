@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
-import { HARMONY_TYPES, type HarmonyType } from '@/types/palette';
+import { ColorItem, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
 import { ColorWheel } from '@/components/ui/ColorWheel';
 import { ColorCard } from '@/components/ui/ColorCard';
 import { AddColorButton } from '@/components/ui/AddColorButton';
@@ -26,16 +26,13 @@ const PalettePage = ({}: PalettePageProps) => {
   const [colorFormat, setColorFormat] = useState<'HEX' | 'RGB'>('HEX');
 
   // Mock colors for demonstration (will be replaced with AI-generated colors)
-  const [generatedColors, setGeneratedColors] = useState<string[]>([
-    '#AAD291',
-    '#BDCBB0',
-    '#A0CFCF',
-    '#FFB4AB',
-    '#E1E4D9',
+  const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([
+    { color: '#AAD291', name: 'Sage Green' },
+    { color: '#BDCBB0', name: 'Misty Gray' },
+    { color: '#A0CFCF', name: 'Teal Dream' },
+    { color: '#FFB4AB', name: 'Coral Blush' },
+    { color: '#E1E4D9', name: 'Ivory Mist' },
   ]);
-
-  // Mock color names (will be replaced with AI-generated names)
-  const colorNames = ['Sage Green', 'Misty Gray', 'Teal Dream', 'Coral Blush', 'Ivory Mist'];
 
   const handleGenerate = () => {
     console.log('Generating palette with:', { prompt, harmony });
@@ -49,7 +46,7 @@ const PalettePage = ({}: PalettePageProps) => {
 
   const handleColorChange = (index: number, newColor: string) => {
     const newColors = [...generatedColors];
-    newColors[index] = newColor;
+    newColors[index] = { ...newColors[index], color: newColor };
     setGeneratedColors(newColors);
   };
 
@@ -233,7 +230,11 @@ const PalettePage = ({}: PalettePageProps) => {
           {/* Color Visualization Section */}
           <div className='mt-2 space-y-8 p-6'>
             <h3 className='text-xl font-bold text-white'>Color Visualization</h3>
-            <ColorWheel colors={generatedColors} size={400} onColorChange={handleColorChange} />
+            <ColorWheel
+              colors={generatedColors.map((item) => item.color)}
+              size={400}
+              onColorChange={handleColorChange}
+            />
           </div>
 
           {/* Generated Colors Section */}
@@ -279,8 +280,8 @@ const PalettePage = ({}: PalettePageProps) => {
             {/* Color Cards Grid */}
             <div className='my-20'>
               <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
-                {generatedColors.map((color, index) => (
-                  <ColorCard key={index} color={color} name={colorNames[index]} format={colorFormat} />
+                {generatedColors.map((colorItem, index) => (
+                  <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
                 ))}
                 {/* Add Color Button */}
                 <AddColorButton onClick={handleAddColor} />
@@ -290,7 +291,7 @@ const PalettePage = ({}: PalettePageProps) => {
             {/* Color Codes Section */}
             <div className='mt-20'>
               <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
-              <ColorCodes colors={generatedColors} colorNames={colorNames} />
+              <ColorCodes colors={generatedColors} />
             </div>
           </div>
         </div>

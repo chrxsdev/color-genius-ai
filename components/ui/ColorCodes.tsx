@@ -1,88 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { generateTailwindV4Code, generateTailwindV3Code, generateCSSCode } from '@/utils/code-style-generator';
+import { useMemo, useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
-type CodeFormat = 'tailwind' | 'tailwindv3' | 'css';
+import { ColorItem } from '@/types/palette';
+import { CodeStyleFormat } from '@/types/format-style-code';
 
 interface ColorCodesProps {
-  colors: string[];
-  colorNames: string[];
+  colors: ColorItem[];
 }
 
-export const ColorCodes = ({ colors, colorNames }: ColorCodesProps) => {
-  const [activeTab, setActiveTab] = useState<CodeFormat>('tailwind');
+interface StyleCodeItem {
+  code: string;
+  language: string;
+}
+
+interface StyleCode {
+  [key: string]: StyleCodeItem;
+}
+
+export const ColorCodes = ({ colors }: ColorCodesProps) => {
+  const [activeTab, setActiveTab] = useState<CodeStyleFormat>(CodeStyleFormat.TailwindV4);
   const [copied, setCopied] = useState(false);
 
-  const generateTailwindCode = (): string => {
-    const colorEntries = colors
-      .map((color, index) => {
-        const name = colorNames[index].toLowerCase().replace(/\s+/g, '-');
-        return `      '${name}': '${color}',`;
-      })
-      .join('\n');
-
-    return `@import "tailwindcss";
-
-@theme inline {
-  --color-${colorNames[0].toLowerCase().replace(/\s+/g, '-')}: ${colors[0]};
-${colors
-  .slice(1)
-  .map((color, index) => `  --color-${colorNames[index + 1].toLowerCase().replace(/\s+/g, '-')}: ${color};`)
-  .join('\n')}
-}`;
-  };
-
-  const generateTailwindV3Code = (): string => {
-    const colorEntries = colors
-      .map((color, index) => {
-        const name = colorNames[index].toLowerCase().replace(/\s+/g, '-');
-        return `        '${name}': '${color}',`;
-      })
-      .join('\n');
-
-    return `module.exports = {
-  theme: {
-    extend: {
-      colors: {
-${colorEntries}
-      }
-    }
-  }
-}`;
-  };
-
-  const generateCSSCode = (): string => {
-    const cssVariables = colors
-      .map((color, index) => {
-        const name = colorNames[index].toLowerCase().replace(/\s+/g, '-');
-        return `  --color-${name}: ${color};`;
-      })
-      .join('\n');
-
-    return `:root {
-${cssVariables}
-}`;
-  };
-
-  const getCode = (): string => {
-    switch (activeTab) {
-      case 'tailwind':
-        return generateTailwindCode();
-      case 'tailwindv3':
-        return generateTailwindV3Code();
-      case 'css':
-        return generateCSSCode();
-      default:
-        return '';
-    }
-  };
+  const styleCode: StyleCode = useMemo(() => {
+    return {
+      [CodeStyleFormat.TailwindV4]: {
+        code: generateTailwindV4Code(colors),
+        language: 'css',
+      },
+      [CodeStyleFormat.TailwindV3]: {
+        code: generateTailwindV3Code(colors),
+        language: 'javascript',
+      },
+      [CodeStyleFormat.CSS]: {
+        code: generateCSSCode(colors),
+        language: 'css',
+      },
+    };
+  }, [activeTab, colors]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(getCode());
+    await navigator.clipboard.writeText(styleCode[activeTab].code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -92,27 +55,31 @@ ${cssVariables}
       {/* Tabs */}
       <div className='flex items-center gap-2 border-b border-neutral-variant/30'>
         <button
-          onClick={() => setActiveTab('tailwind')}
+          onClick={() => setActiveTab(CodeStyleFormat.TailwindV4)}
           className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
-            activeTab === 'tailwind' ? 'text-primary' : 'text-control-text hover:text-white'
+            activeTab === CodeStyleFormat.TailwindV4 ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
           TailwindCSS V4
-          {activeTab === 'tailwind' && <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />}
+          {activeTab === CodeStyleFormat.TailwindV4 && (
+            <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />
+          )}
         </button>
         <button
-          onClick={() => setActiveTab('tailwindv3')}
+          onClick={() => setActiveTab(CodeStyleFormat.TailwindV3)}
           className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
-            activeTab === 'tailwindv3' ? 'text-primary' : 'text-control-text hover:text-white'
+            activeTab === CodeStyleFormat.TailwindV3 ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
           TailwindCSS V3
-          {activeTab === 'tailwindv3' && <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />}
+          {activeTab === CodeStyleFormat.TailwindV3 && (
+            <div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />
+          )}
         </button>
         <button
-          onClick={() => setActiveTab('css')}
+          onClick={() => setActiveTab(CodeStyleFormat.CSS)}
           className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
-            activeTab === 'css' ? 'text-primary' : 'text-control-text hover:text-white'
+            activeTab === CodeStyleFormat.CSS ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
           CSS
@@ -121,7 +88,7 @@ ${cssVariables}
       </div>
 
       {/* Code Block */}
-      <div className='relative rounded-xl bg-neutral/20 border border-neutral-variant/30 p-6'>
+      <div className='relative rounded-xl bg-neutral/20 border border-neutral-variant/30 py-4 px-6'>
         {/* Copy Button */}
         <button
           onClick={handleCopy}
@@ -137,11 +104,11 @@ ${cssVariables}
         {/* Code Content */}
 
         <SyntaxHighlighter
-          language={activeTab === 'css' ? 'css' : 'javascript'}
+          language={styleCode[activeTab as CodeStyleFormat].language}
           style={vscDarkPlus}
           customStyle={{ border: 2, borderRadius: '0.5rem', backgroundColor: 'transparent', margin: 0, padding: 0 }}
         >
-          {getCode()}
+          {styleCode[activeTab as CodeStyleFormat].code}
         </SyntaxHighlighter>
       </div>
     </div>

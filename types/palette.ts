@@ -14,3 +14,8 @@ export const HARMONY_TYPES: { value: HarmonyType; label: string }[] = [
   { value: 'split-complementary', label: 'Split-Complementary' },
   { value: 'tetradic', label: 'Tetradic' },
 ];
+
+export interface ColorItem {
+  color: string;
+  name: string;
+}
