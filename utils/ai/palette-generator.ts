@@ -1,36 +1,6 @@
 import { generateObject } from 'ai';
 import { google } from '@ai-sdk/google';
-import { z } from 'zod';
-
-/**
- * Structured output schema for type safety
- * Ensures AI responses match expected format
- */
-const ColorSchema = z.object({
-  name: z.string().min(2).max(30),
-  hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  hsl: z.object({
-    h: z.number().min(0).max(359.9999),
-    s: z.number().min(0).max(100),
-    l: z.number().min(0).max(100),
-  }),
-});
-
-const PaletteSchema = z.object({
-  colors: z.array(ColorSchema).min(3).max(8),
-  rationale: z.string().min(50).max(300),
-  tags: z.array(z.string().min(1).max(20)).min(3).max(8),
-});
-/**
- * Response type inferred from schema
- */
-export type PaletteResponse = z.infer<typeof PaletteSchema> & {
-  metadata: {
-    provider: string;
-    model: string;
-    generatedAt: string;
-  };
-};
+import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
 
 /**
  * PaletteGenerator class
@@ -111,13 +81,14 @@ export class PaletteGenerator {
 
     return `
     You are a color palette generator. Generate exactly ${colorCount} colors following ${harmony} color harmony principles.
+
     REQUIREMENTS:
     - Return valid JSON matching the provided schema exactly.
     - Each color must include: name, hex (#RRGGBB), and hsl {h,s,l}.
     - Hex must correspond to the given HSL (convert HSL→RGB→HEX).
     - Follow ${harmony} rules strictly.
     - Provide creative names (2–30 chars).
-    - Strict Rationale length 50–250 characters including spaces.
+    - Rationale length will be strictly <70 words, without mention the harmony style, just the palette description and rationale.
     - 3–8 tags for discoverability.
     - Consider web accessibility and modern design trends.
     - Ensure colors work well together for web design projects.
@@ -128,8 +99,7 @@ export class PaletteGenerator {
     - Ensure lightness values across the palette span at least 25 points.
     - Avoid near-duplicates: no two colors may have both |ΔH| < 10°, |ΔS| < 10, and |ΔL| < 10.
       
-    HARMONY RULES:
-    ${this.getHarmonyRules(harmony)}
+    HARMONY RULES: ${this.getHarmonyRules(harmony)}
       
     OUTPUT ORDER:
     - Distribute hues evenly per the harmony (do not cluster).
@@ -144,7 +114,7 @@ export class PaletteGenerator {
       monochromatic:
         'Work in HSL. Keep hue within ±4° of base H0. Enforce strong diversity: S in [35,85], L in [25,85], with S range ≥ 40 and L range ≥ 35. Avoid any two colors with |ΔH|<6° and |ΔS|<10 and |ΔL|<10.',
       analogous:
-        'Work in HSL. Choose base H0. Pick window width W in [24,40]. Place n hues evenly across [H0−W/2, H0+W/2]. Minimum pairwise hue spacing ≥ 10°. Ensure S spans ≥ 30 points and L spans ≥ 25 points across the set.',
+        'Work in HSL. Choose base H0. Pick window width W in [24,40]. Place n hues evenly across [H0−W/2, H0+W/2]. Minimum pairwise hue spacing ≥ 20°. Ensure S spans ≥ 40 points and L spans ≥ 35 points across the set.',
       complementary:
         'Work in HSL. Target hues {H0, H0+180°} with ±3° tolerance. If n>2, add neighbors at ±15–25° around each complement. Minimum pairwise hue spacing ≥ 12°. Ensure S range ≥ 30 and L range ≥ 25.',
       triadic:
@@ -167,28 +137,28 @@ export class PaletteGenerator {
         {
           name: 'Purple Dawn',
           hex: '#667EEA',
-          hsl: { h: 231, s: 72, l: 65 }
+          hsl: { h: 231, s: 72, l: 65 },
         },
         {
           name: 'Deep Violet',
           hex: '#764BA2',
-          hsl: { h: 267, s: 39, l: 46 }
+          hsl: { h: 267, s: 39, l: 46 },
         },
         {
           name: 'Pink Mist',
           hex: '#F093FB',
-          hsl: { h: 287, s: 89, l: 78 }
+          hsl: { h: 287, s: 89, l: 78 },
         },
         {
           name: 'Coral Pink',
           hex: '#F5576C',
-          hsl: { h: 352, s: 89, l: 65 }
+          hsl: { h: 352, s: 89, l: 65 },
         },
         {
           name: 'Sky Blue',
           hex: '#4FACFE',
-          hsl: { h: 211, s: 98, l: 66 }
-        }
+          hsl: { h: 211, s: 98, l: 66 },
+        },
       ],
       rationale: 'A beautiful gradient palette with purple and pink tones, perfect for modern web designs.',
       tags: ['gradient', 'purple', 'pink', 'modern', 'elegant'],
