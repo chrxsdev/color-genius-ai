@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
-import { hexToRgb } from '@/utils/code-color-conversions';
+import { hexToRgb } from '@/utils/color-conversions/code-color-conversions';
 import { Format } from '@/types/palette';
 
 interface ColorCardProps {

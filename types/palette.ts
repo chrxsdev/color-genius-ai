@@ -8,9 +8,9 @@ export type HarmonyType =
 
 export const HARMONY_TYPES: { value: HarmonyType; label: string }[] = [
   { value: 'analogous', label: 'Analogous' },
+  { value: 'monochromatic', label: 'Monochromatic' },
   { value: 'complementary', label: 'Complementary' },
   { value: 'triadic', label: 'Triadic' },
-  { value: 'monochromatic', label: 'Monochromatic' },
   { value: 'split-complementary', label: 'Split-Complementary' },
   { value: 'tetradic', label: 'Tetradic' },
 ];

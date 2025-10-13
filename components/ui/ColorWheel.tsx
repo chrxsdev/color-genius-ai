@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { hexToHSL, hslToHex } from '@/utils/code-color-conversions';
+import { hexToHSL, hslToHex } from '@/utils/color-conversions/code-color-conversions';
 
 interface ColorWheelProps {
   colors: string[];

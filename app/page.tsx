@@ -25,7 +25,13 @@ const PalettePage = ({}: PalettePageProps) => {
   const [colorSlots, setColorSlots] = useState(5);
   const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
-  // Mock colors for demonstration (will be replaced with AI-generated colors)
+  // State for AI generation
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rationale, setRationale] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+
+  // Generated colors from AI
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([
     { color: '#AAD291', name: 'Sage Green' },
     { color: '#BDCBB0', name: 'Misty Gray' },
@@ -34,9 +40,44 @@ const PalettePage = ({}: PalettePageProps) => {
     { color: '#E1E4D9', name: 'Ivory Mist' },
   ]);
 
-  const handleGenerate = () => {
-    console.log('Generating palette with:', { prompt, harmony });
-    // TODO: Implement palette generation
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a prompt to generate a palette');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/generate-palette', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          harmony,
+          colorCount: colorSlots,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || data.message || 'Failed to generate palette');
+
+      // Update state with AI-generated palette
+      setGeneratedColors(data.colors);
+      setRationale(data.metadata?.rationale || null);
+      setTags(data.metadata?.tags || []);
+      setPaletteName(''); // Clear any previous name
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      console.error('Generation error:', err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleGenerateName = () => {
@@ -94,6 +135,11 @@ const PalettePage = ({}: PalettePageProps) => {
                 type='text'
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isGenerating && prompt.trim()) {
+                    handleGenerate();
+                  }
+                }}
                 placeholder='e.g., a serene beach sunset'
                 className='w-full rounded-xl border-2 border-neutral-variant bg-background h-14 pl-4 pr-4 text-base text-white placeholder:text-slate-500 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all'
               />
@@ -122,11 +168,64 @@ const PalettePage = ({}: PalettePageProps) => {
           {/* Generate Button */}
           <button
             onClick={handleGenerate}
-            className='flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-8 text-base font-bold text-button-text transition-all duration-200 ease-in-out hover:bg-primary/90 hover:scale-105 cursor-pointer active:scale-95'
+            disabled={isGenerating || !prompt.trim()}
+            className='flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-8 text-base font-bold text-button-text transition-all duration-200 ease-in-out hover:bg-primary/90 hover:scale-105 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
           >
-            <SiGooglegemini className='text-xl' />
-            Generate Palette
+            {isGenerating ? (
+              <>
+                <svg
+                  className='animate-spin h-5 w-5 text-white'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                >
+                  <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                  <path
+                    className='opacity-75'
+                    fill='currentColor'
+                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                  ></path>
+                </svg>
+                Generating...
+              </>
+            ) : (
+              <>
+                <SiGooglegemini className='text-xl' />
+                Generate Palette
+              </>
+            )}
           </button>
+
+          {/* Error Message */}
+          {error && (
+            <div className='mt-4 p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 text-red-400'>
+              <p className='font-medium'>⚠️ {error}</p>
+            </div>
+          )}
+
+          {/* AI Insights */}
+          {(rationale || tags.length > 0) && (
+            <div className='mt-6 p-6 rounded-xl bg-neutral-variant/20 border-2 border-neutral-variant/50 space-y-4'>
+              {rationale && (
+                <div>
+                  <h4 className='text-sm font-bold text-primary mb-2'>Design Rationale</h4>
+                  <p className='text-subtitle text-sm leading-relaxed'>{rationale}</p>
+                </div>
+              )}
+              {tags.length > 0 && (
+                <div>
+                  <h4 className='text-sm font-bold text-primary mb-2'>Tags</h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {tags.map((tag) => (
+                      <span key={tag} className='px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium'>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Palette Controls Section */}

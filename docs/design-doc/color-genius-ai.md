@@ -1,492 +1,129 @@
-# Color Genius AI - Design Document
+# Color Genius AI - Design Document (implementation-aligned)
 
 ## 1. Context
 
-Color Genius AI is an AI-first application that generates comprehensive, web-ready color palettes from natural language descriptions. The system provides complete creative packages including HEX codes, semantic color names, design rationales, and categorical tags. Built with color science guardrails and perceptual controls, the application ensures generated palettes are both aesthetically pleasing and technically sound for web development.
+This document describes the current, implemented behavior of the Color Genius AI project. It focuses on the code that is present in this repository (as of the current branch): the Next.js API route that calls an AI generator, the in-repo AI prompt/schema, the types used by the frontend, and the color conversion utilities. The goal is to keep this doc aligned with the code so maintainers and contributors have a correct mental model.
 
-### Goals and Success Criteria
+High level summary:
+- The backend is implemented as a Next.js API route at `app/api/generate-palette/route.ts`.
+- AI generation is performed by a local `PaletteGenerator` (in `utils/ai/palette-generator.ts`) which uses the `ai` SDK + Google model (`gemini-2.0-flash-exp`).
+- The AI output is validated with Zod schemas and includes color objects with `name`, `hex`, and `hsl` fields plus a `rationale` and `tags`.
+- The API returns a compact palette shape expected by the frontend: an `id`, an array of `{ color, name }` items, and `metadata` (prompt, harmony, rationale, tags, provider/model info).
+- Color math utilities in `utils/color-conversions/code-color-conversions.ts` are HSL-focused (hex<->HSL, hex->RGB, and helpers for formatting).
 
-**Primary Goals:**
-- Generate usable, harmonious color palettes from natural language prompts
-- Provide complete creative context (names, rationales, tags) alongside colors
-- Ensure color science compliance (sRGB gamut, distinctness, harmony rules)
-- Enable intuitive color adjustments using perceptual controls
-- Export production-ready code snippets for modern web frameworks
+Environment requirement:
+- `GOOGLE_GENERATIVE_AI_API_KEY` must be set. The API route checks for this variable and returns a 500 with a helpful message when it's absent.
 
-**Success Criteria:**
-- Generate palettes in under 3 seconds with 95% success rate
-- Achieve minimum 4.5:1 WCAG contrast ratio for accessibility badges
-- Support 5+ color harmony types (analogous, complementary, triadic, etc.)
-- Export formats for Tailwind CSS, CSS variables, and other web formats
-- Maintain user session state across interactions
+## 2. Implemented Architecture (concise)
 
-## 2. High-level Solution
+Client -> POST /api/generate-palette -> Next.js route -> PaletteGenerator (AI) -> Zod validation -> Response to client
 
-### Proposed Architecture
+- No external ColorEngine/OKLCH processing step is invoked by the current API route. The palette generator returns colors already containing HSL and HEX values. The frontend receives a simplified `ColorItem` array (see types section).
 
-```mermaid
-graph TB
-    A[Client App] -->|User Input| B[Next.js API Routes]
-    B -->|Secure Call| C[Supabase Edge Function]
-    C -->|Prompt| D[LLM Service]
-    D -->|Raw JSON| C
-    C -->|Validated Response| B
-    B -->|Color Data| E[Color Engine]
-    E -->|Processed Colors| F[Redux Store]
-    F -->|State Updates| G[UI Components]
-    G -->|User Adjustments| E
-    
-    H[Supabase DB] -->|Persistence| B
-    I[Authentication] -->|User Context| B
-    
-    subgraph "Color Processing Pipeline"
-        E --> J[Validation Layer]
-        J --> K[OKLCH Conversion]
-        K --> L[Harmony Verification]
-        L --> M[Accessibility Checks]
-    end
-```
+## 3. Implementation details (files & behavior)
 
-### Key Components and Responsibilities
+### API route: `app/api/generate-palette/route.ts`
 
-1. **Client Application (Next.js)**
-   - User interface and interaction handling
-   - State management via Redux
-   - Real-time color adjustments and previews
-   - Export functionality for various formats
-
-2. **Color Engine Module**
-   - Core color science calculations using OKLCH color space
-   - Validation and correction algorithms
-   - Harmony rule enforcement
-   - Accessibility compliance checks
-
-3. **AI Integration Layer (Supabase Edge Function)**
-   - Secure LLM API calls with rate limiting
-   - Input/output validation using Zod schemas
-   - Error handling and fallback mechanisms
-
-4. **Persistence Layer (Supabase)**
-   - User authentication and session management
-   - Palette storage with Row-Level Security (RLS)
-   - User preferences and history tracking
-
-### High-level Data and Control Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant C as Client
-    participant API as Next.js API
-    participant SF as Supabase Function
-    participant LLM as AI Model
-    participant CE as Color Engine
-    participant DB as Database
-    
-    U->>C: Enter prompt & harmony type
-    C->>API: POST /api/generate-palette
-    API->>SF: Call edge function
-    SF->>LLM: Generate colors with schema
-    LLM->>SF: Return structured JSON
-    SF->>SF: Validate & sanitize
-    SF->>API: Return color data
-    API->>CE: Process colors (OKLCH)
-    CE->>CE: Validate harmony & accessibility
-    CE->>API: Return processed palette
-    API->>C: Send complete palette
-    C->>C: Update Redux state
-    C->>U: Display palette with controls
-    
-    Note over U,C: User adjusts sliders
-    U->>C: Modify brightness/saturation
-    C->>CE: Apply OKLCH transformations
-    CE->>C: Return updated colors
-    
-    Note over C,DB: Optional persistence
-    U->>C: Save palette
-    C->>DB: Store with RLS
-```
-
-## 3. Code and Architectural Changes
-
-### Data Models
-
-#### Core Types
-
-```typescript
-// types/color.ts
-export interface Color {
-  hex: string;
-  name: string;
-  oklch: {
-    l: number; // Lightness (0-1)
-    c: number; // Chroma (0-0.4+)
-    h: number; // Hue (0-360)
-  };
-  accessibility: {
-    contrastLight: number;
-    contrastDark: number;
-    wcagLevel: 'AA' | 'AAA' | 'FAIL';
-  };
-}
-
-// types/palette.ts
-export interface Palette {
-  id: string;
-  colors: Color[];
-  metadata: {
-    prompt: string;
-    harmony: HarmonyType;
-    rationale: string;
-    tags: string[];
-  };
-  adjustments: {
-    brightness: number; // -1 to 1
-    saturation: number; // -1 to 1
-    warmth: number;     // -1 to 1
-  };
-  isPublic: boolean;
-  createdAt: Date;
-  userId?: string;
-}
-
-export type HarmonyType = 
-  | 'monochromatic'
-  | 'analogous'
-  | 'complementary'
-  | 'triadic'
-  | 'tetradic'
-  | 'split-complementary';
-```
-
-#### Database Schema (Supabase)
-
-```sql
--- migrations/001_initial_schema.sql
-CREATE TABLE palettes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  name TEXT NOT NULL,
-  colors JSONB NOT NULL,
-  metadata JSONB NOT NULL,
-  adjustments JSONB DEFAULT '{"brightness": 0, "saturation": 0, "warmth": 0}'::jsonb,
-  isPublic BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE user_preferences (
-  user_id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  default_harmony TEXT DEFAULT 'analogous',
-  preferred_export_format TEXT DEFAULT 'tailwind',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Row Level Security
-ALTER TABLE palettes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own palettes" ON palettes FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Anyone can view public palettes" ON palettes FOR SELECT USING ((visibility->>'isPublic')::boolean = true);
-CREATE POLICY "Users can insert own palettes" ON palettes FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own palettes" ON palettes FOR UPDATE USING (auth.uid() = user_id);
-```
-
-### Key Code Examples
-
-#### Color Engine Core Module
-
-```typescript
-// lib/color-engine/index.ts
-import { oklchToHex, hexToOklch } from './oklch';
-import { validateHarmony } from './harmony';
-import { checkAccessibility } from './accessibility';
-
-export class ColorEngine {
-  static processAIPalette(rawColors: string[], harmony: HarmonyType): Color[] {
-    return rawColors.map((hex, index) => {
-      const oklch = hexToOklch(hex);
-      const accessibility = checkAccessibility(hex);
-      
-      return {
-        hex: this.ensureValidHex(hex),
-        name: `Color ${index + 1}`, // Will be replaced by AI-generated name
-        oklch,
-        accessibility
-      };
-    }).filter(color => this.isValidColor(color));
+- Validates incoming requests using Zod. Expected body fields:
+  - `prompt` (string, 3..200 chars)
+  - `harmony` (one of the supported harmony strings)
+  - `colorCount` (number, 3..8, defaults to 5)
+- If `GOOGLE_GENERATIVE_AI_API_KEY` is not set the route returns status 500 with an informative JSON message.
+- The route instantiates `new PaletteGenerator()` and calls `generatePalette(prompt, harmony, colorCount)`.
+- It maps the AI response into the frontend-friendly shape:
+  {
+    id: <uuid>,
+    colors: [ { color: <hex>, name: <string> }, ... ],
+    metadata: { prompt, harmony, rationale, tags, generatedAt, model, provider }
   }
+- Validation errors (Zod) return 400 with details; other errors return 500.
 
-  static adjustPalette(colors: Color[], adjustments: PaletteAdjustments): Color[] {
-    return colors.map(color => {
-      const adjusted = {
-        l: Math.max(0, Math.min(1, color.oklch.l + adjustments.brightness * 0.3)),
-        c: Math.max(0, color.oklch.c * (1 + adjustments.saturation * 0.5)),
-        h: (color.oklch.h + adjustments.warmth * 30 + 360) % 360
-      };
-      
-      const hex = oklchToHex(adjusted);
-      return {
-        ...color,
-        hex,
-        oklch: adjusted,
-        accessibility: checkAccessibility(hex)
-      };
-    });
-  }
-}
-```
+### AI integration: `utils/ai/palette-generator.ts`
 
-#### API Route Implementation
+- Uses the `ai` SDK's `generateObject` function with the Google model `gemini-2.0-flash-exp` (`@ai-sdk/google`).
+- Enforces a strong Zod schema for the AI output. The implemented schema requires each color object to contain:
+  - `name` (2..30 chars)
+  - `hex` (string matching /^#[0-9A-Fa-f]{6}$/)
+  - `hsl` object ({ h: 0..360, s: 0..100, l: 0..100 })
+- Also requires `rationale` (50..300 chars) and `tags` (3..8 strings).
+- The generator sanitizes user input to reduce prompt injection risk (removes role labels, code blocks, angle brackets, markdown links, and truncates).
+- The system prompt the generator sends to the model contains explicit rules for harmony, spacing, diversity, and output format. Harmony types supported in the generator include: `monochromatic`, `analogous`, `complementary`, `triadic`, `tetradic`, and `split-complementary`.
+- On error, the generator returns a deterministic fallback palette (static colors + metadata) so the API can still respond.
 
-```typescript
-// app/api/generate-palette/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { z } from 'zod';
-import { ColorEngine } from '@/lib/color-engine';
+### Types: `types/palette.ts` (current implementation)
 
-const GenerateRequestSchema = z.object({
-  prompt: z.string().min(3).max(200),
-  harmony: z.enum(['monochromatic', 'analogous', 'complementary', 'triadic']),
-  colorCount: z.number().min(3).max(8).default(5)
-});
+- HarmonyType (string union):
+  - 'analogous'
+  - 'complementary'
+  - 'triadic'
+  - 'monochromatic'
+  - 'split-complementary'
+  - 'tetradic'
+- `HARMONY_TYPES` constant used by the UI to render options.
+- `ColorItem` interface returned by the API route:
+  - `color: string` (hex, e.g. `#AABBCC`)
+  - `name: string`
+- `Format` type used in utilities: `'HEX' | 'RGB'`
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { prompt, harmony, colorCount } = GenerateRequestSchema.parse(body);
-    
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    const { data, error } = await supabase.functions.invoke('generate-palette', {
-      body: { prompt, harmony, colorCount }
-    });
-    
-    if (error) throw error;
-    
-    // Process colors through color engine
-    const processedColors = ColorEngine.processAIPalette(data.colors, harmony);
-    
-    const palette: Palette = {
-      id: crypto.randomUUID(),
-      colors: processedColors,
-      metadata: {
-        prompt,
-        harmony,
-        rationale: data.rationale,
-        tags: data.tags,
-      },
-      adjustments: { brightness: 0, saturation: 0, warmth: 0 },
-      visibility: { isPublic: false, isSaved: false, showInExplore: false },
-      createdAt: new Date()
-    };
-    
-    return NextResponse.json(palette);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to generate palette' },
-      { status: 500 }
-    );
-  }
-}
-```
+Note: The repository does not currently expose the richer `Palette` shape (OKLCH, accessibility fields, adjustments, persistence flags) shown in older design drafts — those shapes are not present in the saved `types/palette.ts`.
 
-#### AI Integration with Vercel AI SDK
+### Color conversions: `utils/color-conversions/code-color-conversions.ts`
 
-```typescript
-// lib/ai/palette-generator.ts
-import { generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { z } from 'zod';
+Implemented helpers (summary):
+- `hexToHSL(hex)` — converts `#RRGGBB` to HSL { hue, saturation, lightness } with hue in degrees and S/L in percentages.
+- `hslToHex(h, s, l)` — converts HSL back to `#RRGGBB`.
+- `hexToRgb(hex)` — converts hex to an `rgb(r, g, b)` string.
+- `getColorValues(colorItem, format)` — helper that normalizes a color `name` (slugifies) and returns either the uppercase `HEX` or `rgb(...)` string depending on `format`.
 
-// Structured output schema for type safety
-const PaletteSchema = z.object({
-  colors: z.array(z.string().regex(/^#[0-9A-Fa-f]{6}$/)).min(3).max(8),
-  names: z.array(z.string().min(2).max(30)),
-  rationale: z.string().min(50).max(200),
-  tags: z.array(z.string().min(1).max(20)).min(3).max(8),
-});
+These utilities are HSL-centric and intentionally simple — they are what the UI and the PaletteGenerator expect.
 
-export class PaletteGenerator {
-  private model = openai('gpt-4o-mini');
+## 4. API response shape (concrete example)
 
-  async generatePalette(prompt: string, harmony: string, colorCount: number = 5) {
-    const sanitizedPrompt = this.sanitizeInput(prompt);
-    
-    try {
-      const result = await generateObject({
-        model: this.model,
-        schema: PaletteSchema,
-        messages: [
-          { 
-            role: 'system', 
-            content: this.buildSystemPrompt(harmony, colorCount)
-          },
-          { 
-            role: 'user', 
-            content: `Create a ${harmony} color palette for: "${sanitizedPrompt}"`
-          }
-        ],
-        temperature: 0.7,
-        maxRetries: 2,
-      });
+POST /api/generate-palette  -> 200 OK
 
-      return {
-        ...result.object,
-        metadata: {
-          provider: 'openai',
-          model: 'gpt-4o-mini',
-          generatedAt: new Date().toISOString()
-        }
-      };
-    } catch (error) {
-      console.error('AI generation failed:', error);
-      return this.getStaticFallback();
-    }
-  }
+Response body example:
 
-  private sanitizeInput(input: string): string {
-    if (!input || typeof input !== 'string') {
-      throw new Error('Invalid input: must be a non-empty string');
-    }
-
-    return input
-      .trim()
-      .replace(/[<>\"'`{}]/g, '') // Remove potential injection characters
-      .replace(/\b(system|assistant|user):/gi, '') // Remove role indicators
-      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-      .replace(/\[.*?\]\(.*?\)/g, '') // Remove markdown links
-      .substring(0, 200); // Limit length
-  }
-
-  private buildSystemPrompt(harmony: string, colorCount: number): string {
-    const allowedHarmonies = ['monochromatic', 'analogous', 'complementary', 'triadic', 'tetradic'];
-    
-    if (!allowedHarmonies.includes(harmony)) {
-      throw new Error(`Invalid harmony type: ${harmony}`);
-    }
-
-    if (colorCount < 3 || colorCount > 8) {
-      throw new Error(`Invalid color count: ${colorCount}`);
-    }
-
-    return `You are a professional color palette generator. Generate exactly ${colorCount} colors following ${harmony} color harmony principles.
-
-REQUIREMENTS:
-- Return valid JSON matching the provided schema exactly
-- Use #RRGGBB hex format (6 characters after #)
-- Follow ${harmony} color harmony rules strictly
-- Provide creative, descriptive color names (2-30 characters)
-- Write a design rationale (50-200 characters)
-- Add 3-8 relevant tags for discoverability
-- Consider web accessibility and modern design trends
-
-The colors should work well together and be suitable for web design projects.`;
-  }
-
-  private getStaticFallback() {
-    return {
-      colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'],
-      names: ['Purple Dawn', 'Deep Violet', 'Pink Mist', 'Coral Pink', 'Sky Blue'],
-      rationale: 'A beautiful gradient palette with purple and pink tones.',
-      tags: ['gradient', 'purple', 'pink', 'modern', 'elegant'],
-      metadata: {
-        provider: 'fallback',
-        model: 'static',
-        generatedAt: new Date().toISOString()
-      }
-    };
-  }
-}
-```
-
-#### Supabase Edge Function Implementation
-
-```typescript
-// supabase/functions/generate-palette/index.ts
-import { PaletteGenerator } from '../../../lib/ai/palette-generator.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-interface GenerateRequest {
-  prompt: string;
-  harmony: 'monochromatic' | 'analogous' | 'complementary' | 'triadic' | 'tetradic';
-  colorCount?: number;
-}
-
-export async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  try {
-    const { prompt, harmony, colorCount = 5 }: GenerateRequest = await req.json();
-
-    // Input validation
-    if (!prompt || typeof prompt !== 'string' || prompt.length < 3 || prompt.length > 200) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid prompt. Must be 3-200 characters.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const allowedHarmonies = ['monochromatic', 'analogous', 'complementary', 'triadic', 'tetradic'];
-    if (!allowedHarmonies.includes(harmony)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid harmony type.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (colorCount < 3 || colorCount > 8) {
-      return new Response(
-        JSON.stringify({ error: 'Color count must be between 3 and 8.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Simple rate limiting (can be enhanced with Supabase or Redis)
-    const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
-    // TODO: Implement proper rate limiting
-
-    // Generate palette using GPT-4o mini
-    const generator = new PaletteGenerator();
-    const result = await generator.generatePalette(prompt, harmony, colorCount);
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    console.error('Generation error:', error);
-    
-    // Return fallback palette on any error
-    const fallback = {
-      colors: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'],
-      names: ['Purple Dawn', 'Deep Violet', 'Pink Mist', 'Coral Pink', 'Sky Blue'],
-      rationale: 'A beautiful gradient palette with purple and pink tones.',
-      tags: ['gradient', 'purple', 'pink', 'modern', 'elegant'],
-      metadata: { provider: 'error-fallback', model: 'static' }
-    };
-
-    return new Response(JSON.stringify(fallback), {
-      status: 200, // Return 200 with fallback for better UX
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+{
+  "id": "b3f1c9f0-...",
+  "colors": [
+    { "color": "#667EEA", "name": "Purple Dawn" },
+    { "color": "#764BA2", "name": "Deep Violet" },
+    { "color": "#F093FB", "name": "Pink Mist" }
+  ],
+  "metadata": {
+    "prompt": "sunset gradient with moody purples",
+    "harmony": "analogous",
+    "rationale": "A beautiful gradient palette with purple and pink tones, perfect for modern web designs.",
+    "tags": ["gradient","purple","pink","modern","elegant"],
+    "generatedAt": "2025-10-12T...Z",
+    "model": "gemini-2.0-flash-exp",
+    "provider": "google"
   }
 }
 
-Deno.serve(handler);
-```
+## 5. Security & operational notes
 
-## 4. Security Considerations
+- The route checks for `GOOGLE_GENERATIVE_AI_API_KEY`. If you plan to run locally, set this env var (e.g., in `.env.local`) before calling the endpoint.
+- The generator sanitizes inputs and enforces a strict output schema via Zod — this reduces the chance of malformed output and prompt-injection-style issues.
+- The AI call is wrapped in a try/catch; on failure a static fallback palette is returned. This keeps the API stable for the frontend.
 
+## 6. Differences vs. older design drafts (why this doc changed)
+
+- Older drafts referenced a separate ColorEngine using OKLCH conversions, accessibility calculations (WCAG), and Supabase function invocation for the AI step. The current implementation:
+  - Calls `PaletteGenerator` directly from the Next.js route (no Supabase function invocation).
+  - Uses HSL/HEX in the AI schema and color utilities (no OKLCH conversion pipeline in the repository code).
+  - Returns a compact `ColorItem[]` to the frontend instead of a very rich `Palette` object with adjustments/visibility fields.
+
+If we want to restore the richer pipeline (OKLCH, accessibility checks, persistence, or Move AI invocation into a serverless function), that should be a separate implementation task with its own changes.
+
+## 7. Next steps (suggestions)
+
+- If you want the documentation to also include the full Zod schemas and the exact system prompt text, we can extract and embed them (they are present in `utils/ai/palette-generator.ts`).
+- If you want the project to perform OKLCH-based perceptual edits and accessibility checks, we should create a dedicated `ColorEngine` module and adapt the API route to call it.
+
+---
+
+This document has been updated to reflect the code currently present in the repository. If you want me to also align other docs, tests, or add a short README snippet showing how to run the API locally (env vars to set), tell me and I will add it.
 ### Authentication and Authorization Model
 
 - **Supabase Auth Integration**: Google OAuth
@@ -654,19 +291,7 @@ class PaletteError extends Error {
 - Input sanitization prevents prompt injection attacks
 - Static fallbacks work when OpenAI API is unavailable
 
-**Task 2.2: Supabase Edge Function Integration** (4 points)
-- Create Supabase Edge Function using PaletteGenerator
-- Implement rate limiting and CORS handling
-- Add comprehensive error handling and validation
-- Set up secure environment variable management
-
-*Acceptance Criteria:*
-- Edge function deploys successfully with proper error handling
-- Rate limiting prevents abuse (basic IP-based protection)
-- OpenAI API key is securely stored and never exposed to client
-- End-to-end generation completes in under 3 seconds
-
-**Task 2.3: Secure Prompt Engineering** (3 points)
+**Task 2.2: Secure Prompt Engineering** (3 points)
 - Design security-first prompts that prevent injection
 - Create systematic prompt templates with validation
 - Implement confidence scoring and output validation
