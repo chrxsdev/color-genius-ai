@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PaletteGenerator } from '@/utils/ai/palette-generator';
+import { PaletteGenerator } from '@/lib/ai/palette-generator';
 import type { HarmonyType } from '@/types/palette';
 
 /**
  * Request validation schema
  */
 const GenerateRequestSchema = z.object({
-  prompt: z
-    .string()
-    .min(3, 'Prompt must be at least 3 characters')
-    .max(200, 'Prompt must be less than 200 characters'),
-  harmony: z.enum([
-    'monochromatic',
-    'analogous',
-    'complementary',
-    'triadic',
-    'tetradic',
-    'split-complementary',
-  ]),
+  prompt: z.string().min(3, 'Prompt must be at least 3 characters').max(200, 'Prompt must be less than 200 characters'),
+  harmony: z.enum(['monochromatic', 'analogous', 'complementary', 'triadic', 'tetradic', 'split-complementary']),
   colorCount: z.number().min(3).max(8).default(5),
 });
 
@@ -41,6 +31,7 @@ export async function POST(request: NextRequest) {
     // Format response to match frontend expectations
     const palette = {
       id: crypto.randomUUID(),
+      paletteName: aiResponse.paletteName,
       colors: aiResponse.colors.map((color, index) => ({
         color: color.hex,
         name: color.name ?? `Color ${index + 1}`,
@@ -73,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle other errors
-    console.error('Palette generation error:', error);
+    console.error({ error });
     return NextResponse.json(
       {
         error: 'Failed to generate palette',

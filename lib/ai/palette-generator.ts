@@ -103,8 +103,9 @@ export class PaletteGenerator {
     - Each color MUST include: name, hex (#RRGGBB format), and hsl {h,s,l}.
     - Hex MUST correspond to the given HSL values (convert HSL→RGB→HEX accurately).
     - Follow ${harmony} harmony rules with MATHEMATICAL PRECISION.
-    - Provide creative, descriptive names (2–30 characters).
-    - Rationale MUST be <70 words, describing the palette WITHOUT mentioning the harmony style.
+    - Provide creative and funny descriptive names (2–30 characters), not use special characters.
+    - Provide a palette general name (strictly 3–25 characters) as paletteName.
+    - Rationale MUST be <70 words, describing the palette WITHOUT mentioning the harmony style, must be funny with not offensive sarcasm descriptive names.
     - Include 3–8 relevant tags for discoverability.
     - Consider web accessibility (WCAG contrast) and modern design trends.
       
@@ -156,6 +157,7 @@ export class PaletteGenerator {
    */
   private getStaticFallback(): PaletteResponse {
     return {
+      paletteName: 'Not AI Generated :(',
       colors: [
         {
           name: 'Purple Dawn',
@@ -183,7 +185,8 @@ export class PaletteGenerator {
           hsl: { h: 211, s: 98, l: 66 },
         },
       ],
-      rationale: 'A beautiful gradient palette with purple and pink tones, perfect for modern web designs.',
+      rationale:
+        'A beautiful gradient palette with purple and pink tones, perfect for modern web designs (Geni is on vacation...).',
       tags: ['gradient', 'purple', 'pink', 'modern', 'elegant'],
       metadata: {
         provider: 'fallback',
@@ -293,7 +296,7 @@ export class PaletteGenerator {
       if (hueDiff < 20) {
         // Shift hue away from target
         const shiftDirection = adjusted.h > targetColor.h ? 1 : -1;
-        adjusted.h = (adjusted.h + shiftDirection * 25 + 360) % 360;
+        adjusted.h = (adjusted.h + shiftDirection * 35 + 360) % 360;
       }
 
       // Also adjust saturation and lightness for extra diversity

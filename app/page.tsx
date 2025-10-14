@@ -8,7 +8,6 @@ import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 import { ColorItem, Format, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
 import { ColorWheel } from '@/components/ui/ColorWheel';
 import { ColorCard } from '@/components/ui/ColorCard';
-import { AddColorButton } from '@/components/ui/AddColorButton';
 import { ColorCodes } from '@/components/ui/ColorCodes';
 import { Loader } from '@/components/shared/Loader';
 import { BiSolidError } from 'react-icons/bi';
@@ -24,7 +23,7 @@ const PalettePage = ({}: PalettePageProps) => {
   const [saturation, setSaturation] = useState(50);
   const [warmth, setWarmth] = useState(50);
   const [paletteName, setPaletteName] = useState('');
-  const [colorSlots, setColorSlots] = useState(5);
+  const [colorSlots, setColorSlots] = useState(6);
   const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
   // State for AI generation
@@ -64,9 +63,9 @@ const PalettePage = ({}: PalettePageProps) => {
 
       // Update state with AI-generated palette
       setGeneratedColors(data.colors);
-      setRationale(data.metadata?.rationale || null);
-      setTags(data.metadata?.tags || []);
-      setPaletteName(''); // Clear any previous name
+      setRationale(data.metadata?.rationale ?? null);
+      setTags(data.metadata?.tags ?? []);
+      setPaletteName(data.paletteName ?? '');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -113,12 +112,16 @@ const PalettePage = ({}: PalettePageProps) => {
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
       <div className='mx-auto max-w-5xl'>
-        <div className={generatedColors.length === 0 ? 'min-h-[calc(100vh-250px)] flex flex-col justify-center' : 'my-auto'}>
+        <div
+          className={
+            generatedColors.length === 0 ? 'min-h-[calc(100vh-250px)] flex flex-col justify-center' : 'my-auto'
+          }
+        >
           {/* Header Section */}
           <div className='text-center mb-12'>
             <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
             <p className='text-2lg text-subtitle mx-auto font-light'>
-              Describe the feeling or vibe you want to capture, and let AI create a palette that matches your vision.
+              Describe the feeling or vibe you want to capture, and let Geni create a palette that matches your vision.
             </p>
           </div>
 
@@ -173,7 +176,7 @@ const PalettePage = ({}: PalettePageProps) => {
               ) : (
                 <>
                   <SiGooglegemini className='text-xl' />
-                  Generate Palette
+                  Generate Palette  
                 </>
               )}
             </button>
@@ -216,82 +219,6 @@ const PalettePage = ({}: PalettePageProps) => {
 
         {generatedColors.length > 0 && (
           <div className='mt-10'>
-            {/* Palette Controls Section */}
-            <div className='mt-8 space-y-8 rounded-xl border-2 border-neutral-variant p-6'>
-              <h3 className='text-xl font-bold text-white'>Palette Controls</h3>
-
-              {/* Sliders Grid */}
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-                {/* Brightness Slider */}
-                <div className='space-y-3'>
-                  <label htmlFor='brightness' className='block font-medium text-slider-label'>
-                    Brightness
-                  </label>
-                  <input
-                    id='brightness'
-                    type='range'
-                    min='0'
-                    max='100'
-                    value={brightness}
-                    onChange={(e) => setBrightness(Number(e.target.value))}
-                    className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
-                  />
-                </div>
-
-                {/* Saturation Slider */}
-                <div className='space-y-3'>
-                  <label htmlFor='saturation' className='block font-medium text-slider-label'>
-                    Saturation
-                  </label>
-                  <input
-                    id='saturation'
-                    type='range'
-                    min='0'
-                    max='100'
-                    value={saturation}
-                    onChange={(e) => setSaturation(Number(e.target.value))}
-                    className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
-                  />
-                </div>
-
-                {/* Warmth Slider */}
-                <div className='space-y-3'>
-                  <label htmlFor='warmth' className='block font-medium text-slider-label'>
-                    Warmth
-                  </label>
-                  <input
-                    id='warmth'
-                    type='range'
-                    min='0'
-                    max='100'
-                    value={warmth}
-                    onChange={(e) => setWarmth(Number(e.target.value))}
-                    className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
-                  />
-                </div>
-              </div>
-
-              {/* Name Input and Slot Control */}
-              <div className='flex flex-col md:flex-row gap-4 pt-4'>
-                {/* Palette Name Input with AI Button */}
-                <div className='relative flex-1'>
-                  <input
-                    type='text'
-                    value={paletteName}
-                    onChange={(e) => setPaletteName(e.target.value)}
-                    placeholder='e.g., Ocean Breeze'
-                    className='w-full rounded-xl border-2 border-neutral-variant bg-background h-12 pl-4 pr-12 text-sm text-white placeholder:text-slate-500 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all'
-                  />
-                  <button
-                    onClick={handleGenerateName}
-                    className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer'
-                  >
-                    <SiGooglegemini className='text-base text-primary' />
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div className='border-2 rounded-xl border-neutral-variant my-10'>
               {/* Color Visualization Section */}
               <div className='mt-2 space-y-8 p-6'>
@@ -302,12 +229,32 @@ const PalettePage = ({}: PalettePageProps) => {
                   onColorChange={handleColorChange}
                 />
               </div>
-
               {/* Generated Colors Section */}
-              <div className='mt-2 space-y-8 p-6'>
+              <div className='mt-2 space-y-4 p-6'>
                 <h3 className='text-xl font-bold text-white'>Generated Colors</h3>
+
+                {/* Name Input and Slot Control */}
+                <div className='flex flex-col md:flex-row gap-4 pt-4'>
+                  {/* Palette Name Input with AI Button */}
+                  <div className='relative flex-1'>
+                    <input
+                      type='text'
+                      value={paletteName}
+                      onChange={(e) => setPaletteName(e.target.value)}
+                      placeholder='e.g., Ocean Breeze'
+                      className='w-full rounded-xl border-2 border-neutral-variant bg-background h-12 pl-4 pr-12 text-sm text-white placeholder:text-slate-500 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all'
+                    />
+                    <button
+                      onClick={handleGenerateName}
+                      className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer'
+                    >
+                      <SiGooglegemini className='text-base text-primary' />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Header with Format Select and Action Buttons */}
-                <div className='flex items-center justify-between'>
+                <div className='flex items-center justify-between my-10'>
                   {/* Format Select */}
                   <div className='relative'>
                     <select
@@ -344,7 +291,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 </div>
 
                 {/* Color Cards Grid */}
-                <div className='my-20'>
+                <div className='my-14'>
                   <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
                     {generatedColors.map((colorItem, index) => (
                       <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
@@ -352,8 +299,63 @@ const PalettePage = ({}: PalettePageProps) => {
                   </div>
                 </div>
 
+                {/* Palette Controls Section */}
+                <div className='space-y-8 py-4'>
+                  <h3 className='text-xl font-bold text-white'>Palette Controls</h3>
+                  {/* Sliders Grid */}
+                  <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+                    {/* Brightness Slider */}
+                    <div className='space-y-3'>
+                      <label htmlFor='brightness' className='block font-medium text-slider-label'>
+                        Brightness
+                      </label>
+                      <input
+                        id='brightness'
+                        type='range'
+                        min='0'
+                        max='100'
+                        value={brightness}
+                        onChange={(e) => setBrightness(Number(e.target.value))}
+                        className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
+                      />
+                    </div>
+
+                    {/* Saturation Slider */}
+                    <div className='space-y-3'>
+                      <label htmlFor='saturation' className='block font-medium text-slider-label'>
+                        Saturation
+                      </label>
+                      <input
+                        id='saturation'
+                        type='range'
+                        min='0'
+                        max='100'
+                        value={saturation}
+                        onChange={(e) => setSaturation(Number(e.target.value))}
+                        className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
+                      />
+                    </div>
+
+                    {/* Warmth Slider */}
+                    <div className='space-y-3'>
+                      <label htmlFor='warmth' className='block font-medium text-slider-label'>
+                        Warmth
+                      </label>
+                      <input
+                        id='warmth'
+                        type='range'
+                        min='0'
+                        max='100'
+                        value={warmth}
+                        onChange={(e) => setWarmth(Number(e.target.value))}
+                        className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Color Codes Section */}
-                <div className='mt-20'>
+                <div className='mt-10'>
                   <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
                   <ColorCodes colors={generatedColors} format={colorFormat} />
                 </div>

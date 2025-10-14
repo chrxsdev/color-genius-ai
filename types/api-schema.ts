@@ -17,6 +17,7 @@ export const ColorSchema = z.object({
 export const PaletteSchema = z.object({
   colors: z.array(ColorSchema).min(3).max(8),
   rationale: z.string().min(50),
+  paletteName: z.string().min(3).max(30),
   tags: z.array(z.string().min(1).max(20)).min(3).max(8),
 });
 
