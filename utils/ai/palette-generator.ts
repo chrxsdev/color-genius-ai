@@ -1,13 +1,25 @@
-import { generateObject } from 'ai';
+import { generateObject, LanguageModel } from 'ai';
 import { google } from '@ai-sdk/google';
 import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
+import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
 
 /**
  * PaletteGenerator class
  * Handles AI-powered color palette generation with security and validation
  */
 export class PaletteGenerator {
-  private model = google('gemini-2.0-flash-exp');
+  private readonly model: LanguageModel;
+
+  // Color distance weights for perceptual similarity
+  private readonly HUE_WEIGHT = 2.0;
+  private readonly SATURATION_WEIGHT = 1.0;
+  private readonly LIGHTNESS_WEIGHT = 1.0;
+
+  constructor() {
+    // Check for API key
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) throw new Error('Missing GOOGLE_GENERATIVE_AI_API_KEY');
+    this.model = google('gemini-2.0-flash-exp');
+  }
 
   /**
    * Generate a color palette based on user prompt and harmony type
@@ -33,8 +45,12 @@ export class PaletteGenerator {
         maxRetries: 2,
       });
 
+      // Enforce color diversity through post-generation validation
+      const validatedColors = this.enforceColorDiversity(result.object.colors, harmony);
+
       return {
         ...result.object,
+        colors: validatedColors,
         metadata: {
           provider: 'google',
           model: 'gemini-2.0-flash-exp',
@@ -80,30 +96,34 @@ export class PaletteGenerator {
     if (colorCount < 3 || colorCount > 8) throw new Error(`Invalid color count: ${colorCount}`);
 
     return `
-    You are a color palette generator. Generate exactly ${colorCount} colors following ${harmony} color harmony principles.
+    You are an expert color palette generator. Generate exactly ${colorCount} colors following ${harmony} color harmony principles.
 
-    REQUIREMENTS:
-    - Return valid JSON matching the provided schema exactly.
-    - Each color must include: name, hex (#RRGGBB), and hsl {h,s,l}.
-    - Hex must correspond to the given HSL (convert HSL→RGB→HEX).
-    - Follow ${harmony} rules strictly.
-    - Provide creative names (2–30 chars).
-    - Rationale length will be strictly <70 words, without mention the harmony style, just the palette description and rationale.
-    - 3–8 tags for discoverability.
-    - Consider web accessibility and modern design trends.
-    - Ensure colors work well together for web design projects.
+    CRITICAL REQUIREMENTS (YOU MUST FOLLOW THESE):
+    - Return valid JSON matching the provided schema EXACTLY.
+    - Each color MUST include: name, hex (#RRGGBB format), and hsl {h,s,l}.
+    - Hex MUST correspond to the given HSL values (convert HSL→RGB→HEX accurately).
+    - Follow ${harmony} harmony rules with MATHEMATICAL PRECISION.
+    - Provide creative, descriptive names (2–30 characters).
+    - Rationale MUST be <70 words, describing the palette WITHOUT mentioning the harmony style.
+    - Include 3–8 relevant tags for discoverability.
+    - Consider web accessibility (WCAG contrast) and modern design trends.
       
-    SPACING AND DIVERSITY:
-    - Enforce minimum pairwise hue separation as specified in harmony rules.
-    - Ensure saturation values across the palette span at least 30 points.
-    - Ensure lightness values across the palette span at least 25 points.
-    - Avoid near-duplicates: no two colors may have both |ΔH| < 10°, |ΔS| < 10, and |ΔL| < 10.
+    DIVERSITY ENFORCEMENT (MANDATORY):
+    - NO TWO COLORS may be visually similar or near-duplicates.
+    - MINIMUM hue separation as specified in harmony rules (see below).
+    - Saturation (S) values MUST span at least 35 points across the palette.
+    - Lightness (L) values MUST span at least 30 points across the palette.
+    - FORBIDDEN: Two colors with |ΔH| < 15°, |ΔS| < 12, AND |ΔL| < 12 simultaneously.
+    - For monochromatic: Since hue is limited, you MUST vary S and L dramatically (S range ≥ 45, L range ≥ 40).
       
     HARMONY RULES: ${this.getHarmonyRules(harmony)}
       
-    OUTPUT ORDER:
-    - Distribute hues evenly per the harmony (do not cluster).
-    - Vary S and L to maximize useful contrast while remaining harmonious.`;
+    OUTPUT STRUCTURE:
+    - Distribute hues evenly per the harmony (DO NOT cluster colors).
+    - Vary S and L strategically to create visual contrast while maintaining harmony.
+    - Order colors logically (e.g., by hue progression, lightness gradient, or visual flow).
+    
+    REMEMBER: Each color must be DISTINCTLY DIFFERENT from all others. Avoid subtle variations that look identical.`;
   }
 
   /**
@@ -112,20 +132,23 @@ export class PaletteGenerator {
   private getHarmonyRules(harmony: string): string {
     const rules: Record<string, string> = {
       monochromatic:
-        'Work in HSL. Keep hue within ±4° of base H0. Enforce strong diversity: S in [35,85], L in [25,85], with S range ≥ 40 and L range ≥ 35. Avoid any two colors with |ΔH|<6° and |ΔS|<10 and |ΔL|<10.',
+        'Work in HSL. Keep hue within ±5° of base H0. YOU MUST create STRONG diversity through saturation and lightness: S must range from 20–85 (span ≥ 45 points), L must range from 20–85 (span ≥ 40 points). CRITICAL: Ensure every pair of colors differs by at least 15 points in S OR 15 points in L. Example good palette: H=210° constant, S=[25,45,65,85], L=[30,50,70,85].',
       analogous:
-        'Work in HSL. Choose base H0. Pick window width W in [24,40]. Place n hues evenly across [H0−W/2, H0+W/2]. Minimum pairwise hue spacing ≥ 20°. Ensure S spans ≥ 40 points and L spans ≥ 35 points across the set.',
+        'Work in HSL. Choose base hue H0. Select window width W between 30–45°. Distribute ${colorCount} hues EVENLY across [H0−W/2, H0+W/2]. MANDATORY minimum spacing between adjacent hues: ≥ 25°. Vary S across 40+ points (e.g., 30–75) and L across 35+ points (e.g., 25–70). Example: H0=180°, W=40°, hues=[160°,170°,180°,190°,200°].',
       complementary:
-        'Work in HSL. Target hues {H0, H0+180°} with ±3° tolerance. If n>2, add neighbors at ±15–25° around each complement. Minimum pairwise hue spacing ≥ 12°. Ensure S range ≥ 30 and L range ≥ 25.',
+        'Work in HSL. Primary hues are {H0, H0+180°} (±4° tolerance). If ${colorCount}>2, add tints/shades or neighbors at ±18–28° around each primary hue. MINIMUM pairwise hue spacing: ≥ 15°. Ensure S spans 35+ points and L spans 30+ points. Example for 5 colors: H=[30°, 50°, 210°, 230°, 195°].',
       triadic:
-        'Work in HSL. Target {H0, H0+120°, H0+240°} with ±3°. If n>3, add neighbors at ±10–18° around each target. Min pairwise hue spacing ≥ 12°. Ensure S range ≥ 30 and L range ≥ 25.',
+        'Work in HSL. Target hues {H0, H0+120°, H0+240°} (±4° tolerance). If ${colorCount}>3, add variations at ±12–20° around each target. MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[20°, 35°, 140°, 155°, 260°].',
       tetradic:
-        'Work in HSL. Target {H0, H0+90°, H0+180°, H0+270°} with ±3°. If n>4, add neighbors at ±10–15° around targets. Min pairwise hue spacing ≥ 10°. Ensure S and L ranges as above.',
+        'Work in HSL. Target hues {H0, H0+90°, H0+180°, H0+270°} (±4° tolerance). If ${colorCount}>4, add variations at ±10–18° around targets. MINIMUM pairwise hue spacing: ≥ 12°. Ensure S and L diversity (35+ and 30+ point ranges). Example: H=[0°, 15°, 90°, 180°, 270°].',
       'split-complementary':
-        'Work in HSL. Use {H0, H0+180°−(15–30)°, H0+180°+(15–30)°}. Min pairwise hue spacing ≥ 12°. Ensure S range ≥ 30 and L range ≥ 25.',
+        'Work in HSL. Use base H0 and two complements: {H0, H0+180°−25°, H0+180°+25°} (±4° tolerance). MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[40°, 155°, 205°, 220°, 50°].',
     };
 
-    return rules[harmony] ?? 'Work in HSL with numeric spacing and S/L diversity constraints.';
+    return (
+      rules[harmony] ??
+      'Work in HSL with numeric spacing and S/L diversity constraints. Ensure all colors are visually distinct.'
+    );
   }
 
   /**
@@ -168,5 +191,164 @@ export class PaletteGenerator {
         generatedAt: new Date().toISOString(),
       },
     };
+  }
+
+  /**
+   * Calculate perceptual distance between two colors in HSL space
+   * Uses weighted Euclidean distance with emphasis on hue differences
+   */
+  private calculateColorDistance(
+    hsl1: { h: number; s: number; l: number },
+    hsl2: { h: number; s: number; l: number }
+  ): number {
+    // Handle hue circularity (0° and 360° are the same)
+    let hueDiff = Math.abs(hsl1.h - hsl2.h);
+    if (hueDiff > 180) {
+      hueDiff = 360 - hueDiff;
+    }
+
+    // Normalize all values to 0-1 range
+    const normalizedHueDiff = hueDiff / 180;
+    const normalizedSatDiff = Math.abs(hsl1.s - hsl2.s) / 100;
+    const normalizedLightDiff = Math.abs(hsl1.l - hsl2.l) / 100;
+
+    // Calculate weighted Euclidean distance
+    const distance = Math.sqrt(
+      Math.pow(normalizedHueDiff * this.HUE_WEIGHT, 2) +
+        Math.pow(normalizedSatDiff * this.SATURATION_WEIGHT, 2) +
+        Math.pow(normalizedLightDiff * this.LIGHTNESS_WEIGHT, 2)
+    );
+
+    return distance;
+  }
+
+  /**
+   * Get minimum distance threshold based on harmony type
+   * Different harmonies have different spacing requirements
+   */
+  private getMinimumDistance(harmony: string): number {
+    const thresholds: Record<string, number> = {
+      monochromatic: 0.25, // Higher threshold due to limited hue range
+      analogous: 0.35, // Moderate threshold for nearby hues
+      complementary: 0.3, // Moderate threshold
+      triadic: 0.28, // Slightly lower for 3-way split
+      tetradic: 0.25, // Lower for 4-way split
+      'split-complementary': 0.3, // Moderate threshold
+    };
+
+    return thresholds[harmony] ?? 0.3; // Default threshold
+  }
+
+  /**
+   * Check if all colors in palette meet minimum distance requirements
+   * Returns indices of colors that are too similar
+   */
+  private findSimilarColors(
+    colors: Array<{ hsl: { h: number; s: number; l: number } }>,
+    harmony: string
+  ): Array<[number, number]> {
+    const minDistance = this.getMinimumDistance(harmony);
+    const similarPairs: Array<[number, number]> = [];
+
+    for (let i = 0; i < colors.length; i++) {
+      for (let j = i + 1; j < colors.length; j++) {
+        const distance = this.calculateColorDistance(colors[i].hsl, colors[j].hsl);
+        if (distance < minDistance) {
+          similarPairs.push([i, j]);
+        }
+      }
+    }
+
+    return similarPairs;
+  }
+
+  /**
+   * Adjust a color to increase distance from another color
+   * Modifies HSL values while respecting harmony constraints
+   */
+  private adjustColor(
+    color: { h: number; s: number; l: number },
+    targetColor: { h: number; s: number; l: number },
+    harmony: string
+  ): { h: number; s: number; l: number } {
+    const adjusted = { ...color };
+
+    // For monochromatic, only adjust saturation and lightness (hue must stay similar)
+    if (harmony === 'monochromatic') {
+      // Increase saturation difference
+      if (Math.abs(adjusted.s - targetColor.s) < 20) {
+        adjusted.s = adjusted.s > 50 ? Math.min(95, adjusted.s + 15) : Math.max(10, adjusted.s - 15);
+      }
+      // Increase lightness difference
+      if (Math.abs(adjusted.l - targetColor.l) < 20) {
+        adjusted.l = adjusted.l > 50 ? Math.min(90, adjusted.l + 15) : Math.max(15, adjusted.l - 15);
+      }
+    } else {
+      // For other harmonies, adjust hue primarily
+      let hueDiff = Math.abs(adjusted.h - targetColor.h);
+      if (hueDiff > 180) {
+        hueDiff = 360 - hueDiff;
+      }
+
+      if (hueDiff < 20) {
+        // Shift hue away from target
+        const shiftDirection = adjusted.h > targetColor.h ? 1 : -1;
+        adjusted.h = (adjusted.h + shiftDirection * 25 + 360) % 360;
+      }
+
+      // Also adjust saturation and lightness for extra diversity
+      if (Math.abs(adjusted.s - targetColor.s) < 15) {
+        adjusted.s = adjusted.s > 50 ? Math.min(95, adjusted.s + 12) : Math.max(15, adjusted.s - 12);
+      }
+      if (Math.abs(adjusted.l - targetColor.l) < 15) {
+        adjusted.l = adjusted.l > 50 ? Math.min(85, adjusted.l + 12) : Math.max(20, adjusted.l - 12);
+      }
+    }
+
+    return adjusted;
+  }
+
+  /**
+   * Enforce color diversity by validating and adjusting similar colors
+   * This is the main orchestration function for post-generation validation
+   */
+  private enforceColorDiversity(
+    colors: Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }>,
+    harmony: string
+  ): Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }> {
+    const maxIterations = 10; // Prevent infinite loops
+    let iteration = 0;
+    let adjustedColors = [...colors];
+
+    while (iteration < maxIterations) {
+      const similarPairs = this.findSimilarColors(adjustedColors, harmony);
+
+      if (similarPairs.length === 0) {
+        // All colors are sufficiently different
+        break;
+      }
+
+      // Adjust the second color in each similar pair
+      const adjustedIndices = new Set<number>();
+      for (const [_index1, index2] of similarPairs) {
+        if (!adjustedIndices.has(index2)) {
+          const targetColor = adjustedColors[_index1].hsl;
+          const adjustedHsl = this.adjustColor(adjustedColors[index2].hsl, targetColor, harmony);
+
+          // Update both HSL and HEX
+          adjustedColors[index2] = {
+            ...adjustedColors[index2],
+            hsl: adjustedHsl,
+            hex: hslToHex(adjustedHsl.h, adjustedHsl.s, adjustedHsl.l),
+          };
+
+          adjustedIndices.add(index2);
+        }
+      }
+
+      iteration++;
+    }
+
+    return adjustedColors;
   }
 }

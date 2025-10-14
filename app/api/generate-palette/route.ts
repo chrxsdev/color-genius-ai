@@ -34,18 +34,6 @@ export async function POST(request: NextRequest) {
 
     const { prompt, harmony, colorCount } = validatedData;
 
-    // Check for API key
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      console.error('GEMINI API is not configured');
-      return NextResponse.json(
-        {
-          error: 'AI service is not configured',
-          message: 'Please add your GEMINI API key to .env.local',
-        },
-        { status: 500 }
-      );
-    }
-
     // Generate palette using AI
     const generator = new PaletteGenerator();
     const aiResponse = await generator.generatePalette(prompt, harmony, colorCount);

@@ -289,27 +289,6 @@ const PalettePage = ({}: PalettePageProps) => {
                     <SiGooglegemini className='text-base text-primary' />
                   </button>
                 </div>
-
-                {/* Color Slots Control */}
-                <div className='flex w-full md:w-[20%] items-center rounded-xl border-2 border-neutral-variant h-12'>
-                  <button
-                    onClick={decrementSlots}
-                    disabled={colorSlots <= 4}
-                    className='flex h-full items-center justify-center px-3 text-control-text hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer'
-                  >
-                    <span className='text-xl font-bold'>−</span>
-                  </button>
-                  <div className='flex-1 h-full flex items-center justify-center border-neutral-variant'>
-                    <span className='text-sm font-medium text-white'>{colorSlots}</span>
-                  </div>
-                  <button
-                    onClick={incrementSlots}
-                    disabled={colorSlots >= 8}
-                    className='flex h-full items-center justify-center px-3 text-control-text hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer'
-                  >
-                    <span className='text-xl font-bold'>+</span>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -370,8 +349,6 @@ const PalettePage = ({}: PalettePageProps) => {
                     {generatedColors.map((colorItem, index) => (
                       <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
                     ))}
-                    {/* Add Color Button */}
-                    <AddColorButton onClick={handleAddColor} />
                   </div>
                 </div>
 
