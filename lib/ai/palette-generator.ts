@@ -2,6 +2,7 @@ import { generateObject, LanguageModel } from 'ai';
 import { google } from '@ai-sdk/google';
 import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
 import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
+import { HARMONY_TYPES, HarmonyType } from '@/types/palette';
 
 /**
  * PaletteGenerator class
@@ -84,15 +85,8 @@ export class PaletteGenerator {
    * Build system prompt with security-first approach
    */
   private buildSystemPrompt(harmony: string, colorCount: number): string {
-    const allowedHarmonies = [
-      'monochromatic',
-      'analogous',
-      'complementary',
-      'triadic',
-      'tetradic',
-      'split-complementary',
-    ];
-    if (!allowedHarmonies.includes(harmony)) throw new Error(`Invalid harmony type: ${harmony}`);
+    const allowedHarmonies = HARMONY_TYPES.map((type) => type.value);
+    if (!allowedHarmonies.includes(harmony as HarmonyType)) throw new Error(`Invalid harmony type: ${harmony}`);
     if (colorCount < 3 || colorCount > 8) throw new Error(`Invalid color count: ${colorCount}`);
 
     return `
@@ -142,7 +136,7 @@ export class PaletteGenerator {
         'Work in HSL. Target hues {H0, H0+120°, H0+240°} (±4° tolerance). If ${colorCount}>3, add variations at ±12–20° around each target. MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[20°, 35°, 140°, 155°, 260°].',
       tetradic:
         'Work in HSL. Target hues {H0, H0+90°, H0+180°, H0+270°} (±4° tolerance). If ${colorCount}>4, add variations at ±10–18° around targets. MINIMUM pairwise hue spacing: ≥ 12°. Ensure S and L diversity (35+ and 30+ point ranges). Example: H=[0°, 15°, 90°, 180°, 270°].',
-      'split-complementary':
+      split_complementary:
         'Work in HSL. Use base H0 and two complements: {H0, H0+180°−25°, H0+180°+25°} (±4° tolerance). MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[40°, 155°, 205°, 220°, 50°].',
     };
 
@@ -236,7 +230,7 @@ export class PaletteGenerator {
       complementary: 0.3, // Moderate threshold
       triadic: 0.28, // Slightly lower for 3-way split
       tetradic: 0.25, // Lower for 4-way split
-      'split-complementary': 0.3, // Moderate threshold
+      split_complementary: 0.3, // Moderate threshold
     };
 
     return thresholds[harmony] ?? 0.3; // Default threshold

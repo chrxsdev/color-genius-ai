@@ -46,8 +46,7 @@ export const hexToRgb = (hex: string): string => {
  * @returns
  */
 export const getColorValues = (colors: ColorItem, format: Format): { name: string; colorCode: string } => {
-
-  const name = colors.name.toLowerCase().replace(/\s+/g, '-');
+  const name = colors.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-');
   const formatColor = format === 'HEX' ? colors.color.toLocaleUpperCase() : hexToRgb(colors.color);
 
   return {
