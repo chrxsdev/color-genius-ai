@@ -26,8 +26,6 @@ export const PaletteSchema = z.object({
  */
 export type PaletteResponse = z.infer<typeof PaletteSchema> & {
   metadata: {
-    provider: string;
-    model: string;
     generatedAt: string;
   };
 };

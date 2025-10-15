@@ -1,8 +1,18 @@
 import { generateObject, LanguageModel } from 'ai';
 import { google } from '@ai-sdk/google';
 import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
+import { ColorNameSchema, PaletteNameSchema } from '@/types/palette';
 import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
-import { HARMONY_TYPES, HarmonyType } from '@/types/palette';
+import {
+  getColorNameSystemPrompt,
+  getColorNameUserPrompt,
+  getPaletteNameSystemPrompt,
+  getPaletteNameUserPrompt,
+  getPaletteGenerationSystemPrompt,
+  getPaletteGenerationUserPrompt,
+  getHarmonyRules,
+} from '@/utils/prompts/ai-prompts';
+import { DEFAULT_COLOR_COUNT } from '@/constant';
 
 /**
  * PaletteGenerator class
@@ -35,11 +45,15 @@ export class PaletteGenerator {
         messages: [
           {
             role: 'system',
-            content: this.buildSystemPrompt(harmony, colorCount),
+            content: getPaletteGenerationSystemPrompt({
+              harmony,
+              colorCount,
+              harmonyRules: getHarmonyRules(harmony),
+            }),
           },
           {
             role: 'user',
-            content: `Create a ${harmony} color palette for: "${sanitizedPrompt}"`,
+            content: getPaletteGenerationUserPrompt(harmony, sanitizedPrompt),
           },
         ],
         temperature: 0.7,
@@ -53,15 +67,118 @@ export class PaletteGenerator {
         ...result.object,
         colors: validatedColors,
         metadata: {
-          provider: 'google',
-          model: 'gemini-2.0-flash-exp',
           generatedAt: new Date().toISOString(),
         },
       };
     } catch (error) {
-      console.error('AI generation failed:', error);
+      console.error('AI generation failed:', { error });
+      // In case of error, return a static fallback palette by default
       return this.getStaticFallback();
     }
+  }
+
+  /**
+   * Regenerate a name (color or palette) based on the rationale
+   * Uses the existing rationale to maintain thematic consistency
+   */
+  async regenerateName(params: {
+    type: 'color' | 'palette';
+    rationale: string;
+    color?: string;
+    existingNames?: string[];
+    colorCount?: number;
+    harmony?: string;
+  }): Promise<string> {
+    const { type, rationale, existingNames = [] } = params;
+    const sanitizedRationale = this.sanitizeInput(rationale);
+    const timestamp = Date.now();
+
+    try {
+      if (type === 'color') {
+        return await this.generateColorName({
+          color: params.color,
+          rationale: sanitizedRationale,
+          existingNames,
+          timestamp,
+        });
+      }
+
+      return await this.generatePaletteName({
+        rationale: sanitizedRationale,
+        colorCount: params.colorCount ?? DEFAULT_COLOR_COUNT,
+        harmony: params.harmony!,
+        timestamp,
+      });
+    } catch (error) {
+      console.error(`Failed to regenerate ${type} name:`, { error });
+      return this.generateFallbackName(type);
+    }
+  }
+
+  /**
+   * Generate a new color name using AI
+   */
+  private async generateColorName(params: {
+    color?: string;
+    rationale: string;
+    existingNames: string[];
+    timestamp: number;
+  }): Promise<string> {
+    const { object } = await generateObject({
+      model: this.model,
+      schema: ColorNameSchema,
+      messages: [
+        {
+          role: 'system',
+          content: getColorNameSystemPrompt(params),
+        },
+        {
+          role: 'user',
+          content: getColorNameUserPrompt(params),
+        },
+      ],
+      temperature: 0.95,
+      maxRetries: 2,
+    });
+
+    return object.name;
+  }
+
+  /**
+   * Generate a new palette name using AI
+   */
+  private async generatePaletteName(params: {
+    rationale: string;
+    colorCount: number;
+    harmony: string;
+    timestamp: number;
+  }): Promise<string> {
+    const { object } = await generateObject({
+      model: this.model,
+      schema: PaletteNameSchema,
+      messages: [
+        {
+          role: 'system',
+          content: getPaletteNameSystemPrompt(params),
+        },
+        {
+          role: 'user',
+          content: getPaletteNameUserPrompt(params),
+        },
+      ],
+      temperature: 0.95,
+      maxRetries: 2,
+    });
+
+    return object.paletteName;
+  }
+
+  /**
+   * Generate a fallback name when AI generation fails
+   */
+  private generateFallbackName(type: 'color' | 'palette'): string {
+    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return type === 'color' ? `Color ${randomId}` : `Palette ${randomId}`;
   }
 
   /**
@@ -79,71 +196,6 @@ export class PaletteGenerator {
       .replace(/```[\s\S]*?```/g, '') // Remove code blocks
       .replace(/\[.*?\]\(.*?\)/g, '') // Remove markdown links
       .substring(0, 200); // Limit length
-  }
-
-  /**
-   * Build system prompt with security-first approach
-   */
-  private buildSystemPrompt(harmony: string, colorCount: number): string {
-    const allowedHarmonies = HARMONY_TYPES.map((type) => type.value);
-    if (!allowedHarmonies.includes(harmony as HarmonyType)) throw new Error(`Invalid harmony type: ${harmony}`);
-    if (colorCount < 3 || colorCount > 8) throw new Error(`Invalid color count: ${colorCount}`);
-
-    return `
-    You are an expert color palette generator. Generate exactly ${colorCount} colors following ${harmony} color harmony principles.
-
-    CRITICAL REQUIREMENTS (YOU MUST FOLLOW THESE):
-    - Return valid JSON matching the provided schema EXACTLY.
-    - Each color MUST include: name, hex (#RRGGBB format), and hsl {h,s,l}.
-    - Hex MUST correspond to the given HSL values (convert HSL→RGB→HEX accurately).
-    - Follow ${harmony} harmony rules with MATHEMATICAL PRECISION.
-    - Provide creative and funny descriptive names (2–30 characters), not use special characters or grammatical rules (using accents, punctuation, etc.).
-    - Provide a palette general name (strictly 3–25 characters) as paletteName.
-    - Rationale MUST be <70 words, describing the palette WITHOUT mentioning the harmony style, must be funny with not offensive sarcasm descriptive names.
-    - Include 3–8 relevant tags for discoverability.
-    - Consider web accessibility (WCAG contrast) and modern design trends.
-      
-    DIVERSITY ENFORCEMENT (MANDATORY):
-    - NO TWO COLORS may be visually similar or near-duplicates.
-    - MINIMUM hue separation as specified in harmony rules (see below).
-    - Saturation (S) values MUST span at least 35 points across the palette.
-    - Lightness (L) values MUST span at least 30 points across the palette.
-    - FORBIDDEN: Two colors with |ΔH| < 15°, |ΔS| < 12, AND |ΔL| < 12 simultaneously.
-    - For monochromatic: Since hue is limited, you MUST vary S and L dramatically (S range ≥ 45, L range ≥ 40).
-      
-    HARMONY RULES: ${this.getHarmonyRules(harmony)}
-      
-    OUTPUT STRUCTURE:
-    - Distribute hues evenly per the harmony (DO NOT cluster colors).
-    - Vary S and L strategically to create visual contrast while maintaining harmony.
-    - Order colors logically (e.g., by hue progression, lightness gradient, or visual flow).
-    
-    REMEMBER: Each color must be DISTINCTLY DIFFERENT from all others. Avoid subtle variations that look identical.`;
-  }
-
-  /**
-   * Get specific harmony rules for AI guidance
-   */
-  private getHarmonyRules(harmony: string): string {
-    const rules: Record<string, string> = {
-      monochromatic:
-        'Work in HSL. Keep hue within ±5° of base H0. YOU MUST create STRONG diversity through saturation and lightness: S must range from 20–85 (span ≥ 45 points), L must range from 20–85 (span ≥ 40 points). CRITICAL: Ensure every pair of colors differs by at least 15 points in S OR 15 points in L. Example good palette: H=210° constant, S=[25,45,65,85], L=[30,50,70,85].',
-      analogous:
-        'Work in HSL. Choose base hue H0. Select window width W between 30–45°. Distribute ${colorCount} hues EVENLY across [H0−W/2, H0+W/2]. MANDATORY minimum spacing between adjacent hues: ≥ 25°. Vary S across 40+ points (e.g., 30–75) and L across 35+ points (e.g., 25–70). Example: H0=180°, W=40°, hues=[160°,170°,180°,190°,200°].',
-      complementary:
-        'Work in HSL. Primary hues are {H0, H0+180°} (±4° tolerance). If ${colorCount}>2, add tints/shades or neighbors at ±18–28° around each primary hue. MINIMUM pairwise hue spacing: ≥ 15°. Ensure S spans 35+ points and L spans 30+ points. Example for 5 colors: H=[30°, 50°, 210°, 230°, 195°].',
-      triadic:
-        'Work in HSL. Target hues {H0, H0+120°, H0+240°} (±4° tolerance). If ${colorCount}>3, add variations at ±12–20° around each target. MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[20°, 35°, 140°, 155°, 260°].',
-      tetradic:
-        'Work in HSL. Target hues {H0, H0+90°, H0+180°, H0+270°} (±4° tolerance). If ${colorCount}>4, add variations at ±10–18° around targets. MINIMUM pairwise hue spacing: ≥ 12°. Ensure S and L diversity (35+ and 30+ point ranges). Example: H=[0°, 15°, 90°, 180°, 270°].',
-      split_complementary:
-        'Work in HSL. Use base H0 and two complements: {H0, H0+180°−25°, H0+180°+25°} (±4° tolerance). MINIMUM pairwise hue spacing: ≥ 15°. Vary S by 35+ points and L by 30+ points. Example: H=[40°, 155°, 205°, 220°, 50°].',
-    };
-
-    return (
-      rules[harmony] ??
-      'Work in HSL with numeric spacing and S/L diversity constraints. Ensure all colors are visually distinct.'
-    );
   }
 
   /**
@@ -183,8 +235,6 @@ export class PaletteGenerator {
         'A beautiful gradient palette with purple and pink tones, perfect for modern web designs (Geni is on vacation...).',
       tags: ['gradient', 'purple', 'pink', 'modern', 'elegant'],
       metadata: {
-        provider: 'fallback',
-        model: 'static',
         generatedAt: new Date().toISOString(),
       },
     };

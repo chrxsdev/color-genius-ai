@@ -32,23 +32,26 @@ const PalettePage = ({}: PalettePageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [regeneratingColorIndex, setRegeneratingColorIndex] = useState<number | null>(null);
+  const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
 
   // Generated colors from AI
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
 
   // Apply slider adjustments to generated colors in real-time
-  const adjustedColors = useMemo(() => 
-    generatedColors.map(item => ({
-      ...item,
-      color: applySliderAdjustments(item.color, brightness, saturation, warmth)
-    })),
+  const adjustedColors = useMemo(
+    () =>
+      generatedColors.map((item) => ({
+        ...item,
+        color: applySliderAdjustments(item.color, brightness, saturation, warmth),
+      })),
     [generatedColors, brightness, saturation, warmth]
   );
 
   // Reset sliders to neutral when a new palette is generated
   // Use a ref to track if this is the initial render to avoid resetting on mount
   const initialRenderRef = useRef(true);
-  
+
   useEffect(() => {
     // Skip on initial render
     if (initialRenderRef.current) {
@@ -104,9 +107,91 @@ const PalettePage = ({}: PalettePageProps) => {
     }
   };
 
-  const handleGenerateName = () => {
-    console.log('Generating palette name...');
-    // TODO: Implement AI name generation
+  const handleGenerateName = async () => {
+    if (!rationale) {
+      setError('Cannot regenerate palette name without rationale');
+      return;
+    }
+
+    setIsRegeneratingPaletteName(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/regenerate-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'palette',
+          rationale,
+          colorCount: colorSlots,
+          harmony,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || data.message || 'Failed to regenerate palette name');
+
+      // Update the palette name
+      setPaletteName(data.name);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      console.error('Palette name regeneration error:', err);
+    } finally {
+      setIsRegeneratingPaletteName(false);
+    }
+  };
+
+  const handleRegenerateColorName = async (color: string) => {
+    if (!rationale) {
+      setError('Cannot regenerate name without palette rationale');
+      return;
+    }
+
+    // Find the index of the color being regenerated
+    const colorIndex = adjustedColors.findIndex((item) => item.color === color);
+    if (colorIndex === -1) return;
+
+    setRegeneratingColorIndex(colorIndex);
+    setError(null);
+
+    try {
+      const existingNames = generatedColors.map((item) => item.name).filter((_, idx) => idx !== colorIndex);
+
+      const response = await fetch('/api/regenerate-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'color',
+          color: generatedColors[colorIndex].color,
+          rationale,
+          existingNames,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || data.message || 'Failed to regenerate name');
+
+      // Update the color name in the generated colors array
+      const updatedColors = [...generatedColors];
+      updatedColors[colorIndex] = {
+        ...updatedColors[colorIndex],
+        name: data.name,
+      };
+      setGeneratedColors(updatedColors);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      console.error('Name regeneration error:', err);
+    } finally {
+      setRegeneratingColorIndex(null);
+    }
   };
 
   const handleColorChange = (index: number, newColor: string) => {
@@ -205,7 +290,7 @@ const PalettePage = ({}: PalettePageProps) => {
               ) : (
                 <>
                   <SiGooglegemini className='text-xl' />
-                  Generate Palette  
+                  Generate Palette
                 </>
               )}
             </button>
@@ -260,6 +345,11 @@ const PalettePage = ({}: PalettePageProps) => {
                   saturation={saturation}
                   warmth={warmth}
                 />
+                <div>
+                  <p className='text-subtitle text-sm text-center leading-relaxed'>
+                    You can adjust the colors using the sliders above or modify the color directly in the wheel.
+                  </p>
+                </div>
               </div>
               {/* Generated Colors Section */}
               <div className='mt-2 space-y-4 p-6'>
@@ -278,9 +368,13 @@ const PalettePage = ({}: PalettePageProps) => {
                     />
                     <button
                       onClick={handleGenerateName}
-                      className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer'
+                      disabled={isRegeneratingPaletteName || !rationale}
+                      className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+                      title='Regenerate Palette Name'
                     >
-                      <SiGooglegemini className='text-base text-primary' />
+                      <SiGooglegemini 
+                        className={`text-base text-primary ${isRegeneratingPaletteName ? 'animate-pulse' : ''}`} 
+                      />
                     </button>
                   </div>
                 </div>
@@ -326,7 +420,14 @@ const PalettePage = ({}: PalettePageProps) => {
                 <div className='my-14'>
                   <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
                     {adjustedColors.map((colorItem, index) => (
-                      <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
+                      <ColorCard
+                        key={index}
+                        color={colorItem.color}
+                        name={colorItem.name}
+                        format={colorFormat}
+                        onRegenerateName={handleRegenerateColorName}
+                        isRegenerating={regeneratingColorIndex === index}
+                      />
                     ))}
                   </div>
                 </div>
