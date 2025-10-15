@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
@@ -11,6 +11,7 @@ import { ColorCard } from '@/components/ui/ColorCard';
 import { ColorCodes } from '@/components/ui/ColorCodes';
 import { Loader } from '@/components/shared/Loader';
 import { BiSolidError } from 'react-icons/bi';
+import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
 
 interface PalettePageProps {
   children?: ReactNode;
@@ -34,6 +35,34 @@ const PalettePage = ({}: PalettePageProps) => {
 
   // Generated colors from AI
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
+
+  // Apply slider adjustments to generated colors in real-time
+  const adjustedColors = useMemo(() => 
+    generatedColors.map(item => ({
+      ...item,
+      color: applySliderAdjustments(item.color, brightness, saturation, warmth)
+    })),
+    [generatedColors, brightness, saturation, warmth]
+  );
+
+  // Reset sliders to neutral when a new palette is generated
+  // Use a ref to track if this is the initial render to avoid resetting on mount
+  const initialRenderRef = useRef(true);
+  
+  useEffect(() => {
+    // Skip on initial render
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      return;
+    }
+
+    // Reset sliders when new palette is generated (length changes)
+    if (generatedColors.length > 0) {
+      setBrightness(50);
+      setSaturation(50);
+      setWarmth(50);
+    }
+  }, [generatedColors.length]); // Only track length, not full array
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -227,6 +256,9 @@ const PalettePage = ({}: PalettePageProps) => {
                   colors={generatedColors.map((item) => item.color)}
                   size={400}
                   onColorChange={handleColorChange}
+                  brightness={brightness}
+                  saturation={saturation}
+                  warmth={warmth}
                 />
               </div>
               {/* Generated Colors Section */}
@@ -293,7 +325,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 {/* Color Cards Grid */}
                 <div className='my-14'>
                   <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
-                    {generatedColors.map((colorItem, index) => (
+                    {adjustedColors.map((colorItem, index) => (
                       <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
                     ))}
                   </div>
@@ -306,9 +338,14 @@ const PalettePage = ({}: PalettePageProps) => {
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
                     {/* Brightness Slider */}
                     <div className='space-y-3'>
-                      <label htmlFor='brightness' className='block font-medium text-slider-label'>
-                        Brightness
-                      </label>
+                      <div className='flex justify-between items-center'>
+                        <label htmlFor='brightness' className='block font-medium text-slider-label'>
+                          Brightness
+                        </label>
+                        <span className='text-xs text-subtitle font-mono'>
+                          {brightness === 50 ? '0' : brightness > 50 ? `+${brightness - 50}` : `${brightness - 50}`}
+                        </span>
+                      </div>
                       <input
                         id='brightness'
                         type='range'
@@ -322,9 +359,14 @@ const PalettePage = ({}: PalettePageProps) => {
 
                     {/* Saturation Slider */}
                     <div className='space-y-3'>
-                      <label htmlFor='saturation' className='block font-medium text-slider-label'>
-                        Saturation
-                      </label>
+                      <div className='flex justify-between items-center'>
+                        <label htmlFor='saturation' className='block font-medium text-slider-label'>
+                          Saturation
+                        </label>
+                        <span className='text-xs text-subtitle font-mono'>
+                          {saturation === 50 ? '0' : saturation > 50 ? `+${saturation - 50}` : `${saturation - 50}`}
+                        </span>
+                      </div>
                       <input
                         id='saturation'
                         type='range'
@@ -338,9 +380,14 @@ const PalettePage = ({}: PalettePageProps) => {
 
                     {/* Warmth Slider */}
                     <div className='space-y-3'>
-                      <label htmlFor='warmth' className='block font-medium text-slider-label'>
-                        Warmth
-                      </label>
+                      <div className='flex justify-between items-center'>
+                        <label htmlFor='warmth' className='block font-medium text-slider-label'>
+                          Warmth
+                        </label>
+                        <span className='text-xs text-subtitle font-mono'>
+                          {warmth === 50 ? '0' : warmth > 50 ? `+${warmth - 50}` : `${warmth - 50}`}
+                        </span>
+                      </div>
                       <input
                         id='warmth'
                         type='range'
@@ -357,7 +404,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 {/* Color Codes Section */}
                 <div className='mt-10'>
                   <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
-                  <ColorCodes colors={generatedColors} format={colorFormat} />
+                  <ColorCodes colors={adjustedColors} format={colorFormat} />
                 </div>
               </div>
             </div>
