@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { hexToHSL, hslToHex } from '@/utils/color-conversions/code-color-conversions';
 
 interface ColorWheelProps {
@@ -17,8 +17,12 @@ interface ColorPosition {
 }
 
 export const ColorWheel = ({ colors, size = 400, onColorChange }: ColorWheelProps) => {
-  const [colorPositions, setColorPositions] = useState<ColorPosition[]>(() =>
-    colors.map((color) => {
+  const [colorPositions, setColorPositions] = useState<ColorPosition[]>([]);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+
+  // Sync color positions when colors prop changes (new palette generated)
+  useEffect(() => {
+    const newPositions = colors.map((color) => {
       const hsl = hexToHSL(color);
       return {
         hue: hsl.hue,
@@ -26,9 +30,9 @@ export const ColorWheel = ({ colors, size = 400, onColorChange }: ColorWheelProp
         lightness: hsl.lightness,
         radius: hsl.saturation / 100, // Map saturation to radius
       };
-    })
-  );
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+    });
+    setColorPositions(newPositions);
+  }, [colors]); // Re-run when colors array changes
 
   const maxRadius = size / 2;
 
@@ -81,6 +85,15 @@ export const ColorWheel = ({ colors, size = 400, onColorChange }: ColorWheelProp
   const handleMouseUp = () => {
     setDraggingIndex(null);
   };
+
+  // Don't render if no colors available yet
+  if (colorPositions.length === 0) {
+    return (
+      <div className='flex items-center justify-center' style={{ width: size, height: size }}>
+        <div className='text-subtitle text-sm'>Waiting for colors...</div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex items-center justify-center'>
