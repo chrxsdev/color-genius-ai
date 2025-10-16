@@ -1,18 +1,15 @@
 import { generateObject, LanguageModel } from 'ai';
 import { google } from '@ai-sdk/google';
 import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
-import { ColorNameSchema, PaletteNameSchema } from '@/types/palette';
+import { PaletteNameSchema } from '@/types/palette';
 import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
 import {
-  getColorNameSystemPrompt,
-  getColorNameUserPrompt,
   getPaletteNameSystemPrompt,
   getPaletteNameUserPrompt,
   getPaletteGenerationSystemPrompt,
   getPaletteGenerationUserPrompt,
   getHarmonyRules,
 } from '@/utils/prompts/ai-prompts';
-import { DEFAULT_COLOR_COUNT } from '@/constant';
 
 /**
  * PaletteGenerator class
@@ -78,70 +75,25 @@ export class PaletteGenerator {
   }
 
   /**
-   * Regenerate a name (color or palette) based on the rationale
+   * Regenerate a palette name based on the rationale
    * Uses the existing rationale to maintain thematic consistency
    */
-  async regenerateName(params: {
-    type: 'color' | 'palette';
-    rationale: string;
-    color?: string;
-    existingNames?: string[];
-    colorCount?: number;
-    harmony?: string;
-  }): Promise<string> {
-    const { type, rationale, existingNames = [] } = params;
+  async regenerateName(params: { rationale: string; harmony: string; generatedNames: string[] }): Promise<string> {
+    const { rationale, generatedNames, harmony } = params;
     const sanitizedRationale = this.sanitizeInput(rationale);
     const timestamp = Date.now();
 
     try {
-      if (type === 'color') {
-        return await this.generateColorName({
-          color: params.color,
-          rationale: sanitizedRationale,
-          existingNames,
-          timestamp,
-        });
-      }
-
       return await this.generatePaletteName({
         rationale: sanitizedRationale,
-        colorCount: params.colorCount ?? DEFAULT_COLOR_COUNT,
-        harmony: params.harmony!,
         timestamp,
+        harmony,
+        generatedNames,
       });
     } catch (error) {
-      console.error(`Failed to regenerate ${type} name:`, { error });
-      return this.generateFallbackName(type);
+      console.error(`Failed to regenerate palette name:`, { error });
+      return this.generateFallbackName();
     }
-  }
-
-  /**
-   * Generate a new color name using AI
-   */
-  private async generateColorName(params: {
-    color?: string;
-    rationale: string;
-    existingNames: string[];
-    timestamp: number;
-  }): Promise<string> {
-    const { object } = await generateObject({
-      model: this.model,
-      schema: ColorNameSchema,
-      messages: [
-        {
-          role: 'system',
-          content: getColorNameSystemPrompt(params),
-        },
-        {
-          role: 'user',
-          content: getColorNameUserPrompt(params),
-        },
-      ],
-      temperature: 0.95,
-      maxRetries: 2,
-    });
-
-    return object.name;
   }
 
   /**
@@ -149,9 +101,9 @@ export class PaletteGenerator {
    */
   private async generatePaletteName(params: {
     rationale: string;
-    colorCount: number;
-    harmony: string;
     timestamp: number;
+    harmony: string;
+    generatedNames: string[];
   }): Promise<string> {
     const { object } = await generateObject({
       model: this.model,
@@ -176,9 +128,9 @@ export class PaletteGenerator {
   /**
    * Generate a fallback name when AI generation fails
    */
-  private generateFallbackName(type: 'color' | 'palette'): string {
+  private generateFallbackName(): string {
     const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return type === 'color' ? `Color ${randomId}` : `Palette ${randomId}`;
+    return `Palette ${randomId}`;
   }
 
   /**

@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PaletteGenerator } from '@/lib/ai/palette-generator';
-import { DEFAULT_COLOR_COUNT } from '@/constant';
+import { HARMONY_TYPES } from '@/types/palette';
 
 /**
  * Request validation schema for name regeneration
  */
 const RegenerateNameRequestSchema = z.object({
-  type: z.enum(['color', 'palette']),
   rationale: z.string().min(10, 'Rationale must be at least 10 characters'),
-  // For color names
-  color: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color format')
-    .optional(),
-  existingNames: z.array(z.string()).optional(),
-  // For palette names
-  colorCount: z.number().min(3).max(8).optional(),
-  harmony: z.string().optional(),
+  harmony: z.enum(HARMONY_TYPES.map((type) => type.value)),
+  generatedNames: z.array(z.string()).optional(),
 });
 
 /**
@@ -30,32 +22,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = RegenerateNameRequestSchema.parse(body);
 
-    const { type, rationale, color, existingNames, colorCount = DEFAULT_COLOR_COUNT, harmony } = validatedData;
-
-    // Validate required fields based on type
-    if (type === 'color' && !color) {
-      return NextResponse.json({ error: 'Color hex is required for color name regeneration' }, { status: 400 });
-    }
-
-    if (type === 'palette' && !harmony) {
-      return NextResponse.json({ error: 'Harmony is required for palette name regeneration' }, { status: 400 });
-    }
+    const { rationale, harmony, generatedNames = [] } = validatedData;
 
     // Generate new name using AI
     const generator = new PaletteGenerator();
     const newName = await generator.regenerateName({
-      type,
       rationale,
-      color: type === 'color' ? color : undefined,
-      existingNames: existingNames ?? [],
-      colorCount: type === 'palette' ? colorCount : undefined,
-      harmony: type === 'palette' ? harmony : undefined,
+      harmony,
+      generatedNames
     });
 
     return NextResponse.json(
       {
         name: newName,
-        type,
       },
       { status: 200 }
     );

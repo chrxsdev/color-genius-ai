@@ -3,17 +3,10 @@
  * Centralized location for all AI prompt templates
  */
 
-interface ColorNamePromptParams {
-  color?: string;
-  rationale: string;
-  existingNames: string[];
-  timestamp: number;
-}
-
 interface PaletteNamePromptParams {
   rationale: string;
-  colorCount?: number;
-  harmony?: string;
+  generatedNames: string[];
+  harmony: string;
   timestamp: number;
 }
 
@@ -24,88 +17,30 @@ interface PaletteGenerationPromptParams {
 }
 
 /**
- * System prompt for color name regeneration
- */
-export const getColorNameSystemPrompt = (params: ColorNamePromptParams): string => {
-  const { rationale, existingNames, timestamp } = params;
-
-  return `You are a creative color naming expert. Generate a UNIQUE, creative, and funny name for a color.
-
-  CRITICAL UNIQUENESS REQUIREMENTS:
-  - Each name you generate MUST be completely different and unique
-  - Think creatively and explore unusual word combinations
-  - Use metaphors, emotions, objects, places, or abstract concepts
-  - Mix unexpected adjectives with nouns for originality
-  - NEVER repeat or slightly modify the same words
-
-  STRICT NAMING RULES:
-  - Name MUST be EXACTLY TWO WORDS separated by a single space
-  - Use ONLY alphanumeric characters and spaces (no special characters, accents, or punctuation)
-  - Each word should be capitalized (Title Case)
-  - Must be COMPLETELY DIFFERENT from these existing names: ${
-    existingNames.length > 0 ? existingNames.join(', ') : 'none yet'
-  }
-  - Name should align with this palette theme: "${rationale}"
-  - Be creative, funny, and descriptive (with not offensive sarcasm)
-  - AVOID generic names like "Blue Color", "Red One", "Dark Blue", "Light Pink", "Deep Purple"
-
-  INSPIRATION CATEGORIES (mix these creatively):
-  - Nature: plants, weather, landscapes, animals
-  - Food & Drinks: fruits, desserts, beverages
-  - Emotions: feelings, moods, sensations
-  - Places: cities, landmarks, mythical locations
-  - Abstract: concepts, dreams, memories
-  - Pop Culture: music, art, literature (not copyrighted)
-
-  Examples of EXCELLENT names: "Electric Dreams", "Velvet Thunder", "Cosmic Blueberry", "Sunset Whisper", "Maple Nostalgia", "Neon Horizon", "Lavender Haze"
-  Examples of BAD names: "Blue" (one word), "Really Deep Blue" (three words), "Blue Color" (generic), "Red-ish" (has hyphen), "Café Latte" (has accent), "Dark Blue" (too   common)
-
-  Generation ID: ${timestamp} - Use this to ensure uniqueness across generations.`;
-};
-
-/**
- * User prompt for color name regeneration
- */
-export const getColorNameUserPrompt = (params: ColorNamePromptParams): string => {
-  const { color } = params;
-  return `Generate a UNIQUE and CREATIVE TWO-WORD name for this color: ${color}. Make it memorable and completely different from any existing names.`;
-};
-
-/**
  * System prompt for palette name regeneration
  */
 export const getPaletteNameSystemPrompt = (params: PaletteNamePromptParams): string => {
-  const { rationale, colorCount = 6, harmony, timestamp } = params;
+  const { rationale, timestamp } = params;
 
   return `You are a creative palette naming expert. Generate a UNIQUE, creative, and catchy name for a color palette.
 
   CRITICAL UNIQUENESS REQUIREMENTS:
   - Each name you generate MUST be completely different and unique
-  - Think creatively about themes, moods, and visual impressions
+  - Think creatively about the ${rationale} theme
+  - Use ONLY alphanumeric characters and spaces in names (no special characters, accents, punctuation, or hyphens).
   - Combine unexpected words to create memorable names
   - Explore various themes: seasons, times of day, emotions, places, eras
   - NEVER repeat or slightly modify the same name pattern
 
   STRICT NAMING RULES:
   - Name MUST be EXACTLY TWO WORDS separated by a single space
-  - Use ONLY alphanumeric characters and spaces (no special characters, accents, or punctuation)
   - Each word should be capitalized (Title Case)
-  - Name should reflect this palette theme: "${rationale}"
-  - Be creative, memorable, and evocative
-  - The palette has ${colorCount} colors with ${harmony} harmony
+  - Be creative, funny, and descriptive (with not offensive sarcasm) related with the ${rationale} theme.
   - AVOID generic names like "Color Palette", "Nice Colors", "Color Set", "Cool Theme", "Beautiful Mix"
-
-  INSPIRATION CATEGORIES (mix these creatively):
-  - Time & Seasons: dawn, twilight, autumn, spring equinox
-  - Moods & Vibes: serene, energetic, nostalgic, dreamy
-  - Nature: ocean, forest, desert, mountains, sky
-  - Eras & Styles: vintage, retro, modern, futuristic
-  - Places: tropical, urban, coastal, arctic
-  - Abstract: journey, awakening, escape, reflection
-
-  Examples of EXCELLENT names: "Ocean Breeze", "Midnight Garden", "Sunset Dreams", "Cosmic Journey", "Vintage Vibes", "Tropical Dawn", "Urban Twilight", "Neon Nostalgia"
-  Examples of BAD names: "Colors" (one word), "Really Cool Palette" (three words), "Color Theme" (generic), "Neo-Classic" (has hyphen), "Café Theme" (has accent), "Nice  Set" (too common)
-
+  - AVOID and GENERATE unique names by not repeating the following array of previously generated names: ${JSON.stringify(
+    params.generatedNames
+  )}
+  
   Generation ID: ${timestamp} - Use this to ensure uniqueness across generations.`;
 };
 
@@ -113,8 +48,8 @@ export const getPaletteNameSystemPrompt = (params: PaletteNamePromptParams): str
  * User prompt for palette name regeneration
  */
 export const getPaletteNameUserPrompt = (params: PaletteNamePromptParams): string => {
-  const { colorCount, harmony } = params;
-  return `Generate a UNIQUE and MEMORABLE TWO-WORD name for this ${colorCount}-color ${harmony} palette. Make it evocative and completely original.`;
+  const { harmony } = params;
+  return `Generate a UNIQUE and MEMORABLE TWO-WORD palette name for this ${harmony} palette. Make it evocative and completely original.`;
 };
 
 /**

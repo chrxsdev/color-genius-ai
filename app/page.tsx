@@ -24,6 +24,7 @@ const PalettePage = ({}: PalettePageProps) => {
   const [saturation, setSaturation] = useState(50);
   const [warmth, setWarmth] = useState(50);
   const [paletteName, setPaletteName] = useState('');
+  const [existingNames, setExistingNames] = useState<string[]>([]);
   const [colorSlots, setColorSlots] = useState(6);
   const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
@@ -32,7 +33,6 @@ const PalettePage = ({}: PalettePageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [rationale, setRationale] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [regeneratingColorIndex, setRegeneratingColorIndex] = useState<number | null>(null);
   const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
 
   // Generated colors from AI
@@ -67,6 +67,8 @@ const PalettePage = ({}: PalettePageProps) => {
     }
   }, [generatedColors.length]); // Only track length, not full array
 
+  console.log({ existingNames });
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt to generate a palette');
@@ -98,6 +100,9 @@ const PalettePage = ({}: PalettePageProps) => {
       setRationale(data.metadata?.rationale ?? null);
       setTags(data.metadata?.tags ?? []);
       setPaletteName(data.paletteName ?? '');
+
+      // When generating a new palette, reset existing names to just the new one
+      setExistingNames([data.paletteName]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -123,10 +128,9 @@ const PalettePage = ({}: PalettePageProps) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'palette',
           rationale,
-          colorCount: colorSlots,
           harmony,
+          generatedNames: existingNames
         }),
       });
 
@@ -136,6 +140,9 @@ const PalettePage = ({}: PalettePageProps) => {
 
       // Update the palette name
       setPaletteName(data.name);
+
+      // Add to existing names to avoid duplicates
+      setExistingNames((prev) => [...prev, data.name].filter(Boolean));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -145,67 +152,10 @@ const PalettePage = ({}: PalettePageProps) => {
     }
   };
 
-  const handleRegenerateColorName = async (color: string) => {
-    if (!rationale) {
-      setError('Cannot regenerate name without palette rationale');
-      return;
-    }
-
-    // Find the index of the color being regenerated
-    const colorIndex = adjustedColors.findIndex((item) => item.color === color);
-    if (colorIndex === -1) return;
-
-    setRegeneratingColorIndex(colorIndex);
-    setError(null);
-
-    try {
-      const existingNames = generatedColors.map((item) => item.name).filter((_, idx) => idx !== colorIndex);
-
-      const response = await fetch('/api/regenerate-name', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'color',
-          color: generatedColors[colorIndex].color,
-          rationale,
-          existingNames,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || data.message || 'Failed to regenerate name');
-
-      // Update the color name in the generated colors array
-      const updatedColors = [...generatedColors];
-      updatedColors[colorIndex] = {
-        ...updatedColors[colorIndex],
-        name: data.name,
-      };
-      setGeneratedColors(updatedColors);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
-      console.error('Name regeneration error:', err);
-    } finally {
-      setRegeneratingColorIndex(null);
-    }
-  };
-
   const handleColorChange = (index: number, newColor: string) => {
     const newColors = [...generatedColors];
     newColors[index] = { ...newColors[index], color: newColor };
     setGeneratedColors(newColors);
-  };
-
-  const incrementSlots = () => {
-    if (colorSlots < 8) setColorSlots(colorSlots + 1);
-  };
-
-  const decrementSlots = () => {
-    if (colorSlots > 4) setColorSlots(colorSlots - 1);
   };
 
   const handleSave = () => {
@@ -372,8 +322,8 @@ const PalettePage = ({}: PalettePageProps) => {
                       className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
                       title='Regenerate Palette Name'
                     >
-                      <SiGooglegemini 
-                        className={`text-base text-primary ${isRegeneratingPaletteName ? 'animate-pulse' : ''}`} 
+                      <SiGooglegemini
+                        className={`text-base text-primary ${isRegeneratingPaletteName ? 'animate-pulse' : ''}`}
                       />
                     </button>
                   </div>
@@ -420,14 +370,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 <div className='my-14'>
                   <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
                     {adjustedColors.map((colorItem, index) => (
-                      <ColorCard
-                        key={index}
-                        color={colorItem.color}
-                        name={colorItem.name}
-                        format={colorFormat}
-                        onRegenerateName={handleRegenerateColorName}
-                        isRegenerating={regeneratingColorIndex === index}
-                      />
+                      <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
                     ))}
                   </div>
                 </div>

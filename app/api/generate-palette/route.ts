@@ -42,8 +42,6 @@ export async function POST(request: NextRequest) {
         rationale: aiResponse.rationale,
         tags: aiResponse.tags,
         generatedAt: aiResponse.metadata.generatedAt,
-        model: aiResponse.metadata.model,
-        provider: aiResponse.metadata.provider,
       },
     };
 
