@@ -306,7 +306,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 />
                 <div>
                   <p className='text-subtitle text-sm text-center leading-relaxed'>
-                    You can adjust the colors using the sliders above or modify the color directly in the wheel.
+                    You can adjust the colors using the palette control sliders or modify each color directly in the wheel.
                   </p>
                 </div>
               </div>
