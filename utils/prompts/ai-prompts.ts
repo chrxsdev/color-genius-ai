@@ -37,10 +37,8 @@ export const getPaletteNameSystemPrompt = (params: PaletteNamePromptParams): str
   - Each word should be capitalized (Title Case)
   - Be creative, funny, and descriptive (with not offensive sarcasm) related with the ${rationale} theme.
   - AVOID generic names like "Color Palette", "Nice Colors", "Color Set", "Cool Theme", "Beautiful Mix"
-  - AVOID and GENERATE unique names by not repeating the following array of previously generated names: ${JSON.stringify(
-    params.generatedNames
-  )}
-  
+  - AVOID and GENERATE unique names by not repeating the following array of previously generated names: 
+    ${JSON.stringify(params.generatedNames)}
   Generation ID: ${timestamp} - Use this to ensure uniqueness across generations.`;
 };
 

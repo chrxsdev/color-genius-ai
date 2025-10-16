@@ -20,6 +20,9 @@ importers:
       color:
         specifier: ^5.0.2
         version: 5.0.2
+      html-to-image:
+        specifier: ^1.11.13
+        version: 1.11.13
       next:
         specifier: 15.5.4
         version: 15.5.4(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1226,6 +1229,9 @@ packages:
 
   highlightjs-vue@1.0.0:
     resolution: {integrity: sha512-PDEfEF102G23vHmPhLyPboFCD+BkMGu+GuJe2d9/eH4FsCwvgBpnc9n0pGE+ffKdph38s6foEZiEjdgHdzp+IA==}
+
+  html-to-image@1.11.13:
+    resolution: {integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -3235,6 +3241,8 @@ snapshots:
   highlight.js@10.7.3: {}
 
   highlightjs-vue@1.0.0: {}
+
+  html-to-image@1.11.13: {}
 
   ignore@5.3.2: {}
 

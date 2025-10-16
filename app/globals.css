@@ -14,8 +14,6 @@
   --color-slider-label: #cbd5e1;
   --color-control-text: #94a3b8;
   --color-wheel-line: #475569;
-  
-  /* Legacy variables */
   --background: #1a1c19;
   --foreground: #e1e4d9;
 }
@@ -35,11 +33,11 @@
   --color-slider-label: var(--color-slider-label);
   --color-control-text: var(--color-control-text);
   --color-wheel-line: var(--color-wheel-line);
-  
+
   /* Font Families */
   --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-space-grotesk);
-  
+
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-regular: 400;

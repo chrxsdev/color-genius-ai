@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
-          error: 'Validation failed',
+          error: error.issues[0].message ?? 'Invalid Values',
           details: error.issues.map((issue) => ({
             field: issue.path.join('.'),
             message: issue.message,

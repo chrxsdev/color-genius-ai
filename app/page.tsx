@@ -5,6 +5,8 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
+import { toPng } from 'html-to-image';
+
 import { ColorItem, Format, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
 import { ColorWheel } from '@/components/ui/ColorWheel';
 import { ColorCard } from '@/components/ui/ColorCard';
@@ -12,6 +14,7 @@ import { ColorCodes } from '@/components/ui/ColorCodes';
 import { Loader } from '@/components/shared/Loader';
 import { BiSolidError } from 'react-icons/bi';
 import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
+import { DEFAULT_COLOR_COUNT } from '@/constant';
 
 interface PalettePageProps {
   children?: ReactNode;
@@ -25,7 +28,6 @@ const PalettePage = ({}: PalettePageProps) => {
   const [warmth, setWarmth] = useState(50);
   const [paletteName, setPaletteName] = useState('');
   const [existingNames, setExistingNames] = useState<string[]>([]);
-  const [colorSlots, setColorSlots] = useState(6);
   const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
   // State for AI generation
@@ -38,6 +40,13 @@ const PalettePage = ({}: PalettePageProps) => {
   // Generated colors from AI
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
 
+  // Color Reference to export
+  const colorsGeneratedRef = useRef<HTMLDivElement>(null);
+
+  // Reset sliders to neutral when a new palette is generated
+  // Use a ref to track if this is the initial render to avoid resetting on mount
+  const initialRenderRef = useRef<boolean>(true);
+
   // Apply slider adjustments to generated colors in real-time
   const adjustedColors = useMemo(
     () =>
@@ -47,10 +56,6 @@ const PalettePage = ({}: PalettePageProps) => {
       })),
     [generatedColors, brightness, saturation, warmth]
   );
-
-  // Reset sliders to neutral when a new palette is generated
-  // Use a ref to track if this is the initial render to avoid resetting on mount
-  const initialRenderRef = useRef(true);
 
   useEffect(() => {
     // Skip on initial render
@@ -66,8 +71,6 @@ const PalettePage = ({}: PalettePageProps) => {
       setWarmth(50);
     }
   }, [generatedColors.length]); // Only track length, not full array
-
-  console.log({ existingNames });
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -87,7 +90,7 @@ const PalettePage = ({}: PalettePageProps) => {
         body: JSON.stringify({
           prompt: prompt.trim(),
           harmony,
-          colorCount: colorSlots,
+          colorCount: DEFAULT_COLOR_COUNT,
         }),
       });
 
@@ -130,7 +133,7 @@ const PalettePage = ({}: PalettePageProps) => {
         body: JSON.stringify({
           rationale,
           harmony,
-          generatedNames: existingNames
+          generatedNames: existingNames,
         }),
       });
 
@@ -159,18 +162,24 @@ const PalettePage = ({}: PalettePageProps) => {
   };
 
   const handleSave = () => {
-    console.log('Saving palette...');
-    // TODO: Implement save functionality
+    // TODO: Check if user is authenticated, if not redirect to login/signup
   };
 
-  const handleExportSVG = () => {
-    console.log('Exporting as SVG...');
-    // TODO: Implement SVG export
-  };
+  const handleExportPNG = async () => {
+    if (!colorsGeneratedRef.current) return;
 
-  const handleAddColor = () => {
-    console.log('Adding new color...');
-    // TODO: Implement add color functionality
+    const dataUrl = await toPng(colorsGeneratedRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      style: {
+        backgroundColor: '#1a1c19',
+      },
+    });
+
+    const link = document.createElement('a');
+    link.download = `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`;
+    link.href = dataUrl;
+    link.click();
   };
 
   return (
@@ -247,8 +256,8 @@ const PalettePage = ({}: PalettePageProps) => {
 
             {/* Error Message */}
             {error && (
-              <div className='mt-4 p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 text-red-400'>
-                <BiSolidError className='text-base' /> {error}
+              <div className='flex flex-row items-center mt-4 p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 text-red-400'>
+                <BiSolidError className='text-base mx-2' /> {error}
               </div>
             )}
 
@@ -357,18 +366,21 @@ const PalettePage = ({}: PalettePageProps) => {
                       <span className='text-sm font-medium text-white'>Save</span>
                     </button>
                     <button
-                      onClick={handleExportSVG}
+                      onClick={handleExportPNG}
                       className='flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
                     >
                       <IoImageOutline className='text-lg text-white' />
-                      <span className='text-sm font-medium text-white'>Export SVG</span>
+                      <span className='text-sm font-medium text-white'>Export PNG</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Color Cards Grid */}
-                <div className='my-14'>
-                  <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'>
+                <div className='my-14 p-2'>
+                  <div
+                    ref={colorsGeneratedRef}
+                    className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'
+                  >
                     {adjustedColors.map((colorItem, index) => (
                       <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />
                     ))}
@@ -376,7 +388,7 @@ const PalettePage = ({}: PalettePageProps) => {
                 </div>
 
                 {/* Palette Controls Section */}
-                <div className='space-y-8 py-4'>
+                <div className='space-y-8 py-2'>
                   <h3 className='text-xl font-bold text-white'>Palette Controls</h3>
                   {/* Sliders Grid */}
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>

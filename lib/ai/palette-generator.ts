@@ -155,7 +155,7 @@ export class PaletteGenerator {
    */
   private getStaticFallback(): PaletteResponse {
     return {
-      paletteName: 'Not AI Generated :(',
+      paletteName: 'Geni on Vacation',
       colors: [
         {
           name: 'Purple Dawn',
@@ -181,6 +181,11 @@ export class PaletteGenerator {
           name: 'Sky Blue',
           hex: '#4FACFE',
           hsl: { h: 211, s: 98, l: 66 },
+        },
+        {
+          name: 'Dark Blue',
+          hex: '#233D54',
+          hsl: { h: 208, s: 41, l: 23 },
         },
       ],
       rationale:

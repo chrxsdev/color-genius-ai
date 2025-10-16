@@ -26,7 +26,7 @@ export const ColorCard = ({ color, name, format }: ColorCardProps) => {
     <div className='flex flex-col items-center gap-3'>
       {/* Color Circle */}
       <div
-        className='w-32 h-32 rounded-full shadow-lg border-2 border-neutral-variant/30 duration-200 ease-in-out hover:scale-105'
+        className='w-32 h-32 rounded-full shadow-lg duration-200 ease-in-out hover:scale-105'
         style={{ backgroundColor: color }}
       />
 
