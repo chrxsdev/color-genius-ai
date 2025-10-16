@@ -130,7 +130,7 @@ export class PaletteGenerator {
    */
   private generateFallbackName(): string {
     const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `Palette ${randomId}`;
+    return `Geni ${randomId}`;
   }
 
   /**
