@@ -16,11 +16,7 @@ import { BiSolidError } from 'react-icons/bi';
 import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
 import { DEFAULT_COLOR_COUNT } from '@/constant';
 
-interface PalettePageProps {
-  children?: ReactNode;
-}
-
-const PalettePage = ({}: PalettePageProps) => {
+const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
   const [harmony, setHarmony] = useState<HarmonyType>('analogous');
   const [brightness, setBrightness] = useState(50);
