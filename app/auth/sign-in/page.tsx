@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/dist/client/link';
+import { signInWithGoogle } from '@/lib/supabase/actions';
 import { FcGoogle } from 'react-icons/fc';
-import { signInWithGoogle } from './actions';
 
 export const SignIn = () => {
   const handleGoogleSignIn = async () => {
