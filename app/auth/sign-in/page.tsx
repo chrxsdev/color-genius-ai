@@ -2,10 +2,11 @@
 
 import Link from 'next/dist/client/link';
 import { FcGoogle } from 'react-icons/fc';
+import { signInWithGoogle } from './actions';
 
 export const SignIn = () => {
   const handleGoogleSignIn = async () => {
-    console.log('Google Sign-In clicked');
+    await signInWithGoogle();
   };
 
   return (
