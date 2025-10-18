@@ -1,5 +1,6 @@
 import Color from 'color';
-import { ColorItem, Format } from '@/types/palette';
+import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
+import { Format } from '@/types/format.types';
 
 /**
  * Converts a HEX color string to HSL (Hue, Saturation, Lightness) values

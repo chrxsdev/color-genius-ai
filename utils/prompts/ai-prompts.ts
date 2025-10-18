@@ -1,20 +1,4 @@
-/**
- * AI Prompts for Color Palette Generation
- * Centralized location for all AI prompt templates
- */
-
-interface PaletteNamePromptParams {
-  rationale: string;
-  generatedNames: string[];
-  harmony: string;
-  timestamp: number;
-}
-
-interface PaletteGenerationPromptParams {
-  harmony: string;
-  colorCount: number;
-  harmonyRules: string;
-}
+import { PaletteGenerationPromptParams, PaletteNamePromptParams } from '@/infrastructure/interfaces/prompt.interface';
 
 /**
  * System prompt for palette name regeneration

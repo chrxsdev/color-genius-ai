@@ -1,7 +1,5 @@
 import { generateObject, LanguageModel } from 'ai';
 import { google } from '@ai-sdk/google';
-import { PaletteResponse, PaletteSchema } from '@/types/api-schema';
-import { PaletteNameSchema } from '@/types/palette';
 import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
 import {
   getPaletteNameSystemPrompt,
@@ -10,6 +8,8 @@ import {
   getPaletteGenerationUserPrompt,
   getHarmonyRules,
 } from '@/utils/prompts/ai-prompts';
+import { PaletteResponse, PaletteSchema } from '@/schemas/api-palette-response.schema';
+import { PaletteNameSchema } from '@/schemas/palette-name.schema';
 
 /**
  * PaletteGenerator class

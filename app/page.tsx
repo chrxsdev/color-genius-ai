@@ -1,20 +1,22 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 import { toPng } from 'html-to-image';
-
-import { ColorItem, Format, HARMONY_TYPES, type HarmonyType } from '@/types/palette';
-import { ColorWheel } from '@/components/ui/ColorWheel';
-import { ColorCard } from '@/components/ui/ColorCard';
-import { ColorCodes } from '@/components/ui/ColorCodes';
-import { Loader } from '@/components/shared/Loader';
 import { BiSolidError } from 'react-icons/bi';
+
+import { ColorWheel } from '@/presentation/components/palette/ColorWheel';
+import { ColorCard } from '@/presentation/components/palette/ColorCard';
+import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
+import { Loader } from '@/presentation/components/Loader';
 import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
-import { DEFAULT_COLOR_COUNT } from '@/constant';
+import { DEFAULT_COLOR_COUNT } from '@/constant/general-values';
+import { HarmonyType } from '@/types/harmony-types.type';
+import { Format } from '@/types/format.types';
+import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
+import { HARMONY_TYPES } from '@/constant/harmony-types';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');

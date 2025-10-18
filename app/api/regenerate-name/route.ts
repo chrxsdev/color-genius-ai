@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PaletteGenerator } from '@/utils/ai/palette-generator';
-import { HARMONY_TYPES } from '@/types/palette';
+import { PaletteGenerator } from '@/core/ai/palette-generator';
+import { RegenerateNameRequestSchema } from '@/schemas/api-generate-palette-name.schema';
 
-/**
- * Request validation schema for name regeneration
- */
-const RegenerateNameRequestSchema = z.object({
-  rationale: z.string().min(10, 'Rationale must be at least 10 characters'),
-  harmony: z.enum(HARMONY_TYPES.map((type) => type.value)),
-  generatedNames: z.array(z.string()).optional(),
-});
 
 /**
  * POST /api/regenerate-name

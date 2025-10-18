@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PaletteGenerator } from '@/utils/ai/palette-generator';
-import { HARMONY_TYPES, HarmonyType } from '@/types/palette';
-
-/**
- * Request validation schema
- */
-const GenerateRequestSchema = z.object({
-  prompt: z.string().min(3, 'Prompt must be at least 3 characters').max(200, 'Prompt must be less than 200 characters'),
-  harmony: z.enum(HARMONY_TYPES.map((type) => type.value)),
-  colorCount: z.number().min(3).max(8).default(5),
-});
+import { PaletteGenerator } from '@/core/ai/palette-generator';
+import type { HarmonyType } from '@/types/harmony-types.type';
+import { GenerateRequestSchema } from '@/schemas/api-generate-palette.schema';
 
 /**
  * POST /api/generate-palette

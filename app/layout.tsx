@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
 import './globals.css';
-import { Navbar } from '@/components/shared/Navbar';
-import { Footer } from '@/components/shared/Footer';
+import { Navbar } from '@/presentation/components/Navbar';
+import { Footer } from '@/presentation/components/Footer';
 
 const spaceGroteskFont = Space_Grotesk({
   variable: '--font-space-grotesk',
