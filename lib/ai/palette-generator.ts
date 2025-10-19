@@ -9,8 +9,8 @@ import {
   getPaletteGenerationUserPrompt,
   getHarmonyRules,
 } from '@/utils/prompts/ai-prompts';
-import { PaletteResponse, PaletteSchema } from '@/schemas/api-palette-response.schema';
-import { PaletteNameSchema } from '@/schemas/palette-name.schema';
+import { PaletteResponse, PaletteSchema } from '@/infrastructure/schemas/api-palette-response.schema';
+import { PaletteNameSchema } from '@/infrastructure/schemas/palette-name.schema';
 
 /**
  * PaletteGenerator class

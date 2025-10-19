@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { PaletteGenerator } from '@/lib/ai/palette-generator';
-import type { HarmonyType } from '@/types/harmony-types.type';
-import { GenerateRequestSchema } from '@/schemas/api-generate-palette.schema';
+import { GenerateRequestSchema } from '@/infrastructure/schemas/api-generate-palette.schema';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
 
 /**
  * POST /api/generate-palette

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HARMONY_TYPES } from '@/constant/harmony-types';
+import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 
 /**
  * Request validation schema for name regeneration

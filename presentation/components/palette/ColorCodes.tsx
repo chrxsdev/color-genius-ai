@@ -5,8 +5,8 @@ import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
-import { CodeStyleFormat } from '@/enums/code-style-format.enum';
-import { Format } from '@/types/format.types';
+import { CodeStyleFormat } from '@/infrastructure/enums/code-style-format.enum';
+import { Format } from '@/infrastructure/types/format.types';
 import { CodeStyleGenerator } from '@/utils/code-generators/code-style-generator';
 
 interface ColorCodesProps {

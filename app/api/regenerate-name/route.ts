@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PaletteGenerator } from '@/lib/ai/palette-generator';
-import { RegenerateNameRequestSchema } from '@/schemas/api-generate-palette-name.schema';
+import { RegenerateNameRequestSchema } from '@/infrastructure/schemas/api-generate-palette-name.schema';
 
 /**
  * POST /api/regenerate-name

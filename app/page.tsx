@@ -12,11 +12,11 @@ import { ColorCard } from '@/presentation/components/palette/ColorCard';
 import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
 import { Loader } from '@/presentation/components/Loader';
 import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
-import { DEFAULT_COLOR_COUNT } from '@/constant/general-values';
-import { HarmonyType } from '@/types/harmony-types.type';
-import { Format } from '@/types/format.types';
+import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { Format } from '@/infrastructure/types/format.types';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
-import { HARMONY_TYPES } from '@/constant/harmony-types';
+import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');

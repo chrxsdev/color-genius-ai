@@ -17,7 +17,7 @@ export const getPaletteNameSystemPrompt = (params: PaletteNamePromptParams): str
   - NEVER repeat or slightly modify the same name pattern
 
   STRICT NAMING RULES:
-  - Name MUST be EXACTLY TWO WORDS separated by a single space
+  - Name is composed of EXACTLY TWO WORDS separated by a single space
   - Each word should be capitalized (Title Case)
   - Be creative, funny, and descriptive (with not offensive sarcasm) related with the ${rationale} theme.
   - AVOID generic names like "Color Palette", "Nice Colors", "Color Set", "Cool Theme", "Beautiful Mix"
