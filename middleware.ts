@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getUser, updateSession } from '@/core/supabase/middleware';
+import { getUser, updateSession } from './lib/supabase/middleware';
 
 export const middleware = async (request: NextRequest, response: NextResponse) => {
   const protectedRoutes = ['/dashboard']; // TODO: Add profile route when implemented

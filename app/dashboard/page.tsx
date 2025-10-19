@@ -1,4 +1,4 @@
-import { getCurrentUser, signOut } from '@/core/supabase/actions';
+import { getCurrentUser, signOut } from '@/actions/auth.actions';
 
 const DashboardPage = async () => {
   const user = await getCurrentUser();
