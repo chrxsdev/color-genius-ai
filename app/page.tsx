@@ -30,7 +30,7 @@ const PalettePage = () => {
   const [regenerateName] = useRegenerateNameMutation();
 
   // Redux hooks for palette management
-  const { palette, setCurrentPalette } = usePalette();
+  const { currentPalette, setCurrentPalette } = usePalette();
 
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
   const [paletteName, setPaletteName] = useState('');
@@ -52,10 +52,6 @@ const PalettePage = () => {
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
 
-  // Reset sliders to neutral when a new palette is generated
-  // Use a ref to track if this is the initial render to avoid resetting on mount
-  const initialRenderRef = useRef<boolean>(true);
-
   // Apply slider adjustments to generated colors in real-time
   const adjustedColors = useMemo(
     () =>
@@ -67,28 +63,20 @@ const PalettePage = () => {
   );
 
   useEffect(() => {
-    // Skip on initial render
-    if (initialRenderRef.current) {
-      initialRenderRef.current = false;
-      return;
-    }
-  }, [generatedColors.length]); // Only track length, not full array
-
-  useEffect(() => {
     // check if colors exists in the current Palette
-    if (!palette.currentPalette) return;
+    if (!currentPalette) return;
 
     // If colors exist, set the state with the current palette
-    setGeneratedColors(palette.currentPalette.colors);
-    setPaletteName(palette.currentPalette.paletteName);
-    setColorFormat(palette.currentPalette.colorFormat as Format);
-    setRationale(palette.currentPalette.rationale);
-    setTags(palette.currentPalette.tags);
-    setHarmony(palette.currentPalette.harmony as HarmonyType);
+    setGeneratedColors(currentPalette.colors);
+    setPaletteName(currentPalette.paletteName);
+    setColorFormat(currentPalette.colorFormat as Format);
+    setRationale(currentPalette.rationale);
+    setTags(currentPalette.tags);
+    setHarmony(currentPalette.harmony as HarmonyType);
 
-    setBrightness(Number(palette.currentPalette.brightness));
-    setSaturation(Number(palette.currentPalette.saturation));
-    setWarmth(Number(palette.currentPalette.warmth));
+    setBrightness(Number(currentPalette.brightness));
+    setSaturation(Number(currentPalette.saturation));
+    setWarmth(Number(currentPalette.warmth));
   }, []);
 
   const handleGenerate = async () => {
@@ -113,6 +101,7 @@ const PalettePage = () => {
       setBrightness(50);
       setSaturation(50);
       setWarmth(50);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);

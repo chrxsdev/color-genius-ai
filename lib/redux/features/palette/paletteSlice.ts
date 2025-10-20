@@ -15,7 +15,14 @@ export const paletteSlice = createSlice({
       };
     },
   },
+
+  selectors: {
+    selectPalette: (state: Palette) => state.currentPalette,
+  },
 });
 
 export const { saveCurrentPalette } = paletteSlice.actions;
+export const { selectPalette } = paletteSlice.selectors;
+
 export const paletteReducer = paletteSlice.reducer;
+
