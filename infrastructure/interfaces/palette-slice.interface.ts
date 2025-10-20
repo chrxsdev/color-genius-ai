@@ -18,7 +18,7 @@ export interface PaletteItem {
   colorControl: ColorControl;
 }
 
-export interface ControlColorPayload {
+export interface ControlColorOptions {
   value: number;
   key: string;
 }

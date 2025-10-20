@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ControlColorPayload, PaletteItem } from '@/infrastructure/interfaces/palette-slice.interface';
+import { PaletteItem } from '@/infrastructure/interfaces/palette-slice.interface';
 
 const initialState: PaletteItem = {
   colors: [],
@@ -19,11 +19,14 @@ export const paletteSlice = createSlice({
   name: 'palette',
   initialState: initialState,
   reducers: {
-    setColorControl: (state, action: PayloadAction<ControlColorPayload>) => {
-      state.colorControl = {
-        ...state.colorControl,
-        [action.payload.key]: action.payload.value,
-      };
+    setActivePalette: (state, action: PayloadAction<PaletteItem>) => {
+      state.colors = action.payload.colors;
+      state.paletteName = action.payload.paletteName;
+      state.colorFormat = action.payload.colorFormat;
+      state.rationale = action.payload.rationale;
+      state.tags = action.payload.tags;
+      state.harmony = action.payload.harmony;
+      state.colorControl = { ...action.payload.colorControl };
     },
   },
 
@@ -32,7 +35,7 @@ export const paletteSlice = createSlice({
   },
 });
 
-export const { setColorControl } = paletteSlice.actions;
+export const { setActivePalette } = paletteSlice.actions;
 export const { selectPalette } = paletteSlice.selectors;
 
 export const paletteReducer = paletteSlice.reducer;
