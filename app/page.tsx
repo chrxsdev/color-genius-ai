@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
@@ -12,13 +12,13 @@ import { ColorWheel } from '@/presentation/components/palette/ColorWheel';
 import { ColorCard } from '@/presentation/components/palette/ColorCard';
 import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
 import { Loader } from '@/presentation/components/Loader';
-import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
 import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
 import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
 import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
-import { useColorPalette } from '@/presentation/hooks/useColorPalette';
+import { useGeneratorControls } from '@/presentation/hooks/useGeneratorControls';
+import { usePalette } from '@/presentation/hooks/usePalette';
 
 const PalettePage = () => {
   // Generated colors from AI
@@ -26,6 +26,7 @@ const PalettePage = () => {
 
   const {
     generatedColors,
+    adjustedColors,
     paletteName,
     colorFormat,
     rationale,
@@ -34,7 +35,8 @@ const PalettePage = () => {
     colorOptionControl: { brightness, saturation, warmth },
     updateState,
     updateColorControl,
-  } = useColorPalette();
+  } = useGeneratorControls();
+  const { savePaletteChanges } = usePalette();
 
   // Using RTK Query hooks to interact with the API
   const [generatePalette] = useGeneratePaletteMutation();
@@ -49,16 +51,6 @@ const PalettePage = () => {
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
-
-  // Apply slider adjustments to generated colors in real-time
-  const adjustedColors = useMemo(
-    () =>
-      generatedColors.map((item) => ({
-        ...item,
-        color: applySliderAdjustments(item.color, brightness, saturation, warmth),
-      })),
-    [generatedColors, brightness, saturation, warmth]
-  );
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -127,7 +119,16 @@ const PalettePage = () => {
      */
 
     if (!currentUser) {
-      // TODO: savePaletteToReduxState(); -> Color Wheel Data, Palette Name, Prompt, Harmony Type, Rationale, Tags
+      // Save the last changes of the color palette
+      savePaletteChanges({
+        colors: generatedColors,
+        paletteName,
+        colorFormat,
+        rationale,
+        tags,
+        harmony,
+        colorControl: { brightness, saturation, warmth },
+      });
       return redirect('auth/sign-in');
     }
   };

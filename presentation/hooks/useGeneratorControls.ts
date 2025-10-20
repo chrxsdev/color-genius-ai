@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePalette } from './usePalette';
 import { PaletteState } from '@/infrastructure/interfaces/palette-state.interface';
 import { ControlColorOptions } from '@/infrastructure/interfaces/palette-slice.interface';
+import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
 
-export const useColorPalette = () => {
+export const useGeneratorControls = () => {
   const { palette } = usePalette();
   const [paletteState, setPaletteState] = useState<PaletteState>({
     generatedColors: [],
@@ -18,6 +19,26 @@ export const useColorPalette = () => {
       warmth: 50,
     },
   });
+
+  // Apply slider adjustments to generated colors in real-time
+  const adjustedColors = useMemo(
+    () =>
+      paletteState.generatedColors.map((item) => ({
+        ...item,
+        color: applySliderAdjustments(
+          item.color,
+          paletteState.colorOptionControl.brightness,
+          paletteState.colorOptionControl.saturation,
+          paletteState.colorOptionControl.warmth
+        ),
+      })),
+    [
+      paletteState.generatedColors,
+      paletteState.colorOptionControl.brightness,
+      paletteState.colorOptionControl.saturation,
+      paletteState.colorOptionControl.warmth,
+    ]
+  );
 
   useEffect(() => {
     if (!palette || palette.colors.length === 0) return;
@@ -56,6 +77,7 @@ export const useColorPalette = () => {
 
   return {
     ...paletteState,
+    adjustedColors,
     updateColorControl,
     updateState,
   };

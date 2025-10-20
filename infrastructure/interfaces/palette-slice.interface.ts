@@ -12,7 +12,7 @@ export interface PaletteItem {
   colors: ColorItem[];
   paletteName: string;
   colorFormat: Format;
-  rationale: string;
+  rationale: string | null;
   tags: string[];
   harmony: HarmonyType;
   colorControl: ColorControl;

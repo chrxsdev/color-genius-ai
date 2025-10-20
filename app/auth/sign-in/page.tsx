@@ -19,7 +19,7 @@ export const SignIn = () => {
         <div className='text-center mb-14'>
           <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>Welcome!</h1>
           <p className='text-2lg text-subtitle mx-auto font-light'>
-            Sign In to access your saved palettes and start sharing with the community.
+            Sign in to save your palettes, access them anywhere, and share with the community.
           </p>
         </div>
 
