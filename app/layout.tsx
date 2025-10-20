@@ -3,6 +3,7 @@ import { Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/presentation/components/Navbar';
 import { Footer } from '@/presentation/components/Footer';
+import { ReduxProvider } from '@/lib/redux/provider';
 
 const spaceGroteskFont = Space_Grotesk({
   variable: '--font-space-grotesk',
@@ -28,12 +29,14 @@ const RootLayout = ({
       <head>
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </head>
-      <body className={`${spaceGroteskFont.variable} font-sans antialiased`}>
-        <section className='grid grid-rows-[auto_1fr_auto] min-h-[100dvh] font-sans'>
-          <Navbar />
-          <main className='bg-background'>{children}</main>
-          <Footer />
-        </section>
+      <body suppressHydrationWarning className={`${spaceGroteskFont.variable} font-sans antialiased`}>
+        <ReduxProvider>
+          <section className='grid grid-rows-[auto_1fr_auto] min-h-[100dvh] font-sans'>
+            <Navbar />
+            <main className='bg-background'>{children}</main>
+            <Footer />
+          </section>
+        </ReduxProvider>
       </body>
     </html>
   );

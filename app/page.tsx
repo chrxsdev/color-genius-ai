@@ -6,6 +6,7 @@ import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 import { toPng } from 'html-to-image';
 import { BiSolidError } from 'react-icons/bi';
+import { redirect } from 'next/navigation';
 
 import { ColorWheel } from '@/presentation/components/palette/ColorWheel';
 import { ColorCard } from '@/presentation/components/palette/ColorCard';
@@ -17,26 +18,31 @@ import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
 import { Format } from '@/infrastructure/types/format.types';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
+import { getCurrentUser } from '@/actions/auth.actions';
+import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 
 const PalettePage = () => {
+  // Generated colors from AI
   const [prompt, setPrompt] = useState('');
+
+  const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
+  const [paletteName, setPaletteName] = useState('');
+  const [colorFormat, setColorFormat] = useState<Format>('HEX');
+  const [rationale, setRationale] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [harmony, setHarmony] = useState<HarmonyType>('analogous');
   const [brightness, setBrightness] = useState(50);
   const [saturation, setSaturation] = useState(50);
   const [warmth, setWarmth] = useState(50);
-  const [paletteName, setPaletteName] = useState('');
+
   const [existingNames, setExistingNames] = useState<string[]>([]);
-  const [colorFormat, setColorFormat] = useState<Format>('HEX');
 
   // State for AI generation
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rationale, setRationale] = useState<string | null>(null);
-  const [tags, setTags] = useState<string[]>([]);
   const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
-
-  // Generated colors from AI
-  const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
+  const [generatePalette, generateResult] = useGeneratePaletteMutation();
+  const [regenerateName, regenerateResult] = useRegenerateNameMutation();
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
@@ -76,33 +82,16 @@ const PalettePage = () => {
       return;
     }
 
-    setIsGenerating(true);
     setError(null);
-
     try {
-      const response = await fetch('/api/generate-palette', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          harmony,
-          colorCount: DEFAULT_COLOR_COUNT,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || data.message || 'Failed to generate palette');
+      setIsGenerating(true);
+      const data = await generatePalette({ prompt: prompt.trim(), harmony, colorCount: DEFAULT_COLOR_COUNT }).unwrap();
 
       // Update state with AI-generated palette
       setGeneratedColors(data.colors);
       setRationale(data.metadata?.rationale ?? null);
       setTags(data.metadata?.tags ?? []);
       setPaletteName(data.paletteName ?? '');
-
-      // When generating a new palette, reset existing names to just the new one
       setExistingNames([data.paletteName]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -119,30 +108,12 @@ const PalettePage = () => {
       return;
     }
 
-    setIsRegeneratingPaletteName(true);
     setError(null);
-
     try {
-      const response = await fetch('/api/regenerate-name', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rationale,
-          harmony,
-          generatedNames: existingNames,
-        }),
-      });
+      setIsRegeneratingPaletteName(true);
+      const data = await regenerateName({ rationale, harmony, generatedNames: existingNames }).unwrap();
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || data.message || 'Failed to regenerate palette name');
-
-      // Update the palette name
       setPaletteName(data.name);
-
-      // Add to existing names to avoid duplicates
       setExistingNames((prev) => [...prev, data.name].filter(Boolean));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -159,8 +130,19 @@ const PalettePage = () => {
     setGeneratedColors(newColors);
   };
 
-  const handleSave = () => {
-    // TODO: Check if user is authenticated, if not redirect to login/signup
+  const handleSave = async () => {
+    const currentUser = await getCurrentUser();
+
+    /**
+     * TODO:
+     * - If user is not authenticated, save the current palette in redux state and then redirect to sign-in page
+     * - If user is authenticated, save the palette and redirect to dashboard
+     */
+
+    if (!currentUser) {
+      // TODO: savePaletteToReduxState(); -> Color Wheel Data, Palette Name, Prompt, Harmony Type, Rationale, Tags
+      return redirect('auth/sign-in');
+    }
   };
 
   const handleExportPNG = async () => {
@@ -304,7 +286,8 @@ const PalettePage = () => {
                 />
                 <div>
                   <p className='text-subtitle text-sm text-center leading-relaxed'>
-                    You can adjust the colors using the palette control sliders or modify each color directly in the wheel.
+                    You can adjust the colors using the palette control sliders or modify each color directly in the
+                    wheel.
                   </p>
                 </div>
               </div>

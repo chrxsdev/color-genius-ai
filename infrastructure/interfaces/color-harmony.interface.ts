@@ -1,4 +1,4 @@
-import { HarmonyType } from '../../types/harmony-types.type';
+import { HarmonyType } from '../types/harmony-types.type';
 
 export interface ColorHarmonyType {
   value: HarmonyType;

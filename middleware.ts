@@ -2,14 +2,14 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getUser, updateSession } from './lib/supabase/middleware';
 
 export const middleware = async (request: NextRequest, response: NextResponse) => {
-  const protectedRoutes = ['/dashboard']; // TODO: Add profile route when implemented
+  const protectedRoutes = ['/dashboard', '/profile'];
   const privateRoutes = ['/auth/sign-in'];
   const path = new URL(request.url).pathname;
 
   const user = await getUser(request, response);
 
   if (protectedRoutes.includes(path) && !user) return NextResponse.redirect(new URL('/auth/sign-in', request.url));
-  if (privateRoutes.includes(path) && user) return NextResponse.redirect(new URL('/dashboard', request.url)); // TODO: Check this implementation
+  if (privateRoutes.includes(path) && user) return NextResponse.redirect(new URL('/dashboard', request.url));
 
   // Update user's auth session
   return await updateSession(request);
