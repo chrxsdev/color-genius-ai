@@ -1,35 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
-
-interface Palette {
-  colors: ColorItem[];
-  paletteName: string;
-  colorFormat: string;
-  rationale: string;
-  tags: string[];
-  harmony: string;
-  brightness: number;
-  saturation: number;
-  warmth: number;
-}
+import { Palette, PaletteItem } from '@/infrastructure/interfaces/palette-slice.interface';
 
 const initialState: Palette = {
-  colors: [],
-  paletteName: '',
-  colorFormat: '',
-  rationale: '',
-  tags: [],
-  harmony: '',
-  brightness: 50,
-  saturation: 50,
-  warmth: 50,
+  currentPalette: null,
 };
 
 export const paletteSlice = createSlice({
   name: 'palette',
-  initialState,
-  reducers: {},
+  initialState: initialState,
+  reducers: {
+    saveCurrentPalette: (state, action: PayloadAction<PaletteItem>) => {
+      state.currentPalette = {
+        ...action.payload,
+      };
+    },
+  },
 });
 
-export const {} = paletteSlice.actions;
+export const { saveCurrentPalette } = paletteSlice.actions;
 export const paletteReducer = paletteSlice.reducer;

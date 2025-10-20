@@ -20,10 +20,17 @@ import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
+import { usePalette } from '@/presentation/hooks/usePalette';
 
 const PalettePage = () => {
   // Generated colors from AI
   const [prompt, setPrompt] = useState('');
+  // Using RTK Query hooks to interact with the API
+  const [generatePalette] = useGeneratePaletteMutation();
+  const [regenerateName] = useRegenerateNameMutation();
+
+  // Redux hooks for palette management
+  const { palette, setCurrentPalette } = usePalette();
 
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
   const [paletteName, setPaletteName] = useState('');
@@ -41,8 +48,6 @@ const PalettePage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
-  const [generatePalette, generateResult] = useGeneratePaletteMutation();
-  const [regenerateName, regenerateResult] = useRegenerateNameMutation();
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
@@ -67,14 +72,24 @@ const PalettePage = () => {
       initialRenderRef.current = false;
       return;
     }
-
-    // Reset sliders when new palette is generated (length changes)
-    if (generatedColors.length > 0) {
-      setBrightness(50);
-      setSaturation(50);
-      setWarmth(50);
-    }
   }, [generatedColors.length]); // Only track length, not full array
+
+  useEffect(() => {
+    // check if colors exists in the current Palette
+    if (!palette.currentPalette) return;
+
+    // If colors exist, set the state with the current palette
+    setGeneratedColors(palette.currentPalette.colors);
+    setPaletteName(palette.currentPalette.paletteName);
+    setColorFormat(palette.currentPalette.colorFormat as Format);
+    setRationale(palette.currentPalette.rationale);
+    setTags(palette.currentPalette.tags);
+    setHarmony(palette.currentPalette.harmony as HarmonyType);
+
+    setBrightness(Number(palette.currentPalette.brightness));
+    setSaturation(Number(palette.currentPalette.saturation));
+    setWarmth(Number(palette.currentPalette.warmth));
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -93,6 +108,11 @@ const PalettePage = () => {
       setTags(data.metadata?.tags ?? []);
       setPaletteName(data.paletteName ?? '');
       setExistingNames([data.paletteName]);
+
+      // Reset sliders to neutral values
+      setBrightness(50);
+      setSaturation(50);
+      setWarmth(50);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -131,6 +151,19 @@ const PalettePage = () => {
   };
 
   const handleSave = async () => {
+    // Save the current palette
+    setCurrentPalette({
+      colors: adjustedColors,
+      paletteName: paletteName,
+      colorFormat: colorFormat,
+      rationale: rationale ?? '',
+      tags: tags,
+      harmony: harmony,
+      brightness: brightness,
+      saturation: saturation,
+      warmth: warmth,
+    });
+
     const currentUser = await getCurrentUser();
 
     /**

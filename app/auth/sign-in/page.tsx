@@ -1,10 +1,13 @@
 'use client';
 
-import Link from 'next/dist/client/link';
-import { signInWithGoogle } from '@/actions/auth.actions';
+import Link from 'next/link';
 import { FcGoogle } from 'react-icons/fc';
+import { usePalette } from '@/presentation/hooks/usePalette';
+import { signInWithGoogle } from '@/actions/auth.actions';
 
 export const SignIn = () => {
+  const { palette } = usePalette();
+
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
   };
@@ -33,7 +36,7 @@ export const SignIn = () => {
             Continue with Google
           </button>
           <div>
-            <Link href='/' className='text-sm text-subtitle hover:text-white/70 underline'>
+            <Link prefetch={false} href='/' className='text-sm text-subtitle hover:text-white/70 underline'>
               Go back to Palette
             </Link>
           </div>
