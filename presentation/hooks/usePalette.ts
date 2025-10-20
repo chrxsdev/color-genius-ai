@@ -1,21 +1,25 @@
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { PaletteItem } from '@/infrastructure/interfaces/palette-slice.interface';
-import { saveCurrentPalette, selectPalette } from '@/lib/redux/features/palette/paletteSlice';
+import { selectPalette, setColorControl } from '@/lib/redux/features/palette/paletteSlice';
+import { ControlColorType } from '@/infrastructure/types/format.types';
 
 export const usePalette = () => {
   const dispatch = useAppDispatch();
-  const currentPalette = useAppSelector(selectPalette);
+  const palette = useAppSelector(selectPalette);
 
-  const setCurrentPalette = (paletteData: PaletteItem) => {
-    dispatch(saveCurrentPalette(paletteData));
+  const updateColorControl = (value: number, type: ControlColorType) => {
+    dispatch(
+      setColorControl({
+        value,
+        key: type as string,
+      })
+    );
   };
-
 
   return {
     // Props
-    currentPalette,
+    palette,
 
     // Methods
-    setCurrentPalette,
+    updateColorControl,
   };
 };

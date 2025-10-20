@@ -30,7 +30,7 @@ const PalettePage = () => {
   const [regenerateName] = useRegenerateNameMutation();
 
   // Redux hooks for palette management
-  const { currentPalette, setCurrentPalette } = usePalette();
+  const { palette, updateColorControl } = usePalette();
 
   const [generatedColors, setGeneratedColors] = useState<ColorItem[]>([]);
   const [paletteName, setPaletteName] = useState('');
@@ -62,23 +62,6 @@ const PalettePage = () => {
     [generatedColors, brightness, saturation, warmth]
   );
 
-  useEffect(() => {
-    // check if colors exists in the current Palette
-    if (!currentPalette) return;
-
-    // If colors exist, set the state with the current palette
-    setGeneratedColors(currentPalette.colors);
-    setPaletteName(currentPalette.paletteName);
-    setColorFormat(currentPalette.colorFormat as Format);
-    setRationale(currentPalette.rationale);
-    setTags(currentPalette.tags);
-    setHarmony(currentPalette.harmony as HarmonyType);
-
-    setBrightness(Number(currentPalette.brightness));
-    setSaturation(Number(currentPalette.saturation));
-    setWarmth(Number(currentPalette.warmth));
-  }, []);
-
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt to generate a palette');
@@ -101,7 +84,6 @@ const PalettePage = () => {
       setBrightness(50);
       setSaturation(50);
       setWarmth(50);
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -140,19 +122,6 @@ const PalettePage = () => {
   };
 
   const handleSave = async () => {
-    // Save the current palette
-    setCurrentPalette({
-      colors: adjustedColors,
-      paletteName: paletteName,
-      colorFormat: colorFormat,
-      rationale: rationale ?? '',
-      tags: tags,
-      harmony: harmony,
-      brightness: brightness,
-      saturation: saturation,
-      warmth: warmth,
-    });
-
     const currentUser = await getCurrentUser();
 
     /**
@@ -402,7 +371,11 @@ const PalettePage = () => {
                           Brightness
                         </label>
                         <span className='text-xs text-subtitle font-mono'>
-                          {brightness === 50 ? '0' : brightness > 50 ? `+${brightness - 50}` : `${brightness - 50}`}
+                          {palette.colorControl.brightness === 50
+                            ? '0'
+                            : palette.colorControl.brightness > 50
+                            ? `+${palette.colorControl.brightness - 50}`
+                            : `${palette.colorControl.brightness - 50}`}
                         </span>
                       </div>
                       <input
@@ -410,8 +383,8 @@ const PalettePage = () => {
                         type='range'
                         min='0'
                         max='100'
-                        value={brightness}
-                        onChange={(e) => setBrightness(Number(e.target.value))}
+                        value={palette.colorControl.brightness}
+                        onChange={(e) => updateColorControl(Number(e.target.value), 'brightness')}
                         className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
                       />
                     </div>
@@ -423,7 +396,11 @@ const PalettePage = () => {
                           Saturation
                         </label>
                         <span className='text-xs text-subtitle font-mono'>
-                          {saturation === 50 ? '0' : saturation > 50 ? `+${saturation - 50}` : `${saturation - 50}`}
+                          {palette.colorControl.saturation === 50
+                            ? '0'
+                            : palette.colorControl.saturation > 50
+                            ? `+${palette.colorControl.saturation - 50}`
+                            : `${palette.colorControl.saturation - 50}`}
                         </span>
                       </div>
                       <input
@@ -431,8 +408,8 @@ const PalettePage = () => {
                         type='range'
                         min='0'
                         max='100'
-                        value={saturation}
-                        onChange={(e) => setSaturation(Number(e.target.value))}
+                        value={palette.colorControl.saturation}
+                        onChange={(e) => updateColorControl(Number(e.target.value), 'saturation')}
                         className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
                       />
                     </div>
@@ -444,7 +421,11 @@ const PalettePage = () => {
                           Warmth
                         </label>
                         <span className='text-xs text-subtitle font-mono'>
-                          {warmth === 50 ? '0' : warmth > 50 ? `+${warmth - 50}` : `${warmth - 50}`}
+                          {palette.colorControl.warmth === 50
+                            ? '0'
+                            : palette.colorControl.warmth > 50
+                            ? `+${palette.colorControl.warmth - 50}`
+                            : `${palette.colorControl.warmth - 50}`}
                         </span>
                       </div>
                       <input
@@ -452,8 +433,8 @@ const PalettePage = () => {
                         type='range'
                         min='0'
                         max='100'
-                        value={warmth}
-                        onChange={(e) => setWarmth(Number(e.target.value))}
+                        value={palette.colorControl.warmth}
+                        onChange={(e) => updateColorControl(Number(e.target.value), 'warmth')}
                         className='w-full h-2 bg-neutral/30 rounded-xl appearance-none cursor-pointer accent-primary'
                       />
                     </div>
