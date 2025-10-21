@@ -27,7 +27,7 @@ export const InputGenerator = ({
   onKeyDown,
 }: InputGeneratorProps) => {
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 animate__animated animate__fadeInUp'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6 items-end'>
         <div className='relative'>
           <input

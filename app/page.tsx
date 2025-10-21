@@ -10,7 +10,6 @@ import { ColorVisualization } from '@/presentation/components/palette/ColorVisua
 import { GeneratedColors } from '@/presentation/components/palette/GeneratedColors';
 import { ColorControls } from '@/presentation/components/palette/ColorControls';
 import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
-import { Loader } from '@/presentation/components/Loader';
 import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
@@ -142,25 +141,11 @@ const PalettePage = () => {
     link.click();
   };
 
-  if (!isHydrated) {
-    return (
-      <div className='h-[90%] w-full flex justify-center items-center'>
-        <div className='flex items-center justify-center'>
-          <Loader className='w-10 h-10' />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <div className='mx-auto max-w-5xl'>
-        <div
-          className={
-            generatedColors.length === 0 ? 'min-h-[calc(100vh-250px)] flex flex-col justify-center' : 'my-auto'
-          }
-        >
-          <div className='text-center mb-12'>
+      <div className='flex flex-col justify-center items-center mx-auto max-w-5xl '>
+        <div className={`w-full`}>
+          <div className='text-center mb-12 animate__animated animate__fadeInUp'>
             <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
             <p className='text-2lg text-subtitle mx-auto font-light'>
               Describe the feeling or vibe you want to capture, and let Geni create a palette that matches your vision.
@@ -181,48 +166,53 @@ const PalettePage = () => {
               }
             }}
           />
-          <AiInsights rationale={rationale} tags={tags} />
         </div>
 
-        {generatedColors.length > 0 && (
-          <div className='mt-10'>
-            <div className='border-2 rounded-xl border-neutral-variant my-10'>
-              <ColorVisualization
-                colors={generatedColors}
-                brightness={brightness}
-                saturation={saturation}
-                warmth={warmth}
-                onColorChange={handleColorChange}
-              />
+        {
+          <div className='animate__animated animate__fadeInUp w-full'>
+            {isHydrated && generatedColors.length > 0 && (
+              <div className='mt-2'>
+                <div className='border-2 rounded-xl border-neutral-variant my-5'>
+                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generated Palette</h3>
+                  <ColorVisualization
+                    colors={generatedColors}
+                    brightness={brightness}
+                    saturation={saturation}
+                    warmth={warmth}
+                    onColorChange={handleColorChange}
+                  />
+                  <AiInsights rationale={rationale} tags={tags} containerClassName='mx-4 my-5' />
 
-              <GeneratedColors
-                colors={adjustedColors}
-                paletteName={paletteName}
-                colorFormat={colorFormat}
-                isRegeneratingName={isRegeneratingPaletteName}
-                rationale={rationale}
-                onNameChange={(value) => updateState({ paletteName: value })}
-                onFormatChange={(value) => updateState({ colorFormat: value })}
-                onRegenerateName={handleGenerateName}
-                onSave={handleSave}
-                onExport={handleExportPNG}
-                colorsRef={colorsGeneratedRef}
-              />
+                  <GeneratedColors
+                    colors={adjustedColors}
+                    paletteName={paletteName}
+                    colorFormat={colorFormat}
+                    isRegeneratingName={isRegeneratingPaletteName}
+                    rationale={rationale}
+                    onNameChange={(value) => updateState({ paletteName: value })}
+                    onFormatChange={(value) => updateState({ colorFormat: value })}
+                    onRegenerateName={handleGenerateName}
+                    onSave={handleSave}
+                    onExport={handleExportPNG}
+                    colorsRef={colorsGeneratedRef}
+                  />
 
-              <ColorControls
-                brightness={brightness}
-                saturation={saturation}
-                warmth={warmth}
-                onControlChange={updateColorControl}
-              />
+                  <ColorControls
+                    brightness={brightness}
+                    saturation={saturation}
+                    warmth={warmth}
+                    onControlChange={updateColorControl}
+                  />
 
-              <div className='mt-10 p-6'>
-                <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
-                <ColorCodes colors={adjustedColors} format={colorFormat} />
+                  <div className='mt-10 p-6'>
+                    <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
+                    <ColorCodes colors={adjustedColors} format={colorFormat} />
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        }
       </div>
     </div>
   );

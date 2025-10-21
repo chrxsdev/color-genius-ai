@@ -23,18 +23,23 @@ export const useColorPalette = () => {
   const [paletteState, setPaletteState] = useState<PaletteState>(DEFAULT_STATE);
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
-  useEffect(() => {
-    setIsHydrated(true);
-    const rawUserPalette = localStorage.getItem('user_palette');
-    if (!rawUserPalette) return;
 
+  useEffect(() => {
+    const rawUserPalette = localStorage.getItem('user_palette');
+    
+    if (!rawUserPalette) {
+      setIsHydrated(true);
+      return;
+    }
+    
     const parsed = JSON.parse(rawUserPalette) as PaletteState;
     setPaletteState((prev) => ({
       ...prev,
       ...parsed,
     }));
+    setIsHydrated(true);
   }, []);
-
+  
   const adjustedColors = useMemo(
     () =>
       paletteState.generatedColors.map((item) => ({
@@ -77,5 +82,6 @@ export const useColorPalette = () => {
     adjustedColors,
     updateColorControl,
     updateState,
+    setIsHydrated
   };
 };

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
-import './globals.css';
 import { Navbar } from '@/presentation/components/Navbar';
 import { Footer } from '@/presentation/components/Footer';
 import { ReduxProvider } from '@/lib/redux/provider';
+
+import './globals.css';
+import 'animate.css';
 
 const spaceGroteskFont = Space_Grotesk({
   variable: '--font-space-grotesk',

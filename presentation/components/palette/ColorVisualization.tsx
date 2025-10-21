@@ -18,7 +18,6 @@ export const ColorVisualization = ({
 }: ColorVisualizationProps) => {
   return (
     <div className='mt-2 space-y-8 p-6'>
-      <h3 className='text-xl font-bold text-white'>Color Visualization</h3>
       <ColorWheel
         colors={colors.map((item) => item.color)}
         size={400}

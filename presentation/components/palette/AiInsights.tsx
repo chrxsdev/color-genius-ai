@@ -1,13 +1,14 @@
 interface AiInsightsProps {
+  containerClassName?: string;
   rationale: string | null;
   tags: string[];
 }
 
-export const AiInsights = ({ rationale, tags }: AiInsightsProps) => {
+export const AiInsights = ({ rationale, tags, containerClassName = '' }: AiInsightsProps) => {
   if (!rationale && tags.length === 0) return null;
 
   return (
-    <div className='mt-6 p-6 rounded-xl bg-neutral-variant/20 border-2 border-neutral-variant/50 space-y-4'>
+    <div className={`mt-6 p-6 rounded-xl bg-neutral-variant/20 border-2 border-neutral-variant/50 space-y-4 ${containerClassName}`}>
       {rationale && (
         <div>
           <h4 className='text-sm font-bold text-primary mb-2'>Why this colors?</h4>
