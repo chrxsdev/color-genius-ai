@@ -143,9 +143,11 @@ const PalettePage = () => {
 
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <div className='flex flex-col justify-center items-center mx-auto max-w-5xl '>
-        <div className={`w-full`}>
-          <div className='text-center mb-12 animate__animated animate__fadeInUp'>
+      <div
+        className={`flex flex-col justify-center items-center mx-auto max-w-4xl`}
+      >
+        <div className={`w-full animate__animated animate__fadeInDown`}>
+          <div className='text-center mb-12'>
             <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
             <p className='text-2lg text-subtitle mx-auto font-light'>
               Describe the feeling or vibe you want to capture, and let Geni create a palette that matches your vision.
