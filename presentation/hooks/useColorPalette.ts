@@ -21,19 +21,18 @@ const DEFAULT_STATE: PaletteState = {
 
 export const useColorPalette = () => {
   const [paletteState, setPaletteState] = useState<PaletteState>(DEFAULT_STATE);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   useEffect(() => {
     setIsHydrated(true);
     const rawUserPalette = localStorage.getItem('user_palette');
-    if (rawUserPalette) {
-      const parsed = JSON.parse(rawUserPalette) as PaletteState;
-      setPaletteState((prev) => ({
-        ...prev,
-        ...parsed,
-      }));
-    }
+    if (!rawUserPalette) return;
+
+    const parsed = JSON.parse(rawUserPalette) as PaletteState;
+    setPaletteState((prev) => ({
+      ...prev,
+      ...parsed,
+    }));
   }, []);
 
   const adjustedColors = useMemo(
@@ -75,7 +74,6 @@ export const useColorPalette = () => {
   return {
     ...paletteState,
     isHydrated,
-    isLoading,
     adjustedColors,
     updateColorControl,
     updateState,
