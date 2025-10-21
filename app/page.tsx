@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import { redirect } from 'next/navigation';
 
@@ -18,6 +18,7 @@ import { ROUTES } from '@/utils/constants/routes';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
   const {
     generatedColors,
     adjustedColors,
@@ -41,6 +42,11 @@ const PalettePage = () => {
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
+
+  // Handle initial mount animation
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -142,11 +148,13 @@ const PalettePage = () => {
   };
 
   return (
-    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='mx-auto px-4 sm:px-6 lg:px-8'>
       <div
-        className={`flex flex-col justify-center items-center mx-auto max-w-4xl`}
+        className={`flex flex-col items-center mx-auto max-w-4xl ${
+          !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-12'
+        } transition-all duration-75`}
       >
-        <div className={`w-full animate__animated animate__fadeInDown`}>
+        <div className={`w-full animate__animated ${isMounted ? 'animate__fadeInDown' : 'opacity-0'}`}>
           <div className='text-center mb-12'>
             <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
             <p className='text-2lg text-subtitle mx-auto font-light'>
@@ -171,7 +179,7 @@ const PalettePage = () => {
         </div>
 
         {
-          <div className='animate__animated animate__fadeInUp w-full'>
+          <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full`}>
             {isHydrated && generatedColors.length > 0 && (
               <div className='mt-2'>
                 <div className='border-2 rounded-xl border-neutral-variant my-5'>
