@@ -10,6 +10,12 @@
 !.yarn/releases
 !.yarn/versions
 
+# github
+/.github
+
+# terminal
+WARP.md
+
 # testing
 /coverage
 

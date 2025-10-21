@@ -1,103 +1,231 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
+import { redirect } from 'next/navigation';
+
+import { InputGenerator } from '@/presentation/components/palette/InputGenerator';
+import { AiInsights } from '@/presentation/components/palette/AiInsights';
+import { ColorVisualization } from '@/presentation/components/palette/ColorVisualization';
+import { GeneratedColors } from '@/presentation/components/palette/GeneratedColors';
+import { ColorControls } from '@/presentation/components/palette/ColorControls';
+import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
+import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
+import { getCurrentUser } from '@/actions/auth.actions';
+import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
+import { useColorPalette } from '@/presentation/hooks/useColorPalette';
+import { ROUTES } from '@/utils/constants/routes';
+
+const PalettePage = () => {
+  const [prompt, setPrompt] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+  const {
+    generatedColors,
+    adjustedColors,
+    paletteName,
+    colorFormat,
+    rationale,
+    tags,
+    harmony,
+    colorOptionControl: { brightness, saturation, warmth },
+    isHydrated,
+    updateState,
+    updateColorControl,
+  } = useColorPalette();
+
+  const [generatePalette] = useGeneratePaletteMutation();
+  const [regenerateName] = useRegenerateNameMutation();
+  const [existingNames, setExistingNames] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
+
+  // Color Reference to export
+  const colorsGeneratedRef = useRef<HTMLDivElement>(null);
+
+  // Handle initial mount animation
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError('Please enter a prompt to generate a palette');
+      return;
+    }
+
+    setError(null);
+    try {
+      setIsGenerating(true);
+      const data = await generatePalette({ prompt: prompt.trim(), harmony, colorCount: DEFAULT_COLOR_COUNT }).unwrap();
+
+      // Update state with AI-generated palette
+      updateState({
+        generatedColors: data.colors,
+        rationale: data.metadata?.rationale ?? null,
+        tags: data.metadata?.tags ?? [],
+        paletteName: data.paletteName ?? '',
+      });
+      setExistingNames([data.paletteName]);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateName = async () => {
+    if (!rationale) {
+      setError('Cannot regenerate palette name without rationale');
+      return;
+    }
+
+    setError(null);
+    try {
+      setIsRegeneratingPaletteName(true);
+      const data = await regenerateName({ rationale, harmony, generatedNames: existingNames }).unwrap();
+
+      updateState({ paletteName: data.name });
+      setExistingNames((prev) => [...prev, data.name].filter(Boolean));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      console.error('Palette name regeneration error:', err);
+    } finally {
+      setIsRegeneratingPaletteName(false);
+    }
+  };
+
+  const handleColorChange = (index: number, newColor: string) => {
+    const newColors = [...generatedColors];
+    newColors[index] = { ...newColors[index], color: newColor };
+    updateState({ generatedColors: newColors });
+  };
+
+  const handleSave = async () => {
+    const currentUser = await getCurrentUser();
+
+    /**
+     * TODO:
+     * - [x] If user is not authenticated, save the current palette in redux state and then redirect to sign-in page and return with the previous values
+     * - [ ] If user is authenticated, save the palette and redirect to dashboard
+     */
+
+    if (!currentUser) {
+      // Save palette in local storage for unauthenticated users
+      localStorage.setItem(
+        'user_palette',
+        JSON.stringify({
+          generatedColors: adjustedColors,
+          paletteName,
+          colorFormat,
+          rationale,
+          tags,
+          harmony,
+          colorOptionControl: { brightness, saturation, warmth },
+        })
+      );
+      return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
+    }
+  };
+
+  const handleExportPNG = async () => {
+    if (!colorsGeneratedRef.current) return;
+
+    const dataUrl = await toPng(colorsGeneratedRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      style: {
+        backgroundColor: '#1a1c19',
+      },
+    });
+
+    const link = document.createElement('a');
+    link.download = `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className='mx-auto px-4 sm:px-6 lg:px-8'>
+      <div
+        className={`flex flex-col items-center mx-auto max-w-4xl ${
+          !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-12'
+        } transition-all duration-75`}
+      >
+        <div className={`w-full animate__animated ${isMounted ? 'animate__fadeInDown' : 'opacity-0'}`}>
+          <div className='text-center mb-12'>
+            <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
+            <p className='text-2lg text-subtitle mx-auto font-light'>
+              Describe the feeling or vibe you want to capture, and let Geni create a palette that matches your vision.
+            </p>
+          </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          <InputGenerator
+            prompt={prompt}
+            harmony={harmony}
+            isGenerating={isGenerating}
+            error={error}
+            onPromptChange={setPrompt}
+            onHarmonyChange={(value) => updateState({ harmony: value })}
+            onGenerate={handleGenerate}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isGenerating && prompt.trim()) {
+                handleGenerate();
+              }
+            }}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {
+          <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full`}>
+            {isHydrated && generatedColors.length > 0 && (
+              <div className='mt-2'>
+                <div className='border-2 rounded-xl border-neutral-variant my-5'>
+                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generated Palette</h3>
+                  <ColorVisualization
+                    colors={generatedColors}
+                    brightness={brightness}
+                    saturation={saturation}
+                    warmth={warmth}
+                    onColorChange={handleColorChange}
+                  />
+                  <AiInsights rationale={rationale} tags={tags} containerClassName='mx-4 my-5' />
+
+                  <GeneratedColors
+                    colors={adjustedColors}
+                    paletteName={paletteName}
+                    colorFormat={colorFormat}
+                    isRegeneratingName={isRegeneratingPaletteName}
+                    rationale={rationale}
+                    onNameChange={(value) => updateState({ paletteName: value })}
+                    onFormatChange={(value) => updateState({ colorFormat: value })}
+                    onRegenerateName={handleGenerateName}
+                    onSave={handleSave}
+                    onExport={handleExportPNG}
+                    colorsRef={colorsGeneratedRef}
+                  />
+
+                  <ColorControls
+                    brightness={brightness}
+                    saturation={saturation}
+                    warmth={warmth}
+                    onControlChange={updateColorControl}
+                  />
+
+                  <div className='mt-10 p-6'>
+                    <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
+                    <ColorCodes colors={adjustedColors} format={colorFormat} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        }
+      </div>
     </div>
   );
-}
+};
+
+export default PalettePage;
