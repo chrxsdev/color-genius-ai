@@ -1,27 +1,41 @@
+'use client';
+
 import { useEffect, useMemo, useState } from 'react';
-import { usePalette } from './usePalette';
 import { PaletteState } from '@/infrastructure/interfaces/palette-state.interface';
 import { ControlColorOptions } from '@/infrastructure/interfaces/palette-slice.interface';
 import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustments';
 
-export const useGeneratorControls = () => {
-  const { palette } = usePalette();
-  
-  const [paletteState, setPaletteState] = useState<PaletteState>({
-    generatedColors: [],
-    paletteName: '',
-    colorFormat: 'HEX',
-    rationale: null,
-    tags: [],
-    harmony: 'analogous',
-    colorOptionControl: {
-      brightness: 50,
-      saturation: 50,
-      warmth: 50,
-    },
-  });
+const DEFAULT_STATE: PaletteState = {
+  generatedColors: [],
+  paletteName: '',
+  colorFormat: 'HEX',
+  rationale: null,
+  tags: [],
+  harmony: 'analogous',
+  colorOptionControl: {
+    brightness: 50,
+    saturation: 50,
+    warmth: 50,
+  },
+};
 
-  // Apply slider adjustments to generated colors in real-time
+export const useColorPalette = () => {
+  const [paletteState, setPaletteState] = useState<PaletteState>(DEFAULT_STATE);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+    const rawUserPalette = localStorage.getItem('user_palette');
+    if (rawUserPalette) {
+      const parsed = JSON.parse(rawUserPalette) as PaletteState;
+      setPaletteState((prev) => ({
+        ...prev,
+        ...parsed,
+      }));
+    }
+  }, []);
+
   const adjustedColors = useMemo(
     () =>
       paletteState.generatedColors.map((item) => ({
@@ -40,24 +54,6 @@ export const useGeneratorControls = () => {
       paletteState.colorOptionControl.warmth,
     ]
   );
-
-  useEffect(() => {
-    if (!palette || palette.colors.length === 0) return;
-
-    setPaletteState({
-      generatedColors: palette.colors,
-      paletteName: palette.paletteName,
-      colorFormat: palette.colorFormat,
-      rationale: palette.rationale,
-      tags: palette.tags,
-      harmony: palette.harmony,
-      colorOptionControl: {
-        brightness: palette.colorControl.brightness,
-        saturation: palette.colorControl.saturation,
-        warmth: palette.colorControl.warmth,
-      },
-    });
-  }, [palette]);
 
   const updateColorControl = (controls: ControlColorOptions) => {
     setPaletteState((prev) => ({
@@ -78,6 +74,8 @@ export const useGeneratorControls = () => {
 
   return {
     ...paletteState,
+    isHydrated,
+    isLoading,
     adjustedColors,
     updateColorControl,
     updateState,

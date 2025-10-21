@@ -17,8 +17,7 @@ import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
 import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
-import { useGeneratorControls } from '@/presentation/hooks/useGeneratorControls';
-import { usePalette } from '@/presentation/hooks/usePalette';
+import { useColorPalette } from '@/presentation/hooks/useColorPalette';
 import { ROUTES } from '@/utils/constants/routes';
 
 const PalettePage = () => {
@@ -34,10 +33,11 @@ const PalettePage = () => {
     tags,
     harmony,
     colorOptionControl: { brightness, saturation, warmth },
+    isHydrated,
+    isLoading,
     updateState,
     updateColorControl,
-  } = useGeneratorControls();
-  const { savePaletteChanges } = usePalette();
+  } = useColorPalette();
 
   // Using RTK Query hooks to interact with the API
   const [generatePalette] = useGeneratePaletteMutation();
@@ -72,7 +72,6 @@ const PalettePage = () => {
         paletteName: data.paletteName ?? '',
       });
       setExistingNames([data.paletteName]);
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -115,21 +114,24 @@ const PalettePage = () => {
 
     /**
      * TODO:
-     * - If user is not authenticated, save the current palette in redux state and then redirect to sign-in page
-     * - If user is authenticated, save the palette and redirect to dashboard
+     * - [x] If user is not authenticated, save the current palette in redux state and then redirect to sign-in page and return with the previous values
+     * - [ ] If user is authenticated, save the palette and redirect to dashboard
      */
 
     if (!currentUser) {
-      // Save the last changes of the color palette
-      savePaletteChanges({
-        colors: generatedColors,
-        paletteName,
-        colorFormat,
-        rationale,
-        tags,
-        harmony,
-        colorControl: { brightness, saturation, warmth },
-      });
+      // Save palette in local storage for unauthenticated users
+      localStorage.setItem(
+        'user_palette',
+        JSON.stringify({
+          generatedColors: adjustedColors,
+          paletteName,
+          colorFormat,
+          rationale,
+          tags,
+          harmony,
+          colorOptionControl: { brightness, saturation, warmth },
+        })
+      );
       return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
     }
   };
@@ -150,6 +152,15 @@ const PalettePage = () => {
     link.href = dataUrl;
     link.click();
   };
+
+  if (!isHydrated)
+    return (
+      <div className='w-full h-[90%] flex justify-center items-center'>
+        <div className='flex items-center justify-center'>
+          <Loader className='w-10 h-10' />
+        </div>
+      </div>
+    );
 
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>

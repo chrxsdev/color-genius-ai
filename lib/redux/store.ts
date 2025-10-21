@@ -1,11 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { paletteReducer } from './features/palette/paletteSlice';
 import { paletteApi } from './api/paletteApi';
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
-      palette: paletteReducer,
       [paletteApi.reducerPath]: paletteApi.reducer,
     },
     devTools: process.env.NODE_ENV !== 'production',
