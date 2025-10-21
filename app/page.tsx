@@ -19,6 +19,7 @@ import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 import { useGeneratorControls } from '@/presentation/hooks/useGeneratorControls';
 import { usePalette } from '@/presentation/hooks/usePalette';
+import { ROUTES } from '@/utils/constants/routes';
 
 const PalettePage = () => {
   // Generated colors from AI
@@ -129,7 +130,7 @@ const PalettePage = () => {
         harmony,
         colorControl: { brightness, saturation, warmth },
       });
-      return redirect('auth/sign-in');
+      return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
     }
   };
 

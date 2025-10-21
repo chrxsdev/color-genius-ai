@@ -5,17 +5,18 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/supabase';
+import { ROUTES } from '@/utils/constants/routes';
 
-const signInWith = (provider: Provider) => async () => {
+const signInWith = (provider: Provider) => async (next: string = ROUTES.dashboard) => {
   const supabase = await createClient();
   
-  const authCallbackUrl = `${process.env.URI}/api/auth/callback?next=/dashboard`;
+  const authCallbackUrl = `${process.env.URI}/api/auth/callback?next=${next}`;
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo: authCallbackUrl },
   });
-  
+
   if (error) {
     console.error('Error during sign-in:', error.message);
     throw new Error('Sign-in failed');
@@ -31,7 +32,7 @@ const signOut = async () => {
   redirect('/');
 };
 
-const signInWithGoogle = signInWith('google');
+const signInWithGoogle = (next?: string) => signInWith('google')(next);
 
 const getCurrentUser = async () => {
   const supabase = await createClient();

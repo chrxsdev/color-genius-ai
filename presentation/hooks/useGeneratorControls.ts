@@ -6,6 +6,7 @@ import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustme
 
 export const useGeneratorControls = () => {
   const { palette } = usePalette();
+  
   const [paletteState, setPaletteState] = useState<PaletteState>({
     generatedColors: [],
     paletteName: '',

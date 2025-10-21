@@ -1,15 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
-import { usePalette } from '@/presentation/hooks/usePalette';
 import { signInWithGoogle } from '@/actions/auth.actions';
+import { ROUTES } from '@/utils/constants/routes';
 
 export const SignIn = () => {
-  const { palette } = usePalette();
+  const params = useSearchParams();
+  const hintedNext = params.get('next') ?? ROUTES.dashboard;
 
   const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
+    await signInWithGoogle(hintedNext);
   };
 
   return (
