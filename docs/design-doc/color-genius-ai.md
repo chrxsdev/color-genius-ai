@@ -161,7 +161,7 @@ erDiagram
         jsonb color_control
         text rationale
         text[] tags
-        jsonb isPublic
+        boolean is_public
         timestamp created_at
         timestamp updated_at
     }
@@ -171,7 +171,7 @@ erDiagram
 
 ```sql
 -- Profiles table (extends Supabase auth.users)
-CREATE TABLE genius_ai_.profiles (
+CREATE TABLE color_genius_ai.profiles (
     id uuid references auth.users primary key,
     username text unique,
     avatar_url text,
@@ -180,9 +180,9 @@ CREATE TABLE genius_ai_.profiles (
 );
 
 -- Palettes table
-CREATE TABLE genius_ai_.palettes (
+CREATE TABLE color_genius_ai.palettes (
     id uuid primary key default gen_random_uuid(),
-    user_id uuid references auth.users not null,
+    user_id uuid references color_genius_ai.profiles not null,
     palette_name text not null,
     color_format text not null,
     harmony_type text not null,
@@ -190,7 +190,7 @@ CREATE TABLE genius_ai_.palettes (
     color_control jsonb not null,
     rationale text,
     tags text[] not null,
-    isPublic boolean not null default false,
+    is_public boolean not null default false,
     created_at timestamp with time zone default timezone('utc'::text, now()),
     updated_at timestamp with time zone,
     
@@ -204,7 +204,6 @@ CREATE TABLE genius_ai_.palettes (
 
 -- Indexes for performance
 CREATE INDEX idx_palettes_user_id ON palettes(user_id);
-CREATE INDEX idx_palettes_visibility ON palettes((visibility->>'isPublic'));
 CREATE INDEX idx_palettes_tags ON palettes USING gin(tags);
 ```
 
@@ -212,37 +211,37 @@ CREATE INDEX idx_palettes_tags ON palettes USING gin(tags);
 
 ```sql
 -- Enable RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE palettes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE color_genius_ai.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE color_genius_ai.palettes ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
+-- color_genius_ai.profiles policies
 CREATE POLICY "Users can view own profile" 
-    ON profiles FOR SELECT 
+    ON color_genius_ai.profiles FOR SELECT 
     USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile" 
-    ON profiles FOR UPDATE 
+    ON color_genius_ai.profiles FOR UPDATE 
     USING (auth.uid() = id);
 
--- Palettes policies
-CREATE POLICY "Users can view own palettes" 
-    ON palettes FOR SELECT 
+-- color_genius_ai.color_genius_ai.palettes policies
+CREATE POLICY "Users can view own color_genius_ai.color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR SELECT 
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Anyone can view public palettes" 
-    ON palettes FOR SELECT 
-    USING ((visibility->>'isPublic')::boolean = true);
+CREATE POLICY "Anyone can view public color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR SELECT 
+    USING (is_public = true);
 
-CREATE POLICY "Users can insert own palettes" 
-    ON palettes FOR INSERT 
+CREATE POLICY "Users can insert own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR INSERT 
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own palettes" 
-    ON palettes FOR UPDATE 
+CREATE POLICY "Users can update own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR UPDATE 
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own palettes" 
-    ON palettes FOR DELETE
+CREATE POLICY "Users can delete own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR DELETE
     USING (auth.uid() = user_id);
 ```
 
