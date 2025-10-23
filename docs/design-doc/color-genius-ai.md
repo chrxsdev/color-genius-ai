@@ -126,6 +126,150 @@ If we want to restore the richer pipeline (OKLCH, accessibility checks, persiste
 
 ---
 
+## 8. Database Implementation
+
+### Database Architecture Overview
+
+The application uses Supabase for data persistence with a focus on simplicity and performance. The database design follows a straightforward model with two main tables: `profiles` and `palettes`. The choice of using JSONB for color and control data maintains flexibility while providing good query performance.
+
+```mermaid
+erDiagram
+    auth_users ||--o{ profiles : "has one"
+    auth_users ||--o{ palettes : "creates many"
+    
+    auth_users {
+        uuid id PK
+        string email
+        timestamp last_sign_in
+    }
+
+    profiles {
+        uuid id PK,FK
+        string username
+        string avatar_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    palettes {
+        uuid id PK
+        uuid user_id FK
+        string palette_name
+        string color_format
+        string harmony_type
+        jsonb colors
+        jsonb color_control
+        text rationale
+        text[] tags
+        jsonb isPublic
+        timestamp created_at
+        timestamp updated_at
+    }
+```
+
+### Schema Definition
+
+```sql
+-- Profiles table (extends Supabase auth.users)
+CREATE TABLE genius_ai_.profiles (
+    id uuid references auth.users primary key,
+    username text unique,
+    avatar_url text,
+    created_at timestamp with time zone default timezone('utc'::text, now()),
+    updated_at timestamp with time zone
+);
+
+-- Palettes table
+CREATE TABLE genius_ai_.palettes (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid references auth.users not null,
+    palette_name text not null,
+    color_format text not null,
+    harmony_type text not null,
+    colors jsonb not null,
+    color_control jsonb not null,
+    rationale text,
+    tags text[] not null,
+    isPublic boolean not null default false,
+    created_at timestamp with time zone default timezone('utc'::text, now()),
+    updated_at timestamp with time zone,
+    
+    constraint valid_colors check (jsonb_array_length(colors) between 3 and 8),
+    constraint valid_color_control check (
+        color_control ? 'brightness' and 
+        color_control ? 'saturation' and 
+        color_control ? 'warmth'
+    )
+);
+
+-- Indexes for performance
+CREATE INDEX idx_palettes_user_id ON palettes(user_id);
+CREATE INDEX idx_palettes_visibility ON palettes((visibility->>'isPublic'));
+CREATE INDEX idx_palettes_tags ON palettes USING gin(tags);
+```
+
+### Row Level Security Policies
+
+```sql
+-- Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE palettes ENABLE ROW LEVEL SECURITY;
+
+-- Profiles policies
+CREATE POLICY "Users can view own profile" 
+    ON profiles FOR SELECT 
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+    ON profiles FOR UPDATE 
+    USING (auth.uid() = id);
+
+-- Palettes policies
+CREATE POLICY "Users can view own palettes" 
+    ON palettes FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can view public palettes" 
+    ON palettes FOR SELECT 
+    USING ((visibility->>'isPublic')::boolean = true);
+
+CREATE POLICY "Users can insert own palettes" 
+    ON palettes FOR INSERT 
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own palettes" 
+    ON palettes FOR UPDATE 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own palettes" 
+    ON palettes FOR DELETE
+    USING (auth.uid() = user_id);
+```
+
+### Performance Considerations
+
+1. **JSONB Storage**
+   - Colors and controls stored as JSONB for flexibility
+   - Indexed visibility field for public palette queries
+   - GIN index on tags for fast tag searches
+
+2. **Query Optimization**
+   - User_id index for fast user palette retrieval
+   - Visibility condition pushed to index scan
+   - Array overlap operator (&&) for efficient tag searches
+
+3. **Data Integrity**
+   - Check constraints ensure valid color arrays
+   - Check constraints validate control object structure
+   - Foreign key constraints maintain referential integrity
+
+### Migration Strategy
+
+The schema supports future extensions through:
+- JSONB fields for flexible color and control data
+- Array type for tags allowing easy additions
+- Visibility JSONB object for extended privacy controls
+
 This document has been updated to reflect the code currently present in the repository. If you want me to also align other docs, tests, or add a short README snippet showing how to run the API locally (env vars to set), tell me and I will add it.
 
 ### Authentication and Authorization Model
@@ -449,7 +593,7 @@ _Note: Simplified AI approach with single provider (GPT-4o mini) reduces complex
 
 10. **AI Provider Dependencies**: Simplified single provider approach
 
-    - **Single Provider**: OpenAI GPT-4o mini (reliable, cost-effective at $0.15/1M tokens)
+    - **Single Provider**: Gemini (reliable, cost-effective at $0.15/1M tokens)
     - **Fallback Strategy**: Static pre-generated palettes for API failures
     - **Monitoring**: Track success rates, response times, and costs
     - **Reliability**: 99%+ uptime expected from OpenAI infrastructure
@@ -457,10 +601,8 @@ _Note: Simplified AI approach with single provider (GPT-4o mini) reduces complex
 11. **Environment Variables Management**:
 
     ```bash
-    # Supabase Edge Function Environment
-    OPENAI_API_KEY=sk-proj-xxx           # GPT-4o mini API key
-    SUPABASE_URL=https://xxx.supabase.co
-    SUPABASE_SERVICE_ROLE_KEY=xxx
+    GOOGLE_GENERATIVE_AI_API_KEY=sk-proj-xxx           # Gemini API key
+    SUPABASE_ENVS
     ```
 
 12. **Third-party Dependencies**: Risk assessment for critical libraries?

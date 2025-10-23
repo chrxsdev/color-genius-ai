@@ -26,7 +26,6 @@ An AI-first app that generates usable, web-ready color palettes from a user’s 
 - Architecture
   - Nextjs with Redux as State Management and a color-engine utility module.
   - Authentication with Supabase.
-  - Supabase Edge Function to call the LLM securely and return strict JSON.
   - Optional persistence in Supabase (palettes, colors, metadata) with RLS if auth is enabled.
 
 - UX and accessibility
