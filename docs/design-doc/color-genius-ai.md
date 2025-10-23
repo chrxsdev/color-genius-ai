@@ -135,7 +135,7 @@ The application uses Supabase for data persistence with a focus on simplicity an
 ```mermaid
 erDiagram
     auth_users ||--o{ profiles : "has one"
-    auth_users ||--o{ palettes : "creates many"
+    profiles ||--o{ palettes : "creates many"
     
     auth_users {
         uuid id PK
