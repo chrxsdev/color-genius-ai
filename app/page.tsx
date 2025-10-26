@@ -15,6 +15,9 @@ import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 import { useColorPalette } from '@/presentation/hooks/useColorPalette';
 import { ROUTES } from '@/utils/constants/routes';
+import { addPalette } from '@/actions/palette.actions';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { Loader } from '@/presentation/components/Loader';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
@@ -39,6 +42,7 @@ const PalettePage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
@@ -104,14 +108,11 @@ const PalettePage = () => {
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
+
     const currentUser = await getCurrentUser();
 
-    /**
-     * TODO:
-     * - [x] If user is not authenticated, save the current palette in redux state and then redirect to sign-in page and return with the previous values
-     * - [ ] If user is authenticated, save the palette and redirect to dashboard
-     */
-
+    // If user is not authenticated, redirect to auth
     if (!currentUser) {
       // Save palette in local storage for unauthenticated users
       localStorage.setItem(
@@ -127,6 +128,24 @@ const PalettePage = () => {
         })
       );
       return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
+    }
+
+    // If user is logged, save the palette and redirecting to the dashboard and clean storage
+
+    const result = await addPalette({
+      palette_name: paletteName,
+      colors: adjustedColors,
+      color_format: colorFormat,
+      rationale,
+      tags,
+      harmony_type: harmony as HarmonyType,
+      color_control: { brightness, saturation, warmth },
+      user_id: currentUser.id,
+    });
+
+    if (result.success) {
+      localStorage.removeItem('user_palette');
+      return redirect(`${ROUTES.dashboard}`);
     }
   };
 
@@ -146,6 +165,13 @@ const PalettePage = () => {
     link.href = dataUrl;
     link.click();
   };
+
+  if (isSaving)
+    return (
+      <div className='flex justify-center items-center min-h-[80dvh]'>
+        <Loader className='w-10 h-10' />
+      </div>
+    );
 
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8'>
@@ -205,6 +231,7 @@ const PalettePage = () => {
                     onSave={handleSave}
                     onExport={handleExportPNG}
                     colorsRef={colorsGeneratedRef}
+                    isSaving={isSaving}
                   />
 
                   <ColorControls

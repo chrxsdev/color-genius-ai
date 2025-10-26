@@ -4,6 +4,7 @@ import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 import { ColorCard } from './ColorCard';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { Format } from '@/infrastructure/types/format.types';
+import { Loader } from '../Loader';
 
 interface GeneratedColorsProps {
   colors: ColorItem[];
@@ -14,6 +15,7 @@ interface GeneratedColorsProps {
   onNameChange: (value: string) => void;
   onFormatChange: (value: Format) => void;
   onRegenerateName: () => void;
+  isSaving?: boolean;
   onSave: () => void;
   onExport: () => void;
   colorsRef: React.RefObject<HTMLDivElement | null>;
@@ -31,6 +33,7 @@ export const GeneratedColors = ({
   onSave,
   onExport,
   colorsRef,
+  isSaving = false,
 }: GeneratedColorsProps) => {
   return (
     <div className='mt-2 space-y-4 p-6'>
@@ -51,9 +54,7 @@ export const GeneratedColors = ({
             className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
             title='Regenerate Palette Name'
           >
-            <SiGooglegemini
-              className={`text-base text-primary ${isRegeneratingName ? 'animate-pulse' : ''}`}
-            />
+            <SiGooglegemini className={`text-base text-primary ${isRegeneratingName ? 'animate-pulse' : ''}`} />
           </button>
         </div>
       </div>
@@ -77,9 +78,12 @@ export const GeneratedColors = ({
         <div className='flex items-center gap-3'>
           <button
             onClick={onSave}
-            className='flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
+            disabled={isSaving}
+            className={`flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 transition-colors cursor-pointer ${
+              isSaving ? 'bg-neutral-variant/50' : 'bg-neutral-variant/20 hover:bg-neutral-variant/30'
+            }`}
           >
-            <IoHeartOutline className='text-lg text-white' />
+            {isSaving ? <Loader className='w-4 h-4' /> : <IoHeartOutline className='text-lg text-white' />}
             <span className='text-sm font-medium text-white'>Save</span>
           </button>
           <button
