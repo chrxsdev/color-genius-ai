@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { Navbar } from '@/presentation/components/Navbar';
+import { Navbar } from '@/presentation/components/navbar/Navbar';
 import { Footer } from '@/presentation/components/Footer';
 
 const SiteLayout = ({

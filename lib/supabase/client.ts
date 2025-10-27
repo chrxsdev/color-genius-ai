@@ -1,3 +1,5 @@
+'use client';
+
 import { createBrowserClient } from '@supabase/ssr';
 
 // Create a supabase client on the browser with project's credentials

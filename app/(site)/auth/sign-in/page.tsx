@@ -15,7 +15,7 @@ export const SignIn = () => {
   };
 
   return (
-    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12 animate__animated animate__fadeInDown'>
       <div className='min-h-[calc(100vh-250px)] flex flex-col justify-center items-center'>
         {/* Header Section */}
         <div className='text-center mb-14'>
