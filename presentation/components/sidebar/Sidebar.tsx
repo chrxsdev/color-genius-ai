@@ -4,11 +4,13 @@ import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { FaPalette, FaMagic } from 'react-icons/fa';
 
 import { ROUTES } from '@/utils/constants/routes';
 import { Logo } from '../Logo';
 import { signOut } from '@/actions/auth.actions';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface SidebarProps {
   user: User | null;
@@ -24,6 +26,7 @@ interface NavItem {
 
 export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
   const pathname = usePathname();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -46,7 +49,12 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
   };
 
   const handleSignOut = async () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const confirmSignOut = async () => {
     await signOut();
+    setLogoutDialogOpen(false);
   };
 
   return (
@@ -128,6 +136,17 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
           </div>
         )}
       </aside>
+
+      <ConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={confirmSignOut}
+        title='Sign Out'
+        description='Are you sure you want to sign out?'
+        confirmText='Sign Out'
+        cancelText='Cancel'
+        variant='default'
+      />
     </>
   );
 };

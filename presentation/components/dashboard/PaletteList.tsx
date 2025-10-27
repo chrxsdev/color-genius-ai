@@ -1,20 +1,23 @@
 'use client';
 
-import { useOptimistic, useTransition } from 'react';
+import { useOptimistic, useTransition, useState } from 'react';
 import { updatePaletteVisibility, deletePalette } from '@/actions/palette.actions';
 import { PaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { PaletteCard } from './PaletteCard';
 import { IoIosColorPalette } from 'react-icons/io';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface PaletteListProps {
   initialPalettes: PaletteResponse[];
 }
 
-type OptimisticAction = { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean } | { type: 'DELETE'; id: string };
+type OptimisticAction = { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean };
 
 export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   const [, startTransition] = useTransition();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [paletteToDelete, setPaletteToDelete] = useState<string | null>(null);
 
   const [optimisticPalettes, setOptimisticPalettes] = useOptimistic<PaletteResponse[], OptimisticAction>(
     initialPalettes,
@@ -50,28 +53,32 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   };
 
   const handleDownload = (id: string) => {
-    // TODO: Implement download functionality (export as PNG/JSON)
+    // TODO: Implement download functionality (export as PNG)
     console.log(`Download palette ${id}`);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this palette?')) {
-      return;
-    }
+    setPaletteToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!paletteToDelete) return;
 
     try {
       const user = await getCurrentUser();
       if (!user) return;
 
-      const result = await deletePalette(id, user.id);
+      const result = await deletePalette(paletteToDelete, user.id);
 
       if (!result.success) {
         console.error('Failed to delete palette:', result.error);
-        alert('Failed to delete palette. Please try again.');
       }
     } catch (err) {
       console.error('Error deleting palette:', err);
-      alert('An error occurred. Please try again.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setPaletteToDelete(null);
     }
   };
 
@@ -108,6 +115,17 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
           onDelete={handleDelete}
         />
       ))}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title='Delete Palette'
+        description='Are you sure you want to delete this palette? This action cannot be undone.'
+        confirmText='Delete'
+        cancelText='Cancel'
+        variant='destructive'
+      />
     </div>
   );
 };
