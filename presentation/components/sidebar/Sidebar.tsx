@@ -1,6 +1,7 @@
 'use client';
 
 import { User } from '@supabase/supabase-js';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaPalette, FaMagic } from 'react-icons/fa';
@@ -98,11 +99,21 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
         {/* User Profile Section */}
         {user && (
           <div className='flex items-center gap-4 border-t border-neutral-variant/30 pt-6'>
-            <img
-              src={user.user_metadata?.avatar_url || '/default-avatar.png'}
-              alt={user.user_metadata?.full_name || 'User Avatar'}
-              className='h-10 w-10 rounded-full object-cover bg-neutral-variant'
-            />
+            <div className='relative h-10 w-10 rounded-full overflow-hidden bg-neutral-variant/30'>
+              {user.user_metadata?.avatar_url ? (
+                <Image
+                  src={user.user_metadata.avatar_url}
+                  alt={user.user_metadata?.full_name || 'User Avatar'}
+                  fill
+                  className='object-cover'
+                  sizes='40px'
+                />
+              ) : (
+                <div className='w-full h-full flex items-center justify-center bg-primary/30 text-primary text-lg font-bold'>
+                  {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
+            </div>
             <div className='flex-1 min-w-0'>
               <p className='font-bold text-slate-800 dark:text-white truncate'>
                 {user.user_metadata?.full_name || 'User'}

@@ -7,7 +7,7 @@ interface LoaderProps {
   radius?: number;
 }
 
-export const Loader = ({ message, className, textClassName, radius = 10 }: LoaderProps) => {
+export const Loader = ({ message, className = 'h-8 w-8', textClassName, radius = 10 }: LoaderProps) => {
   return (
     <>
       <svg

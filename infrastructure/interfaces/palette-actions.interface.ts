@@ -13,3 +13,18 @@ export interface PaletteRequest {
   color_control: ColorControl;
   user_id: string;
 }
+
+export interface PaletteResponse {
+  id: string;
+  palette_name: string;
+  colors: ColorItem[];
+  color_format: Format;
+  rationale: string | null;
+  tags: string[];
+  harmony_type: HarmonyType;
+  color_control: ColorControl;
+  user_id: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string | null;
+}

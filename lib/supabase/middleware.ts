@@ -6,7 +6,7 @@ export const updateSession = async (request: NextRequest) => {
     request,
   });
 
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  const supabase = createServerClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -28,7 +28,7 @@ export const updateSession = async (request: NextRequest) => {
 };
 
 export const getUser = async (request: NextRequest, response: NextResponse) => {
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '', {
+  const supabase = createServerClient(process.env.SUPABASE_URL ?? '', process.env.SUPABASE_ANON_KEY ?? '', {
     cookies: {
       getAll() {
         return request.cookies.getAll();
