@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 import { PaletteRequestSchema } from '@/infrastructure/schemas/palette.schema';
 import { PaletteRequest } from '@/infrastructure/interfaces/palette-actions.interface';

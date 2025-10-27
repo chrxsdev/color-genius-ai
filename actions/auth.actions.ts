@@ -4,7 +4,7 @@ import { Provider } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { createClient } from '@/lib/supabase/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { ROUTES } from '@/utils/constants/routes';
 
 const signInWith = (provider: Provider) => async (next: string = ROUTES.dashboard) => {
