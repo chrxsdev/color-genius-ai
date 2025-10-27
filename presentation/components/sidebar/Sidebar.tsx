@@ -116,7 +116,7 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
             </div>
             <div className='flex-1 min-w-0'>
               <p className='font-bold text-slate-800 dark:text-white truncate'>
-                {user.user_metadata?.full_name || 'User'}
+                <Link href={ROUTES.profile}>Hello, {user.user_metadata?.full_name.split(' ')[0] ?? 'User'}</Link>
               </p>
               <button
                 onClick={handleSignOut}

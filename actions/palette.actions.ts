@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 import { PaletteRequestSchema } from '@/infrastructure/schemas/palette.schema';
@@ -18,6 +19,8 @@ const addPalette = async (palette: PaletteRequest) => {
         code: error.code,
       };
     }
+    
+    revalidatePath('/dashboard');
     // Return success or error
     return { success: true };
   } catch (error) {
@@ -63,6 +66,7 @@ const updatePaletteVisibility = async (paletteId: string, isPublic: boolean, use
       return { error: error.message };
     }
 
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error({ error });
@@ -85,6 +89,7 @@ const deletePalette = async (paletteId: string, userId: string) => {
       return { error: error.message };
     }
 
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
     console.error({ error });

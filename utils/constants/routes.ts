@@ -5,4 +5,5 @@ export const ROUTES = {
   auth: {
     signIn: '/auth/sign-in' as const,
   },
+  profile: '/profile' as const,
 } as const;

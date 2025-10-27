@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useOptimistic, useTransition } from 'react';
 import { updatePaletteVisibility, deletePalette } from '@/actions/palette.actions';
 import { PaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { getCurrentUser } from '@/actions/auth.actions';
@@ -11,38 +11,40 @@ interface PaletteListProps {
   initialPalettes: PaletteResponse[];
 }
 
+type OptimisticAction = { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean } | { type: 'DELETE'; id: string };
+
 export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
-  const [palettes, setPalettes] = useState<PaletteResponse[]>(initialPalettes);
+  const [, startTransition] = useTransition();
+
+  const [optimisticPalettes, setOptimisticPalettes] = useOptimistic<PaletteResponse[], OptimisticAction>(
+    initialPalettes,
+    (state, action) => {
+      switch (action.type) {
+        case 'UPDATE_VISIBILITY':
+          return state.map((palette) =>
+            palette.id === action.id ? { ...palette, is_public: action.isPublic } : palette
+          );
+        default:
+          return state;
+      }
+    }
+  );
 
   const handleToggleVisibility = async (id: string, isPublic: boolean) => {
-    // Optimistic update
-    setPalettes((prev) =>
-      prev.map((palette) => (palette.id === id ? { ...palette, is_public: isPublic } : palette))
-    );
+    startTransition(() => {
+      setOptimisticPalettes({ type: 'UPDATE_VISIBILITY', id, isPublic });
+    });
 
     try {
       const user = await getCurrentUser();
-      if (!user) {
-        // Revert optimistic update if user not found
-        setPalettes((prev) =>
-          prev.map((palette) => (palette.id === id ? { ...palette, is_public: !isPublic } : palette))
-        );
-        return;
-      }
+      if (!user) return;
 
       const result = await updatePaletteVisibility(id, isPublic, user.id);
 
       if (!result.success) {
-        // Revert optimistic update on error
-        setPalettes((prev) =>
-          prev.map((palette) => (palette.id === id ? { ...palette, is_public: !isPublic } : palette))
-        );
+        console.error('Failed to update visibility:', result.error);
       }
     } catch (err) {
-      // Revert optimistic update on error
-      setPalettes((prev) =>
-        prev.map((palette) => (palette.id === id ? { ...palette, is_public: !isPublic } : palette))
-      );
       console.error('Error updating visibility:', err);
     }
   };
@@ -63,9 +65,7 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
 
       const result = await deletePalette(id, user.id);
 
-      if (result.success) {
-        setPalettes((prev) => prev.filter((palette) => palette.id !== id));
-      } else {
+      if (!result.success) {
         console.error('Failed to delete palette:', result.error);
         alert('Failed to delete palette. Please try again.');
       }
@@ -75,13 +75,13 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
     }
   };
 
-  if (palettes.length === 0) {
+  if (optimisticPalettes.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center py-20 text-center'>
         <IoIosColorPalette color='white' size={54} />
         <h2 className='text-2xl font-bold text-slate-900 dark:text-white my-4'>No palettes yet</h2>
         <p className='text-slate-500 dark:text-slate-400 mb-6 max-w-md'>
-           Your saved palettes will appear on this page.
+          Your saved palettes will appear on this page.
         </p>
         <a
           href='/'
@@ -95,7 +95,7 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
 
   return (
     <div className='grid grid-cols-1 gap-8'>
-      {palettes.map((palette) => (
+      {optimisticPalettes.map((palette) => (
         <PaletteCard
           key={palette.id}
           id={palette.id}
