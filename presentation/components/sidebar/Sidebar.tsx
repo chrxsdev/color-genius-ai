@@ -9,6 +9,7 @@ import { FaPalette, FaMagic } from 'react-icons/fa';
 
 import { ROUTES } from '@/utils/constants/routes';
 import { Logo } from '../Logo';
+import { Loader } from '../Loader';
 import { signOut } from '@/actions/auth.actions';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 
@@ -27,6 +28,7 @@ interface NavItem {
 export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navItems: NavItem[] = [
     {
@@ -53,9 +55,19 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
   };
 
   const confirmSignOut = async () => {
+    setIsLoggingOut(true);
     await signOut();
-    setLogoutDialogOpen(false);
   };
+
+  if (isLoggingOut)
+    return (
+      <div className='fixed inset-0 bg-black/90 z-[60] flex items-center justify-center'>
+        <div className='flex flex-col items-center gap-4'>
+          <Loader className='h-12 w-12' />
+          <p className='text-white text-lg font-medium'>Signing out...</p>
+        </div>
+      </div>
+    );
 
   return (
     <>
