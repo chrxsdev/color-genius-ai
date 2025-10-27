@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
-import { Navbar } from '@/presentation/components/Navbar';
-import { Footer } from '@/presentation/components/Footer';
 import { ReduxProvider } from '@/lib/redux/provider';
 
 import './globals.css';
@@ -32,13 +30,7 @@ const RootLayout = ({
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </head>
       <body suppressHydrationWarning className={`${spaceGroteskFont.variable} font-sans antialiased`}>
-        <ReduxProvider>
-          <section className='grid grid-rows-[auto_1fr_auto] min-h-[100dvh] font-sans'>
-            <Navbar />
-            <main className='bg-background'>{children}</main>
-            <Footer />
-          </section>
-        </ReduxProvider>
+        <ReduxProvider>{children}</ReduxProvider>
       </body>
     </html>
   );

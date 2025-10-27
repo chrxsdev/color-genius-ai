@@ -14,10 +14,9 @@ import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 import { useColorPalette } from '@/presentation/hooks/useColorPalette';
-import { ROUTES } from '@/utils/constants/routes';
 import { addPalette } from '@/actions/palette.actions';
 import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
-import { Loader } from '@/presentation/components/Loader';
+import { ROUTES } from '@/utils/constants/routes';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
@@ -165,13 +164,6 @@ const PalettePage = () => {
     link.href = dataUrl;
     link.click();
   };
-
-  if (isSaving)
-    return (
-      <div className='flex justify-center items-center min-h-[80dvh]'>
-        <Loader className='w-10 h-10' />
-      </div>
-    );
 
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8'>

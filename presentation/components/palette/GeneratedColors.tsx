@@ -84,7 +84,7 @@ export const GeneratedColors = ({
             }`}
           >
             {isSaving ? <Loader className='w-4 h-4' /> : <IoHeartOutline className='text-lg text-white' />}
-            <span className='text-sm font-medium text-white'>Save</span>
+            <span className='text-sm font-medium text-white'>{isSaving ? 'Saving...' : 'Save'}</span>
           </button>
           <button
             onClick={onExport}
