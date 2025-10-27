@@ -1,0 +1,1 @@
+export { PaletteCard } from './PaletteCard';
