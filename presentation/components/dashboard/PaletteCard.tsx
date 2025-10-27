@@ -1,6 +1,6 @@
 'use client';
 
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaDownload } from 'react-icons/fa';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 
 interface PaletteCardProps {
@@ -10,6 +10,7 @@ interface PaletteCardProps {
   colors: ColorItem[];
   isPublic: boolean;
   onToggleVisibility: (id: string, isPublic: boolean) => void;
+  onDownload: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -20,10 +21,11 @@ export const PaletteCard = ({
   colors,
   isPublic,
   onToggleVisibility,
+  onDownload,
   onDelete,
 }: PaletteCardProps) => {
   return (
-    <div className="rounded-xl border border-neutral-variant/50 dark:border-neutral-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
+    <div className="w-full rounded-xl border border-neutral-variant/50 dark:border-neutral-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
       {/* Color Preview */}
       <div className="flex h-32">
         {colors.slice(0, 5).map((colorItem, index) => (
@@ -67,8 +69,15 @@ export const PaletteCard = ({
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <button
+              onClick={() => onDownload(id)}
+              className="p-2 rounded-full hover:bg-secondary/20 transition-colors text-slate-500 dark:text-slate-400 hover:text-primary cursor-pointer"
+              aria-label="Download palette"
+            >
+              <FaDownload className="text-base" />
+            </button>
+            <button
               onClick={() => onDelete(id)}
-              className="p-2 rounded-full hover:bg-error/20 transition-colors text-slate-500 dark:text-slate-400 hover:text-error"
+              className="p-2 rounded-full hover:bg-error/20 transition-colors text-slate-500 dark:text-slate-400 hover:text-error cursor-pointer"
               aria-label="Delete palette"
             >
               <FaTrash className="text-base" />

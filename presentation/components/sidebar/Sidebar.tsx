@@ -56,12 +56,13 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed md:sticky top-0 h-screen w-64 flex-shrink-0 
+          fixed top-0 left-0 h-screen w-64 flex-shrink-0 
           bg-background dark:bg-background-dark 
           border-r border-neutral-variant/30
           p-6 flex flex-col justify-between
           transition-transform duration-300 ease-in-out
           z-50 md:z-auto
+          overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >

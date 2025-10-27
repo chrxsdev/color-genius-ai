@@ -61,6 +61,11 @@ const DashboardPage = () => {
     console.log(`Toggle visibility for palette ${id} to ${isPublic}`);
   };
 
+  const handleDownload = (id: string) => {
+    // TODO: Implement download functionality (export as PNG/JSON)
+    console.log(`Download palette ${id}`);
+  };
+
   const handleDelete = (id: string) => {
     // TODO: Implement delete functionality with confirmation
     console.log(`Delete palette ${id}`);
@@ -88,7 +93,7 @@ const DashboardPage = () => {
 
       {/* Palette Grid */}
       {palettes.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {palettes.map((palette) => (
             <PaletteCard
               key={palette.id}
@@ -98,6 +103,7 @@ const DashboardPage = () => {
               colors={palette.colors}
               isPublic={palette.isPublic}
               onToggleVisibility={handleToggleVisibility}
+              onDownload={handleDownload}
               onDelete={handleDelete}
             />
           ))}
