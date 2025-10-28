@@ -1,7 +1,15 @@
+import { getProfile } from '@/actions/profile.actions';
 import { Avatar } from '@/presentation/components/profile/Avatar';
 import { ProfileForm } from '@/presentation/components/profile/ProfileForm';
+import { redirect } from 'next/navigation';
 
-const ProfilePage = () => {
+const ProfilePage = async () => {
+  const { data: profile, error } = await getProfile();
+
+  if (error || !profile) {
+    redirect('/auth/sign-in');
+  }
+
   return (
     <div className='max-w-7xl mx-auto p-8'>
       <div className='mb-12'>
@@ -19,10 +27,10 @@ const ProfilePage = () => {
           </div>
           <div className='flex lg:flex-row flex-col justify-between'>
             <div className='text-center'>
-              <Avatar />
+              <Avatar avatarUrl={profile.avatar_url} username={profile.full_name ?? 'User'} />
             </div>
             <div className='flex-1'>
-              <ProfileForm />
+              <ProfileForm userInfo={{ full_name: profile.full_name ?? '' }} />
             </div>
           </div>
         </div>
