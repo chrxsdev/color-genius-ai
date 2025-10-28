@@ -460,7 +460,7 @@ _Acceptance Criteria:_
 
 ### Epic 3: User Interface Development (21 story points)
 
-**Task 3.1: Main Palette Generator Component** (6 points)
+#### Task 3.1: Main Palette Generator Component (6 points)
 
 - Build prompt input interface with harmony selection
 - Create loading states and error handling
@@ -473,7 +473,7 @@ _Acceptance Criteria:_
 - Real-time validation feedback on user input
 - Responsive design works on mobile and desktop
 
-**Task 3.2: Color Visualization Components** (4 points)
+#### Task 3.2: Color Visualization Components (4 points)
 
 - Build interactive color wheel display
 - Create color contrast visualization tools
@@ -483,7 +483,7 @@ _Acceptance Criteria:_
 - Color wheel accurately represents hue relationships
 - Accessibility badges show correct WCAG levels
 
-**Task 3.3: Perceptual Control Sliders** (4 points)
+#### Task 3.3: Perceptual Control Sliders (4 points)
 
 - Implement brightness, saturation, and warmth sliders
 - Create visual feedback for slider adjustments
@@ -495,7 +495,7 @@ _Acceptance Criteria:_
 - Slider adjustments feel immediate (< 100ms response)
 - Visual changes correspond to perceptual expectations
 
-**Task 3.4: Export and Sharing Features** (3 points)
+#### Task 3.4: Export and Sharing Features (3 points)
 
 - Build copy-to-clipboard for multiple formats
 - Create shareable palette URLs
@@ -509,7 +509,34 @@ _Acceptance Criteria:_
 - User preferences persist across sessions
 - Visibility settings allow users to control palette privacy and explore visibility
 
-**Task 3.5: Explore Section and Discovery** (4 points)
+
+#### Task 3.5: Profile Module (3 story points)
+
+- Sidebar: user profile area and sign-out flow with confirmation dialog have been implemented in the app UI.
+- Alert dialog (shadcn / Radix-based) was integrated and is used for destructive and confirmation flows (palette deletion, sign-out).
+- Dashboard: the palettes list and per-palette actions (toggle visibility, delete with confirmation, download placeholder) are implemented and wired to the API/actions.
+
+#### Task 3.6: Profile Module (3 story points)
+
+Add a small profile editing module that allows authenticated users to update their full name and upload a new avatar image. This is a focused UI/API task that improves account management UX.
+
+Key items
+
+- Update `profiles.username` (or `full_name`) with a simple form input.
+- Upload avatar images to a Supabase storage bucket (e.g. `avatars/{userId}/{timestamp}-{filename}`) and update `profiles.avatar_url` with the returned URL or signed URL.
+- Provide client-side validation (file type/size), loading states, and success/error feedback.
+
+Acceptance criteria
+
+- Profile edit UI exists and updates the DB without a full page reload.
+- Avatar uploads use Supabase Storage API and update the profile record atomically.
+- UI reflects the new name and avatar immediately after a successful update.
+
+Estimated effort
+
+- 1–2 days (frontend form, Supabase Storage upload wiring, DB update, and basic validation/UX)
+
+#### Task 3.7: Explore Section and Discovery (4 points)
 
 - Build public palette browsing interface
 - Implement tag-based filtering and search
@@ -525,7 +552,6 @@ _Acceptance Criteria:_
 
 **Total Estimate: 47 story points (approximately 9-10 weeks with 1 developer)**
 
-_Note: Simplified AI approach with single provider (GPT-4o mini) reduces complexity and development time while maintaining core functionality._
 
 ## 7. Open Questions and Decisions to Confirm
 
@@ -608,4 +634,4 @@ _Note: Simplified AI approach with single provider (GPT-4o mini) reduces complex
     - **AI Libraries**: Vercel AI SDK (actively maintained, TypeScript-first)
     - **Color Libraries**: Culori for OKLCH conversions (battle-tested)
     - **Validation**: Zod for runtime type safety (essential for AI outputs)
-    - **Contingency**: All dependencies have fallback implementations
+  - **Contingency**: All dependencies have fallback implementations

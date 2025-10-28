@@ -8,8 +8,8 @@ export const Avatar = () => {
     <div className='flex flex-col p-4 justify-center items-center'>
       <div className='relative'>
         <Image
-          src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
-          alt={'User Avatar'}
+          src=''
+          alt={'user_avatar'}
           className='object-cover rounded-full'
           width={120}
           height={120}
