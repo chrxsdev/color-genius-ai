@@ -135,14 +135,14 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
               )}
             </div>
             <div className='flex-1 min-w-0'>
-              <p className='font-bold text-slate-800 dark:text-white truncate'>
+              <p className='font-bold text-white truncate'>
                 <Link href={ROUTES.profile}>Hello, {user.user_metadata?.full_name.split(' ')[0] ?? 'User'}</Link>
               </p>
               <button
                 onClick={handleSignOut}
-                className='text-sm text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer'
+                className='text-xs text-primary hover:text-primary/90 transition-colors cursor-pointer'
               >
-                Sign Out
+                Logout
               </button>
             </div>
           </div>

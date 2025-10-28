@@ -40,7 +40,7 @@ export const PaletteCard = ({
 
       {/* Card Content */}
       <div className='p-6 bg-background'>
-        <h3 className='text-lg font-bold text-slate-900 dark:text-white'>{name}</h3>
+        <h3 className='text-lg font-bold text-white'>{name}</h3>
         {rationale && <p className='text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4 line-clamp-2'>{rationale}</p>}
 
         <div className='flex justify-between items-center'>

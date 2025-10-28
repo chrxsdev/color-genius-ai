@@ -48,7 +48,7 @@ export const ConfirmDialog = ({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className='bg-background dark:bg-background-dark border-neutral-variant/30'>
         <AlertDialogHeader>
-          <AlertDialogTitle className='text-slate-900 dark:text-white text-lg font-bold'>{title}</AlertDialogTitle>
+          <AlertDialogTitle className='text-white text-lg font-bold'>{title}</AlertDialogTitle>
           <AlertDialogDescription className='text-slate-600 dark:text-slate-400'>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

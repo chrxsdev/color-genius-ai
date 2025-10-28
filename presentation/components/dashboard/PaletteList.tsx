@@ -86,7 +86,7 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
     return (
       <div className='flex flex-col items-center justify-center py-20 text-center'>
         <IoIosColorPalette color='white' size={54} />
-        <h2 className='text-2xl font-bold text-slate-900 dark:text-white my-4'>No palettes yet</h2>
+        <h2 className='text-2xl font-boldtext-white my-4'>No palettes yet</h2>
         <p className='text-slate-500 dark:text-slate-400 mb-6 max-w-md'>
           Your saved palettes will appear on this page.
         </p>

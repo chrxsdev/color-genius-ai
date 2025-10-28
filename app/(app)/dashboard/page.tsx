@@ -17,7 +17,7 @@ const DashboardPage = async () => {
     <div className='max-w-7xl mx-auto p-8'>
       {/* Header */}
       <div className='mb-12'>
-        <h1 className='text-4xl md:text-5xl font-bold tracking-tighter text-slate-900 dark:text-white'>
+        <h1 className='text-4xl md:text-5xl font-bold tracking-tighter text-white'>
           My Saved Palettes
         </h1>
         <p className='mt-4 text-slate-500 dark:text-slate-400'>

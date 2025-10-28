@@ -14,7 +14,7 @@ export const AppLayoutClient = ({ user, children }: AppLayoutClientProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className='relative min-h-screen w-full font-sans'>
+    <div className='relative min-h-screen w-full text-white font-sans'>
       <Sidebar user={user} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className='md:ml-64 flex flex-col min-h-screen'>
