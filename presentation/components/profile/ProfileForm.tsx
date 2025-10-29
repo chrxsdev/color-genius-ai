@@ -1,11 +1,19 @@
 'use client';
 
 import { updateProfile } from '@/actions/profile.actions';
-import { ProfileFormProps } from '@/infrastructure/interfaces/profile.interface';
 import { ProfileFormData, profileFormSchema } from '@/infrastructure/schemas/profile.schema';
 import { FormEvent, useState } from 'react';
 import { FaSave } from 'react-icons/fa';
 import { ZodError } from 'zod';
+
+export interface UserInfo {
+  id: string;
+  full_name: string;
+}
+
+export interface ProfileFormProps {
+  userInfo: UserInfo;
+}
 
 interface Feedback {
   type: 'success' | 'error' | 'info';
@@ -19,20 +27,26 @@ export const ProfileForm = ({ userInfo }: ProfileFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setFeedback(null);
-
-    // Zod validation of entire form object
+  const validateForm = () => {
     try {
       profileFormSchema.parse(formData);
+      return true;
     } catch (error) {
       if (error instanceof ZodError) {
         const zodError = error as ZodError;
         setFeedback({ type: 'error', message: zodError.issues[0].message });
       }
-      return;
+      return false;
     }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFeedback(null);
+
+    const isFormValid = validateForm();
+
+    if (!isFormValid) return;
 
     if (formData.full_name.trim() === userInfo.full_name) {
       setFeedback({ type: 'info', message: 'No changes to save' });
@@ -42,7 +56,7 @@ export const ProfileForm = ({ userInfo }: ProfileFormProps) => {
     setIsLoading(true);
 
     try {
-      const { success, error } = await updateProfile({ full_name: formData.full_name.trim() });
+      const { success, error } = await updateProfile(userInfo.id, { full_name: formData.full_name.trim() });
 
       if (success) {
         setFeedback({ type: 'success', message: 'Profile updated successfully' });

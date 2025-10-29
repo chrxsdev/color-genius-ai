@@ -27,10 +27,10 @@ const ProfilePage = async () => {
           </div>
           <div className='flex lg:flex-row flex-col justify-between'>
             <div className='text-center'>
-              <Avatar avatarUrl={profile.avatar_url} username={profile.full_name ?? 'User'} />
+              <Avatar userId={profile.id} avatarUrl={profile.avatar_url} name={profile.full_name ?? 'User'} />
             </div>
             <div className='flex-1'>
-              <ProfileForm userInfo={{ full_name: profile.full_name ?? '' }} />
+              <ProfileForm userInfo={{ id: profile.id, full_name: profile.full_name ?? '' }} />
             </div>
           </div>
         </div>

@@ -1,35 +1,125 @@
 'use client';
 
+import { uploadAvatar } from '@/actions/profile.actions';
+import { validateImageFile } from '@/utils/image-validation';
 import Image from 'next/image';
-import { IoMdAddCircleOutline } from 'react-icons/io';
+import { useRouter } from 'next/navigation';
+import { ChangeEvent, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
+import { IoMdAddCircleOutline } from 'react-icons/io';
 
 interface AvatarProps {
+  userId: string;
   avatarUrl: string | null;
-  username: string;
+  name: string;
 }
 
-export const Avatar = ({ avatarUrl, username }: AvatarProps) => {
+export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setError(null);
+
+    // Validate image
+    const validation = validateImageFile(file);
+
+    if (!validation.isValid) {
+      setError(validation.error ?? 'Invalid file');
+      return;
+    }
+
+    // Upload image automatically
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const { success, error: uploadError } = await uploadAvatar(userId, formData);
+
+      if (success) {
+        router.refresh();
+      } else {
+        console.log(uploadError);
+        setError('Failed to upload avatar');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className='flex flex-col p-4 justify-center items-center'>
       <div className='relative'>
         {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt={`${username}'s avatar`}
-            className='object-cover rounded-full'
-            width={120}
-            height={120}
-          />
+          <div className='relative h-40 w-40 rounded-full overflow-hidden'>
+            <Image
+              src={avatarUrl}
+              alt={`${name}-avatar`}
+              className='object-cover'
+              fill
+              sizes='500px'
+            />
+          </div>
         ) : (
           <div className='w-[120px] h-[120px] rounded-full bg-neutral-variant/20 flex items-center justify-center'>
             <FaUser className='text-subtitle' size={50} />
           </div>
         )}
+
+        {/* Upload overlay when uploading */}
+        {isUploading && (
+          <div className='absolute inset-0 rounded-full bg-black/50 flex items-center justify-center'>
+            <div className='w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin' />
+          </div>
+        )}
+
+        {/* Upload button */}
         <div className='absolute bottom-0 right-0 p-1'>
-          <IoMdAddCircleOutline className='cursor-pointer text-subtitle hover:text-subtitle/90' size={25} />
+          <button
+            type='button'
+            onClick={handleAvatarClick}
+            disabled={isUploading}
+            className='cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+            aria-label='Upload avatar'
+          >
+            <IoMdAddCircleOutline className='text-white hover:text-white/90' size={25} />
+          </button>
         </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='image/jpeg,image/jpg,image/png'
+          onChange={handleFileChange}
+          className='hidden'
+          disabled={isUploading}
+        />
       </div>
+
+      {/* Error message */}
+      {error && <p className='text-error text-sm mt-2 text-center max-w-[200px]'>{error}</p>}
+
+      {/* Upload status */}
+      {isUploading && <p className='text-neutral text-sm mt-2'>Uploading...</p>}
     </div>
   );
 };
