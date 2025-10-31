@@ -36,6 +36,7 @@ export const getProfile = async (): Promise<GetProfileResponse> => {
       data: {
         id: profile.id,
         full_name: profile.full_name,
+        email: profile.email,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
         updated_at: profile.updated_at,
@@ -97,9 +98,7 @@ export const uploadAvatar = async (userId: string, formData: FormData): Promise<
       cacheControl: '3600',
     });
 
-    if (uploadError) {
-      return { success: false, message: `Upload failed: ${uploadError.message}` };
-    }
+    if (uploadError) return { success: false, message: `Upload failed: ${uploadError.message}` };
 
     // Get public URL
     const {
@@ -107,21 +106,14 @@ export const uploadAvatar = async (userId: string, formData: FormData): Promise<
     } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
     // Update profile with new avatar URL
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        avatar_url: publicUrl,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+    const { success, error: updateError } = await updateProfile(userId, {
+      avatar_url: publicUrl,
+    });
 
-    if (updateError) {
-      return { success: false, message: `Profile update failed: ${updateError.message}` };
-    }
+    if (!success) return { success: false, message: `Profile update failed: ${updateError}` };
 
     revalidatePath('/profile');
-
-    return { success: true, data: { avatarUrl: publicUrl }, message: null };
+    return { success: true, data: { avatarUrl: publicUrl }, message: 'Image uploaded successfully' };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
     return { success: false, message: errorMessage };

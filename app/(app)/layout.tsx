@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/actions/auth.actions';
+import { getProfile } from '@/actions/profile.actions';
 import { AppLayoutClient } from '@/presentation/components/layouts';
 
 const AppLayout = async ({
@@ -6,9 +6,9 @@ const AppLayout = async ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const user = await getCurrentUser();
+  const user = await getProfile();
 
-  return <AppLayoutClient user={user}>{children}</AppLayoutClient>;
+  return <AppLayoutClient user={user.data}>{children}</AppLayoutClient>;
 };
 
 export default AppLayout;

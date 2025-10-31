@@ -16,7 +16,6 @@ interface AvatarProps {
 
 export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(avatarUrl);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,14 +45,12 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const { data, success } = await uploadAvatar(userId, formData);
-      
+      const { success } = await uploadAvatar(userId, formData);
+
       if (!success) {
         setError('Failed to upload avatar');
         return;
       }
-      
-      if (data) setImageUrl(data.avatarUrl);
     } catch (error) {
       console.error({ error });
       setError('Something failed during upload');
@@ -69,9 +66,9 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   return (
     <div className='flex flex-col p-4 justify-center items-center'>
       <div className='relative'>
-        {imageUrl ? (
+        {avatarUrl ? (
           <div className='relative h-40 w-40 rounded-full overflow-hidden'>
-            <Image src={imageUrl} alt={`${name}-avatar`} className='object-cover' fill sizes='500px' />
+            <Image src={avatarUrl} alt={`${name}-avatar`} className='object-cover' fill sizes='500px' />
           </div>
         ) : (
           <div className='w-[120px] h-[120px] rounded-full bg-neutral-variant/20 flex items-center justify-center'>

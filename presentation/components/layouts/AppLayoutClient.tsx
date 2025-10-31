@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { User } from '@supabase/supabase-js';
 import { Sidebar } from '@/presentation/components/sidebar/Sidebar';
 import { MobileHeader } from '@/presentation/components/sidebar/MobileHeader';
+import { ProfileData } from '@/infrastructure/interfaces/profile-actions.interface';
 
 interface AppLayoutClientProps {
-  user: User | null;
+  user: ProfileData | null;
   children: React.ReactNode;
 }
 

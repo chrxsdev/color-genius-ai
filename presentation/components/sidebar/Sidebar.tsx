@@ -1,6 +1,5 @@
 'use client';
 
-import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,9 +11,10 @@ import { Logo } from '../Logo';
 import { Loader } from '../Loader';
 import { signOut } from '@/actions/auth.actions';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ProfileData } from '@/infrastructure/interfaces/profile-actions.interface';
 
 interface SidebarProps {
-  user: User | null;
+  user: ProfileData | null;
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -120,23 +120,23 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
         {user && (
           <div className='flex items-center gap-4 border-t border-neutral-variant/30 pt-6'>
             <div className='relative h-10 w-10 rounded-full overflow-hidden bg-neutral-variant/30'>
-              {user.user_metadata?.avatar_url ? (
+              {user.avatar_url ? (
                 <Image
-                  src={user.user_metadata.avatar_url}
-                  alt={user.user_metadata?.full_name || 'User Avatar'}
+                  src={user.avatar_url}
+                  alt={user.full_name ?? 'user_avatar'}
                   fill
                   className='object-cover'
                   sizes='40px'
                 />
               ) : (
                 <div className='w-full h-full flex items-center justify-center bg-primary/30 text-primary text-lg font-bold'>
-                  {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                  {user.full_name?.[0]?.toUpperCase() || user?.email[0]?.toUpperCase() || 'U'}
                 </div>
               )}
             </div>
             <div className='flex-1 min-w-0'>
               <p className='font-bold text-white truncate'>
-                <Link href={ROUTES.profile}>Hello, {user.user_metadata?.full_name.split(' ')[0] ?? 'User'}</Link>
+                <Link href={ROUTES.profile}>Hello, {user.full_name?.split(' ')[0] ?? 'User'}</Link>
               </p>
               <button
                 onClick={handleSignOut}
