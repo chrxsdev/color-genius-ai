@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { ChangeEvent, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { IoMdAddCircleOutline } from 'react-icons/io';
+import { toast } from 'sonner';
 
 import { uploadAvatar } from '@/actions/profile.actions';
 import { validateImageFile } from '@/utils/image-validation';
@@ -16,7 +17,6 @@ interface AvatarProps {
 
 export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarClick = () => {
@@ -28,13 +28,11 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
 
     if (!file) return;
 
-    setError(null);
-
     // Validate image
     const validation = validateImageFile(file);
 
     if (!validation.isValid) {
-      setError(validation.error ?? 'Invalid file');
+      toast.error(validation.error ?? 'Invalid file');
       return;
     }
 
@@ -45,15 +43,18 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const { success } = await uploadAvatar(userId, formData);
+      const { success, message } = await uploadAvatar(userId, formData);
 
       if (!success) {
-        setError('Failed to upload avatar');
+        toast.error(message ?? 'Failed to upload avatar');
         return;
       }
+
+      // Show success message
+      toast.success(message ?? 'Avatar uploaded successfully');
     } catch (error) {
       console.error({ error });
-      setError('Something failed during upload');
+      toast.error('Something failed during upload');
     } finally {
       setIsUploading(false);
       // Reset input
@@ -64,11 +65,18 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   };
 
   return (
-    <div className='flex flex-col p-4 justify-center items-center'>
+    <div className='flex flex-col p-6 justify-center items-center'>
       <div className='relative'>
         {avatarUrl ? (
           <div className='relative h-40 w-40 rounded-full overflow-hidden'>
-            <Image src={avatarUrl} alt={`${name}-avatar`} className='object-cover' fill sizes='500px' />
+            <Image
+              src={avatarUrl}
+              alt={`${name}-avatar`}
+              className='object-cover'
+              fill
+              sizes='500px'
+              fetchPriority='high'
+            />
           </div>
         ) : (
           <div className='w-[120px] h-[120px] rounded-full bg-neutral-variant/20 flex items-center justify-center'>
@@ -106,9 +114,6 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
           disabled={isUploading}
         />
       </div>
-
-      {/* Error message */}
-      {error && <p className='text-error text-sm mt-2 text-center max-w-[200px]'>{error}</p>}
 
       {/* Upload status */}
       {isUploading && <p className='text-neutral text-sm mt-2'>Uploading...</p>}

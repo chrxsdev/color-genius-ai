@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk } from 'next/font/google';
 import { ReduxProvider } from '@/lib/redux/provider';
+import { Toaster } from '@/presentation/components/ui/sonner';
 
 import './globals.css';
 import 'animate.css';
@@ -31,6 +32,7 @@ const RootLayout = ({
       </head>
       <body suppressHydrationWarning className={`${spaceGroteskFont.variable} font-sans antialiased`}>
         <ReduxProvider>{children}</ReduxProvider>
+        <Toaster />
       </body>
     </html>
   );
