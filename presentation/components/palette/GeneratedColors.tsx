@@ -1,4 +1,3 @@
-import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { IoHeartOutline, IoImageOutline } from 'react-icons/io5';
 import { ColorCard } from './ColorCard';
@@ -8,13 +7,8 @@ import { Loader } from '../Loader';
 
 interface GeneratedColorsProps {
   colors: ColorItem[];
-  paletteName: string;
   colorFormat: Format;
-  isRegeneratingName: boolean;
-  rationale: string | null;
-  onNameChange: (value: string) => void;
   onFormatChange: (value: Format) => void;
-  onRegenerateName: () => void;
   isSaving?: boolean;
   onSave: () => void;
   onExport: () => void;
@@ -23,43 +17,18 @@ interface GeneratedColorsProps {
 
 export const GeneratedColors = ({
   colors,
-  paletteName,
   colorFormat,
-  isRegeneratingName,
-  rationale,
-  onNameChange,
   onFormatChange,
-  onRegenerateName,
   onSave,
   onExport,
   colorsRef,
   isSaving = false,
 }: GeneratedColorsProps) => {
   return (
-    <div className='mt-2 space-y-4 p-6'>
-      <h3 className='text-xl font-bold text-white'>Generated Colors</h3>
+    <div className='mt-2 px-6 py-4'>
+      <h3 className='text-xl font-bold text-white'>Colors</h3>
 
-      <div className='flex flex-col md:flex-row gap-4 pt-4'>
-        <div className='relative flex-1'>
-          <input
-            type='text'
-            value={paletteName}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder='e.g., Ocean Breeze'
-            className='w-full rounded-xl border-2 border-neutral-variant bg-background h-12 pl-4 pr-12 text-sm text-white placeholder:text-slate-500 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all'
-          />
-          <button
-            onClick={onRegenerateName}
-            disabled={isRegeneratingName || !rationale}
-            className='absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary/20 hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
-            title='Regenerate Palette Name'
-          >
-            <SiGooglegemini className={`text-base text-primary ${isRegeneratingName ? 'animate-pulse' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      <div className='flex items-center justify-between my-10'>
+      <div className='flex items-center justify-between my-4'>
         <div className='relative'>
           <select
             value={colorFormat}
@@ -96,7 +65,7 @@ export const GeneratedColors = ({
         </div>
       </div>
 
-      <div className='my-14 p-2'>
+      <div className='my-4 p-2'>
         <div
           ref={colorsRef}
           className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'

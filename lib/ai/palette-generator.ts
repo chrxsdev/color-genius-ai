@@ -185,8 +185,8 @@ export class PaletteGenerator {
         },
         {
           name: 'Dark Blue',
-          hex: '#233D54',
-          hsl: { h: 208, s: 41, l: 23 },
+          hex: '#272958',
+          hsl: { h: 238, s: 39, l: 25 },
         },
       ],
       rationale:

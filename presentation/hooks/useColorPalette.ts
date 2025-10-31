@@ -14,8 +14,8 @@ const DEFAULT_STATE: PaletteState = {
   harmony: 'analogous',
   colorOptionControl: {
     brightness: 50,
-    saturation: 50,
-    warmth: 50,
+    saturation: 0,
+    warmth: 0,
   },
 };
 

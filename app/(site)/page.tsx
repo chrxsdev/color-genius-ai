@@ -9,6 +9,7 @@ import { ColorVisualization } from '@/presentation/components/palette/ColorVisua
 import { GeneratedColors } from '@/presentation/components/palette/GeneratedColors';
 import { ColorControls } from '@/presentation/components/palette/ColorControls';
 import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
+import { RegenerateInput } from '@/presentation/components/palette/RegenerateInput';
 import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
@@ -195,8 +196,17 @@ const PalettePage = () => {
           <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full`}>
             {isHydrated && generatedColors.length > 0 && (
               <div className='mt-2'>
+                <AiInsights rationale={rationale} tags={tags} containerClassName='my-5' />
                 <div className='border-2 rounded-xl border-neutral-variant my-5'>
-                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generated Palette</h3>
+                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generate Palette Options</h3>
+
+                  <RegenerateInput
+                    paletteName={paletteName}
+                    isRegeneratingName={isRegeneratingPaletteName}
+                    rationale={rationale}
+                    onNameChange={(value) => updateState({ paletteName: value })}
+                    onRegenerateName={handleGenerateName}
+                  />
                   <ColorVisualization
                     colors={generatedColors}
                     brightness={brightness}
@@ -204,17 +214,11 @@ const PalettePage = () => {
                     warmth={warmth}
                     onColorChange={handleColorChange}
                   />
-                  <AiInsights rationale={rationale} tags={tags} containerClassName='mx-4 my-5' />
 
                   <GeneratedColors
                     colors={adjustedColors}
-                    paletteName={paletteName}
                     colorFormat={colorFormat}
-                    isRegeneratingName={isRegeneratingPaletteName}
-                    rationale={rationale}
-                    onNameChange={(value) => updateState({ paletteName: value })}
                     onFormatChange={(value) => updateState({ colorFormat: value })}
-                    onRegenerateName={handleGenerateName}
                     onSave={handleSave}
                     onExport={handleExportPNG}
                     colorsRef={colorsGeneratedRef}
@@ -228,8 +232,8 @@ const PalettePage = () => {
                     onControlChange={updateColorControl}
                   />
 
-                  <div className='mt-10 p-6'>
-                    <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
+                  <div className='px-6 pb-4'>
+                    <h3 className='text-xl font-bold text-white my-4'>Copy Color Codes</h3>
                     <ColorCodes colors={adjustedColors} format={colorFormat} />
                   </div>
                 </div>
