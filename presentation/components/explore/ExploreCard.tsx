@@ -9,7 +9,7 @@ export type HeightPattern = 'short' | 'medium' | 'tall' | 'extra-tall';
 interface ExploreCardProps {
   id: string;
   paletteName: string;
-  username: string;
+  name: string;
   colors: ColorItem[];
   likes: number;
   heightPattern?: HeightPattern;
@@ -26,7 +26,7 @@ const heightClasses: Record<HeightPattern, string> = {
 export const ExploreCard = ({
   id,
   paletteName,
-  username,
+  name,
   colors,
   likes,
   heightPattern = 'medium',
@@ -52,7 +52,7 @@ export const ExploreCard = ({
         {/* Top Section: Palette Name & Username */}
         <div className='absolute top-0 left-0 right-0 p-6 transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300'>
           <h3 className='text-xl font-bold text-white mb-1 drop-shadow-lg'>{paletteName}</h3>
-          <p className='text-sm text-slate-200 drop-shadow-md'>by @{username}</p>
+          <p className='text-sm text-slate-200 drop-shadow-md'>by {name}</p>
         </div>
 
         {/* Bottom Section: Likes */}

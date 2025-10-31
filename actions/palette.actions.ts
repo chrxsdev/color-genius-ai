@@ -19,8 +19,9 @@ const addPalette = async (palette: PaletteRequest) => {
         code: error.code,
       };
     }
-    
+
     revalidatePath('/dashboard');
+    revalidatePath('/explore');
     // Return success or error
     return { success: true };
   } catch (error) {
@@ -67,6 +68,7 @@ const updatePaletteVisibility = async (paletteId: string, isPublic: boolean, use
     }
 
     revalidatePath('/dashboard');
+    revalidatePath('/explore');
     return { success: true };
   } catch (error) {
     console.error({ error });
@@ -78,11 +80,7 @@ const deletePalette = async (paletteId: string, userId: string) => {
   try {
     const supabase = await createClient();
 
-    const { error } = await supabase
-      .from('palettes')
-      .delete()
-      .eq('id', paletteId)
-      .eq('user_id', userId);
+    const { error } = await supabase.from('palettes').delete().eq('id', paletteId).eq('user_id', userId);
 
     if (error) {
       console.error('Error deleting palette:', error);
@@ -90,6 +88,7 @@ const deletePalette = async (paletteId: string, userId: string) => {
     }
 
     revalidatePath('/dashboard');
+    revalidatePath('/explore');
     return { success: true };
   } catch (error) {
     console.error({ error });
@@ -97,4 +96,54 @@ const deletePalette = async (paletteId: string, userId: string) => {
   }
 };
 
-export { addPalette, getUserPalettes, updatePaletteVisibility, deletePalette };
+const getPublicPalettes = async () => {
+  try {
+    const supabase = await createClient();
+
+    // First get all public palettes with profile info
+    const { data: palettes, error: palettesError } = await supabase
+      .from('palettes')
+      .select('*, user_id(full_name)')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false });
+
+    if (palettesError) {
+      console.error('Error fetching public palettes:', palettesError);
+      return { 
+        error: 'Failed to fetch public palettes', 
+        data: null 
+      };
+    }
+
+    // Get likes count for each palette
+    const palettesWithLikes = await Promise.all(
+      (palettes ?? []).map(async (palette) => {
+        const { count } = await supabase
+          .from('user_palette_likes')
+          .select('*', { count: 'exact', head: true })
+          .eq('palette_id', palette.id);
+
+        return {
+          ...palette,
+          profile: {
+            full_name: palette.user_id?.full_name,
+          },
+          likes_count: count ?? 0,
+        };
+      })
+    );
+
+    return { 
+      data: palettesWithLikes, 
+      error: null 
+    };
+  } catch (error) {
+    console.error({ error });
+    return { 
+      error: 'Something went wrong while fetching public palettes', 
+      data: null 
+    };
+  }
+};
+
+export { addPalette, getUserPalettes, updatePaletteVisibility, deletePalette, getPublicPalettes };

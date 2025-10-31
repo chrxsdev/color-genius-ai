@@ -28,3 +28,17 @@ export interface PaletteResponse {
   created_at: string;
   updated_at: string | null;
 }
+
+export interface ExplorePaletteResponse extends PaletteResponse {
+  profile: ProfileInfo | null;
+  likes_count: number;
+}
+
+export interface ProfileInfo {
+  id?: string;
+  email?: string;
+  full_name?: string;
+  avatar_url?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
