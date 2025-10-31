@@ -586,30 +586,11 @@ Estimated effort
 
 - 1–2 days (frontend form, Supabase Storage upload wiring, DB update, and basic validation/UX)
 
-#### Task 3.7: Palette Liking System and Public Discovery (5 story points)
-
-- Implement like/favorite functionality for public palettes
-- Add like count display on palette cards
-- Create user's liked palettes collection view
-- Build API routes for like/unlike operations
-- Add like animations and feedback UI
-
-_Acceptance Criteria:_
-
-- Users can like/unlike public palettes from other creators
-- Like counts update in real-time on palette cards
-- Liked palettes are tracked in user's profile
-- Unauthenticated users can browse but cannot like
-- Like operations are idempotent and handle concurrent requests
-- Database maintains referential integrity with cascading deletes
-
-#### Task 3.8: Explore Section and Discovery (4 points)
+#### Task 3.7: Explore Section and Discovery (4 points)
 
 - Build public palette browsing interface
-- Implement tag-based filtering and search
-- Add pagination and infinite scroll
 - Create palette discovery algorithms using tags
-- Display like counts and trending palettes
+- Display like counts
 
 _Acceptance Criteria:_
 
@@ -621,6 +602,24 @@ _Acceptance Criteria:_
 
 **Total Estimate: 52 story points (approximately 10-11 weeks with 1 developer)**
 
+#### Task 3.8: Palette Liking System and Public Discovery (5 story points)
+
+- Implement like/favorite functionality for public palettes
+- Add like count display on palette cards
+- Create user's liked palettes collection view
+- Build API routes for like/unlike operations
+- Add like animations and feedback UI
+- Implement tag-based filtering and search
+- Add pagination and infinite scroll
+
+_Acceptance Criteria:_
+
+- Users can like/unlike public palettes from other creators
+- Like counts update in real-time on palette cards
+- Liked palettes are tracked in user's profile
+- Unauthenticated users can browse but cannot like
+- Like operations are idempotent and handle concurrent requests
+- Database maintains referential integrity with cascading deletes
 
 ## 7. Open Questions and Decisions to Confirm
 

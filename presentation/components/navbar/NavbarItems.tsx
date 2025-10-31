@@ -13,6 +13,8 @@ interface NavbarItemsProps {
 export const NavbarItems = ({ isAuth }: NavbarItemsProps) => {
   const pathname = usePathname();
   const isAuthPath = pathname.includes('auth');
+  const isHome = pathname === ROUTES.home;
+
   const userStatus = isAuth ? 'authenticated' : 'not_authenticated';
 
   const renderItems = useMemo(() => {
@@ -39,8 +41,13 @@ export const NavbarItems = ({ isAuth }: NavbarItemsProps) => {
   }, [pathname]);
 
   return (
-    <div className='flex items-center gap-x-8'>
-      <LinkButton to={ROUTES.explore} text='Explore' buttonStyle='hyperlink' />
+    <div className='flex items-center gap-x-2'>
+      {isHome ? (
+        <LinkButton to={ROUTES.explore} text='Explore' buttonStyle='hyperlink' />
+      ) : (
+        <LinkButton to={ROUTES.home} text='Home' buttonStyle='hyperlink' />
+      )}
+
       {renderItems[userStatus].item}
     </div>
   );
