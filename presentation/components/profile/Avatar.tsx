@@ -1,12 +1,12 @@
 'use client';
 
-import { uploadAvatar } from '@/actions/profile.actions';
-import { validateImageFile } from '@/utils/image-validation';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { IoMdAddCircleOutline } from 'react-icons/io';
+
+import { uploadAvatar } from '@/actions/profile.actions';
+import { validateImageFile } from '@/utils/image-validation';
 
 interface AvatarProps {
   userId: string;
@@ -16,9 +16,9 @@ interface AvatarProps {
 
 export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(avatarUrl);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -46,16 +46,17 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const { success, error: uploadError } = await uploadAvatar(userId, formData);
-
-      if (success) {
-        router.refresh();
-      } else {
-        console.log(uploadError);
+      const { data, success } = await uploadAvatar(userId, formData);
+      
+      if (!success) {
         setError('Failed to upload avatar');
+        return;
       }
+      
+      if (data) setImageUrl(data.avatarUrl);
     } catch (error) {
-      setError('An unexpected error occurred');
+      console.error({ error });
+      setError('Something failed during upload');
     } finally {
       setIsUploading(false);
       // Reset input
@@ -68,15 +69,9 @@ export const Avatar = ({ userId, avatarUrl, name }: AvatarProps) => {
   return (
     <div className='flex flex-col p-4 justify-center items-center'>
       <div className='relative'>
-        {avatarUrl ? (
+        {imageUrl ? (
           <div className='relative h-40 w-40 rounded-full overflow-hidden'>
-            <Image
-              src={avatarUrl}
-              alt={`${name}-avatar`}
-              className='object-cover'
-              fill
-              sizes='500px'
-            />
+            <Image src={imageUrl} alt={`${name}-avatar`} className='object-cover' fill sizes='500px' />
           </div>
         ) : (
           <div className='w-[120px] h-[120px] rounded-full bg-neutral-variant/20 flex items-center justify-center'>

@@ -1,22 +1,15 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { createClient } from '@/lib/supabase/server';
+import {
+  GetProfileResponse,
+  UpdateProfileData,
+  UpdateProfileResponse,
+  UploadAvatarResponse,
+} from '@/infrastructure/interfaces/profile-actions.interface';
 
-interface ProfileData {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string | null;
-}
-
-interface UpdateProfileData {
-  full_name?: string;
-  avatar_url?: string;
-}
-
-export const getProfile = async (): Promise<{ data: ProfileData | null; error: string | null }> => {
+export const getProfile = async (): Promise<GetProfileResponse> => {
   try {
     const supabase = await createClient();
 
@@ -54,10 +47,7 @@ export const getProfile = async (): Promise<{ data: ProfileData | null; error: s
   }
 };
 
-export const updateProfile = async (
-  userId: string,
-  updates: UpdateProfileData
-): Promise<{ success: boolean; error: string | null }> => {
+export const updateProfile = async (userId: string, updates: UpdateProfileData): Promise<UpdateProfileResponse> => {
   try {
     const supabase = await createClient();
 
@@ -87,17 +77,14 @@ export const updateProfile = async (
   }
 };
 
-export const uploadAvatar = async (
-  userId: string,
-  formData: FormData
-): Promise<{ success: boolean; avatarUrl?: string; error: string | null }> => {
+export const uploadAvatar = async (userId: string, formData: FormData): Promise<UploadAvatarResponse> => {
   try {
     const supabase = await createClient();
 
     const file = formData.get('avatar') as File;
 
     if (!file) {
-      return { success: false, error: 'No file provided' };
+      return { success: false, message: 'No file provided' };
     }
 
     // Generate unique filename with user ID folder
@@ -105,31 +92,13 @@ export const uploadAvatar = async (
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
 
-    // Delete old avatar if exists
-    const { data: profile } = await supabase.from('profiles').select('avatar_url').eq('id', userId).single();
-
-    if (profile?.avatar_url) {
-      try {
-        // Extract file path from URL
-        const urlParts = profile.avatar_url.split('/storage/v1/object/public/avatars/');
-        if (urlParts.length > 1) {
-          const oldFilePath = urlParts[1];
-          await supabase.storage.from('avatars').remove([oldFilePath]);
-        }
-      } catch (e) {
-        // Ignore errors when deleting old avatar
-        console.error('Failed to delete old avatar:', e);
-      }
-    }
-
     // Upload new avatar
     const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
       cacheControl: '3600',
-      upsert: true,
     });
 
     if (uploadError) {
-      return { success: false, error: `Upload failed: ${uploadError.message}` };
+      return { success: false, message: `Upload failed: ${uploadError.message}` };
     }
 
     // Get public URL
@@ -147,14 +116,14 @@ export const uploadAvatar = async (
       .eq('id', userId);
 
     if (updateError) {
-      return { success: false, error: `Profile update failed: ${updateError.message}` };
+      return { success: false, message: `Profile update failed: ${updateError.message}` };
     }
 
     revalidatePath('/profile');
 
-    return { success: true, avatarUrl: publicUrl, error: null };
+    return { success: true, data: { avatarUrl: publicUrl }, message: null };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
-    return { success: false, error: errorMessage };
+    return { success: false, message: errorMessage };
   }
 };
