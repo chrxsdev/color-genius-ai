@@ -25,9 +25,9 @@ export const PaletteCard = ({
   onDelete,
 }: PaletteCardProps) => {
   return (
-    <div className='w-full rounded-xl border border-neutral-variant/50 dark:border-neutral-variant/30 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300'>
+    <div className='w-full rounded-xl border border-neutral-variant/50 overflow-hidden shadow-sm transition-shadow duration-300'>
       {/* Color Preview */}
-      <div className='flex h-32'>
+      <div className='flex h-32' id={id}>
         {colors.slice(0, 5).map((colorItem, index) => (
           <div
             key={index}

@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/actions/auth.actions';
 import { PaletteCard } from './PaletteCard';
 import { IoIosColorPalette } from 'react-icons/io';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { exportPaletteCardToPng } from '@/utils/export-to-png';
 
 interface PaletteListProps {
   initialPalettes: PaletteResponse[];
@@ -52,9 +53,15 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
     }
   };
 
-  const handleDownload = (id: string) => {
-    // TODO: Implement download functionality (export as PNG)
-    console.log(`Download palette ${id}`);
+  const handleDownload = async (id: string) => {
+    const palette = optimisticPalettes.find((p) => p.id === id);
+    if (!palette) return;
+
+    try {
+      await exportPaletteCardToPng(id, palette.palette_name);
+    } catch (err) {
+      console.error('Error exporting palette:', err);
+    }
   };
 
   const handleDelete = async (id: string) => {

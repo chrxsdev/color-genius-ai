@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { toPng } from 'html-to-image';
 import { redirect } from 'next/navigation';
 
 import { InputGenerator } from '@/presentation/components/palette/InputGenerator';
@@ -17,6 +16,7 @@ import { useColorPalette } from '@/presentation/hooks/useColorPalette';
 import { addPalette } from '@/actions/palette.actions';
 import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
 import { ROUTES } from '@/utils/constants/routes';
+import { exportElementToPng } from '@/utils/export-to-png';
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
@@ -151,18 +151,13 @@ const PalettePage = () => {
   const handleExportPNG = async () => {
     if (!colorsGeneratedRef.current) return;
 
-    const dataUrl = await toPng(colorsGeneratedRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      style: {
-        backgroundColor: '#1a1c19',
-      },
-    });
-
-    const link = document.createElement('a');
-    link.download = `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`;
-    link.href = dataUrl;
-    link.click();
+    try {
+      await exportElementToPng(colorsGeneratedRef.current, {
+        fileName: `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`,
+      });
+    } catch (err) {
+      console.error('Error exporting palette:', err);
+    }
   };
 
   return (
