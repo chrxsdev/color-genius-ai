@@ -136,6 +136,8 @@ The application uses Supabase for data persistence with a focus on simplicity an
 erDiagram
     auth_users ||--o{ profiles : "has one"
     profiles ||--o{ palettes : "creates many"
+    profiles ||--o{ user_palette_likes : "gives"
+    palettes ||--o{ user_palette_likes : "receives"
     
     auth_users {
         uuid id PK
@@ -164,6 +166,12 @@ erDiagram
         boolean is_public
         timestamp created_at
         timestamp updated_at
+    }
+
+    user_palette_likes {
+        uuid user_id FK,PK
+        uuid palette_id FK,PK
+        timestamp created_at
     }
 ```
 
@@ -205,6 +213,28 @@ CREATE TABLE color_genius_ai.palettes (
 -- Indexes for performance
 CREATE INDEX idx_palettes_user_id ON palettes(user_id);
 CREATE INDEX idx_palettes_tags ON palettes USING gin(tags);
+
+-- User Palette Likes table (tracks likes/favorites on public palettes)
+CREATE TABLE color_genius_ai.user_palette_likes (
+    user_id uuid NOT NULL,
+    palette_id uuid NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+
+    -- Composite primary key prevents duplicate likes for the same user-palette pair
+    CONSTRAINT user_palette_likes_pk PRIMARY KEY (user_id, palette_id),
+
+    -- Foreign keys with cascading deletes
+    CONSTRAINT fk_like_user FOREIGN KEY (user_id)
+        REFERENCES color_genius_ai.profiles (id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_like_palette FOREIGN KEY (palette_id)
+        REFERENCES color_genius_ai.palettes (id) ON DELETE CASCADE
+);
+
+-- Index for efficient lookup of palettes liked by a user
+CREATE INDEX idx_user_palette_likes_user_id ON color_genius_ai.user_palette_likes(user_id);
+-- Index for efficient lookup of likes on a palette
+CREATE INDEX idx_user_palette_likes_palette_id ON color_genius_ai.user_palette_likes(palette_id);
 ```
 
 ### Row Level Security Policies
@@ -242,6 +272,26 @@ CREATE POLICY "Users can update own color_genius_ai.palettes"
 
 CREATE POLICY "Users can delete own color_genius_ai.palettes" 
     ON color_genius_ai.palettes FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- color_genius_ai.user_palette_likes policies
+ALTER TABLE color_genius_ai.user_palette_likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view likes on public palettes" 
+    ON color_genius_ai.user_palette_likes FOR SELECT 
+    USING (
+        EXISTS (
+            SELECT 1 FROM color_genius_ai.palettes p
+            WHERE p.id = palette_id AND p.is_public = true
+        )
+    );
+
+CREATE POLICY "Authenticated users can insert likes" 
+    ON color_genius_ai.user_palette_likes FOR INSERT 
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own likes" 
+    ON color_genius_ai.user_palette_likes FOR DELETE 
     USING (auth.uid() = user_id);
 ```
 
@@ -536,12 +586,30 @@ Estimated effort
 
 - 1–2 days (frontend form, Supabase Storage upload wiring, DB update, and basic validation/UX)
 
-#### Task 3.7: Explore Section and Discovery (4 points)
+#### Task 3.7: Palette Liking System and Public Discovery (5 story points)
+
+- Implement like/favorite functionality for public palettes
+- Add like count display on palette cards
+- Create user's liked palettes collection view
+- Build API routes for like/unlike operations
+- Add like animations and feedback UI
+
+_Acceptance Criteria:_
+
+- Users can like/unlike public palettes from other creators
+- Like counts update in real-time on palette cards
+- Liked palettes are tracked in user's profile
+- Unauthenticated users can browse but cannot like
+- Like operations are idempotent and handle concurrent requests
+- Database maintains referential integrity with cascading deletes
+
+#### Task 3.8: Explore Section and Discovery (4 points)
 
 - Build public palette browsing interface
 - Implement tag-based filtering and search
 - Add pagination and infinite scroll
 - Create palette discovery algorithms using tags
+- Display like counts and trending palettes
 
 _Acceptance Criteria:_
 
@@ -549,8 +617,9 @@ _Acceptance Criteria:_
 - Tag filtering works efficiently with large datasets
 - Search functionality finds relevant palettes quickly
 - Discovery algorithms surface interesting and diverse palettes
+- Trending/popular palettes (by like count) are highlighted
 
-**Total Estimate: 47 story points (approximately 9-10 weeks with 1 developer)**
+**Total Estimate: 52 story points (approximately 10-11 weeks with 1 developer)**
 
 
 ## 7. Open Questions and Decisions to Confirm
