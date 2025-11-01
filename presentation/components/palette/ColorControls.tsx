@@ -18,7 +18,9 @@ export const ColorControls = ({ brightness, saturation, warmth, onControlChange 
             <label htmlFor='brightness' className='block font-medium text-slider-label'>
               Brightness
             </label>
-            <span className='text-xs text-subtitle font-mono'>{brightness}</span>
+            <span className='text-xs text-subtitle font-mono'>
+              {brightness === 50 ? '0' : brightness > 50 ? `+${brightness - 50}` : `${brightness - 50}`}
+            </span>
           </div>
           <input
             id='brightness'
@@ -37,7 +39,9 @@ export const ColorControls = ({ brightness, saturation, warmth, onControlChange 
             <label htmlFor='saturation' className='block font-medium text-slider-label'>
               Saturation
             </label>
-            <span className='text-xs text-subtitle font-mono'>{saturation}</span>
+            <span className='text-xs text-subtitle font-mono'>
+              {saturation === 50 ? '0' : saturation > 50 ? `+${saturation - 50}` : `${saturation - 50}`}
+            </span>
           </div>
           <input
             id='saturation'
@@ -56,7 +60,9 @@ export const ColorControls = ({ brightness, saturation, warmth, onControlChange 
             <label htmlFor='warmth' className='block font-medium text-slider-label'>
               Warmth
             </label>
-            <span className='text-xs text-subtitle font-mono'>{warmth}</span>
+            <span className='text-xs text-subtitle font-mono'>
+              {warmth === 50 ? '0' : warmth > 50 ? `+${warmth - 50}` : `${warmth - 50}`}
+            </span>
           </div>
           <input
             id='warmth'
