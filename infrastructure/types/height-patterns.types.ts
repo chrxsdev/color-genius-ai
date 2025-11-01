@@ -1,0 +1,1 @@
+export type HeightPattern = 'short' | 'medium' | 'tall' | 'extra_tall';

@@ -2,7 +2,7 @@ import { SiGooglegemini } from 'react-icons/si';
 import { MdArrowDropDown } from 'react-icons/md';
 import { BiSolidError } from 'react-icons/bi';
 import { Loader } from '../Loader';
-import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 import { HARMONY_TYPES } from '@/utils/constants/harmony-types';
 
 interface InputGeneratorProps {

@@ -2,9 +2,8 @@
 
 import { Heart, Copy } from 'lucide-react';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
-
-// Height pattern variants for Pinterest-style layout
-export type HeightPattern = 'short' | 'medium' | 'tall' | 'extra-tall';
+import { HeightPattern } from '@/infrastructure/types/height-patterns.types';
+import { heightClasses } from '@/utils/constants/height-patterns';
 
 interface ExploreCardProps {
   id: string;
@@ -15,22 +14,7 @@ interface ExploreCardProps {
   heightPattern?: HeightPattern;
 }
 
-// Map height patterns to Tailwind classes
-const heightClasses: Record<HeightPattern, string> = {
-  short: 'h-48',
-  medium: 'h-64',
-  tall: 'h-80',
-  'extra-tall': 'h-96',
-};
-
-export const ExploreCard = ({
-  id,
-  paletteName,
-  name,
-  colors,
-  likes,
-  heightPattern = 'medium',
-}: ExploreCardProps) => {
+export const ExploreCard = ({ id, paletteName, name, colors, likes, heightPattern = 'medium' }: ExploreCardProps) => {
   return (
     <div
       className={`group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer ${heightClasses[heightPattern]}`}

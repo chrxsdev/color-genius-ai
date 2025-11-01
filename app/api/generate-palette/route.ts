@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { PaletteGenerator } from '@/lib/ai/palette-generator';
 import { GenerateRequestSchema } from '@/infrastructure/schemas/api-generate-palette.schema';
-import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 
 /**
  * POST /api/generate-palette

@@ -1,19 +1,14 @@
 'use client';
 
 import { ExplorePaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
-import { ExploreCard, HeightPattern } from './ExploreCard';
+import { ExploreCard } from './ExploreCard';
 import { AlertCircle } from 'lucide-react';
+import { getHeightPattern } from '@/utils/patterns';
 
 interface ExplorePaletteGridProps {
   palettes: ExplorePaletteResponse[] | null;
   error: string | null;
 }
-
-// Generate a pattern sequence that repeats
-const getHeightPattern = (index: number): HeightPattern => {
-  const patterns: HeightPattern[] = ['short', 'tall', 'medium', 'extra-tall'];
-  return patterns[index % patterns.length];
-};
 
 export const ExplorePaletteGrid = ({ palettes, error }: ExplorePaletteGridProps) => {
   // Show error message if there's an error

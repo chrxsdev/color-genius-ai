@@ -15,7 +15,7 @@ import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 import { useColorPalette } from '@/presentation/hooks/useColorPalette';
 import { addPalette } from '@/actions/palette.actions';
-import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 import { ROUTES } from '@/utils/constants/routes';
 import { exportElementToPng } from '@/utils/export-to-png';
 

@@ -1,5 +1,5 @@
-import { ExplorePaletteGrid } from '@/presentation/components/explore';
-import { Search } from 'lucide-react';
+import { Suspense } from 'react';
+import { ExplorePaletteGrid, ExploreSuspenseSkeleton } from '@/presentation/components/explore';
 import { MdArrowDropDown } from 'react-icons/md';
 import { getPublicPalettes } from '@/actions/palette.actions';
 
@@ -40,7 +40,9 @@ const ExplorePage = async () => {
 
       {/* Palette Grid */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-12'>
-        <ExplorePaletteGrid palettes={result.data} error={result.error} />
+        <Suspense fallback={<ExploreSuspenseSkeleton count={6} />}>
+          <ExplorePaletteGrid palettes={result.data} error={result.error} />
+        </Suspense>
       </div>
     </div>
   );

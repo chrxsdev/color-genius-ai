@@ -1,5 +1,5 @@
 import { Format } from '../types/format.types';
-import { HarmonyType } from '../types/harmony-types.type';
+import { HarmonyType } from '../types/harmony-types.types';
 import { ColorItem } from './color-harmony.interface';
 
 export interface ColorControl {
