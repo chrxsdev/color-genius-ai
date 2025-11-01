@@ -8,9 +8,10 @@ import { getHeightPattern } from '@/utils/patterns';
 interface ExplorePaletteGridProps {
   palettes: ExplorePaletteResponse[] | null;
   error: string | null;
+  isAuthenticated: boolean;
 }
 
-export const ExplorePaletteGrid = ({ palettes, error }: ExplorePaletteGridProps) => {
+export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: ExplorePaletteGridProps) => {
   // Show error message if there's an error
   if (error) {
     return (
@@ -42,6 +43,8 @@ export const ExplorePaletteGrid = ({ palettes, error }: ExplorePaletteGridProps)
             name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
             colors={palette.colors}
             likes={palette.likes_count}
+            isLiked={palette.is_liked_by_user}
+            isAuthenticated={isAuthenticated}
             heightPattern={getHeightPattern(index)}
           />
         </div>

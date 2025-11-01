@@ -1,9 +1,14 @@
 'use client';
 
+import { useState, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heart, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { HeightPattern } from '@/infrastructure/types/height-patterns.types';
 import { heightClasses } from '@/utils/constants/height-patterns';
+import { togglePaletteLike } from '@/actions/palette.actions';
+import { ROUTES } from '@/utils/constants/routes';
 
 interface ExploreCardProps {
   id: string;
@@ -11,10 +16,90 @@ interface ExploreCardProps {
   name: string;
   colors: ColorItem[];
   likes: number;
+  isLiked: boolean;
+  isAuthenticated: boolean;
   heightPattern?: HeightPattern;
 }
 
-export const ExploreCard = ({ id, paletteName, name, colors, likes, heightPattern = 'medium' }: ExploreCardProps) => {
+export const ExploreCard = ({
+  id,
+  paletteName,
+  name,
+  colors,
+  likes: initialLikes,
+  isLiked: initialIsLiked,
+  isAuthenticated,
+  heightPattern = 'medium',
+}: ExploreCardProps) => {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [likesCount, setLikesCount] = useState(initialLikes);
+  const [animate, setAnimate] = useState(false);
+  const pendingActionRef = useRef<'like' | 'unlike' | null>(null);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // If not authenticated, redirect immediately without any UI changes
+    if (!isAuthenticated) {
+      router.push(ROUTES.auth.signIn);
+      return;
+    }
+
+    // Store the intended action
+    const newIsLiked = !isLiked;
+    pendingActionRef.current = newIsLiked ? 'like' : 'unlike';
+
+    // Trigger animation
+    setAnimate(true);
+    setTimeout(() => setAnimate(false), 400);
+
+    // Update the UI and feedback optimistically
+    const newLikesCount = newIsLiked ? likesCount + 1 : likesCount - 1;
+    setIsLiked(newIsLiked);
+    setLikesCount(newLikesCount);
+
+    // Use transition to batch the server update
+    // This allows multiple clicks, but only the last action will be sent
+    startTransition(async () => {
+      const result = await togglePaletteLike(id);
+
+      if (result.error) {
+        // Revert optimistic update on errors
+        setIsLiked(!newIsLiked);
+        setLikesCount(initialLikes);
+        toast.error(result.error);
+      } else if (result.data) {
+        // Update with actual values from server
+        setIsLiked(result.data.isLiked);
+        setLikesCount(result.data.likesCount);
+      }
+
+      pendingActionRef.current = null;
+    });
+  };
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      const paletteData = {
+        name: paletteName,
+        colors: colors.map((c) => ({
+          name: c.name,
+          color: c.color,
+        })),
+      };
+
+      await navigator.clipboard.writeText(JSON.stringify(paletteData, null, 2));
+      toast.success('Palette copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy palette');
+      console.error('Copy error:', error);
+    }
+  };
+
   return (
     <div
       className={`group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer ${heightClasses[heightPattern]}`}
@@ -39,23 +124,27 @@ export const ExploreCard = ({ id, paletteName, name, colors, likes, heightPatter
           <p className='text-sm text-slate-200 drop-shadow-md'>by {name}</p>
         </div>
 
-        {/* Bottom Section: Likes */}
+        {/* Bottom Section: Likes & Copy */}
         <div className='absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300'>
-          <div className='flex items-center gap-2'>
-            <Heart className='w-5 h-5 text-white drop-shadow-lg' />
+          <button
+            onClick={handleLike}
+            className='flex items-center gap-2 transition-colors cursor-pointer hover:scale-110'
+            aria-label={isLiked ? 'Unlike palette' : 'Like palette'}
+          >
+            <Heart
+              className={`w-5 h-5 drop-shadow-lg transition-colors duration-200 ${
+                isLiked ? 'fill-red-500 text-red-500' : 'text-white'
+              } ${animate ? 'animate-heartBeat' : ''}`}
+            />
             <span className='text-white font-medium drop-shadow-lg'>
-              {likes >= 1000 ? `${(likes / 1000).toFixed(1)}k` : likes}
+              {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}k` : likesCount}
             </span>
-          </div>
+          </button>
 
           {/* Copy Button */}
           <button
-            className='p-3 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors duration-200'
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: Implement copy functionality
-              console.log('Copy palette:', id);
-            }}
+            className='p-3 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors duration-200 cursor-pointer'
+            onClick={handleCopy}
             aria-label='Copy palette'
           >
             <Copy className='w-5 h-5 text-white drop-shadow-lg' />

@@ -1,11 +1,9 @@
 import { Suspense } from 'react';
-import { ExplorePaletteGrid, ExploreSuspenseSkeleton } from '@/presentation/components/explore';
+import { ExploreSuspenseSkeleton } from '@/presentation/components/explore';
 import { MdArrowDropDown } from 'react-icons/md';
-import { getPublicPalettes } from '@/actions/palette.actions';
+import { ExploreContent } from '../../../presentation/components/explore/ExploreContentWithSuspense';
 
 const ExplorePage = async () => {
-  const result = await getPublicPalettes();
-
   return (
     <div className='min-h-screen bg-background'>
       {/* Hero Section */}
@@ -40,8 +38,8 @@ const ExplorePage = async () => {
 
       {/* Palette Grid */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-12'>
-        <Suspense fallback={<ExploreSuspenseSkeleton count={6} />}>
-          <ExplorePaletteGrid palettes={result.data} error={result.error} />
+        <Suspense fallback={<ExploreSuspenseSkeleton />}>
+          <ExploreContent />
         </Suspense>
       </div>
     </div>
