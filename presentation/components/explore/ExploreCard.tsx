@@ -19,6 +19,7 @@ interface ExploreCardProps {
   isLiked: boolean;
   isAuthenticated: boolean;
   heightPattern?: HeightPattern;
+  containerClassName?: string;
 }
 
 export const ExploreCard = ({
@@ -30,6 +31,7 @@ export const ExploreCard = ({
   isLiked: initialIsLiked,
   isAuthenticated,
   heightPattern = 'medium',
+  containerClassName,
 }: ExploreCardProps) => {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -102,7 +104,7 @@ export const ExploreCard = ({
 
   return (
     <div
-      className={`group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer ${heightClasses[heightPattern]}`}
+      className={`group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer ${heightClasses[heightPattern]} ${containerClassName}`}
     >
       {/* Color Stripes Background */}
       <div className='absolute inset-0 flex flex-col rounded-2xl overflow-hidden'>

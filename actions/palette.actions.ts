@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 
 import { PaletteRequestSchema } from '@/infrastructure/schemas/palette.schema';
 import { PaletteRequest, PaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
+import { da } from 'zod/locales';
 
 const addPalette = async (palette: PaletteRequest) => {
   try {
@@ -96,7 +97,7 @@ const deletePalette = async (paletteId: string, userId: string) => {
   }
 };
 
-const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent') => {
+const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent', limit: number = 20) => {
   try {
     const supabase = await createClient();
 
@@ -110,7 +111,8 @@ const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent') => {
       .from('palettes')
       .select('*, user_id(full_name)')
       .eq('is_public', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (palettesError) {
       console.error('Error fetching public palettes:', palettesError);
@@ -172,34 +174,63 @@ const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent') => {
 };
 
 /**
+ * Fetch paginated public palettes
+ */
+const paginatedPalettes = async (offset: number, perPage: number = 20, sortedBy: 'recent' | 'mostLiked' = 'recent') => {
+  const supabase = await createClient();
+
+  const from = (offset - 1) * perPage;
+  const to = from + perPage - 1;
+
+  const { data } = await supabase
+    .from('palettes')
+    .select('*, user_id(full_name)')
+    .eq('is_public', true)
+    .range(from, to)
+    .order('created_at', { ascending: false });
+    
+  return {
+    data: data
+      ? data?.map((palette) => ({
+          ...palette,
+          profile: {
+            full_name: palette.user_id?.full_name,
+          },
+        }))
+      : [],
+    error: null,
+  };
+};
+
+/**
  * Toggle like/unlike on a palette
  * Returns the new like status and updated count
-*/
+ */
 const togglePaletteLike = async (paletteId: string) => {
   try {
     const supabase = await createClient();
-    
+
     // Get current user
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       return {
         error: 'You must be logged in to like palettes',
         data: null,
       };
     }
-    
+
     // Check if user has already liked this palette
     const { data: existingLike, error: checkError } = await supabase
-    .from('user_palette_likes')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('palette_id', paletteId)
-    .single();
-    
+      .from('user_palette_likes')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('palette_id', paletteId)
+      .single();
+
     if (checkError && checkError.code !== 'PGRST116') {
       // PGRST116 is "not found" error, which is expected
       console.error('Error checking like status:', checkError);
@@ -208,17 +239,17 @@ const togglePaletteLike = async (paletteId: string) => {
         data: null,
       };
     }
-    
+
     let isLiked = false;
-    
+
     if (existingLike) {
       // Unlike: Remove the like
       const { error: deleteError } = await supabase
-      .from('user_palette_likes')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('palette_id', paletteId);
-      
+        .from('user_palette_likes')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('palette_id', paletteId);
+
       if (deleteError) {
         console.error('Error removing like:', deleteError);
         return {
@@ -226,7 +257,7 @@ const togglePaletteLike = async (paletteId: string) => {
           data: null,
         };
       }
-      
+
       isLiked = false;
     } else {
       // Like: Add the like
@@ -234,7 +265,7 @@ const togglePaletteLike = async (paletteId: string) => {
         user_id: user.id,
         palette_id: paletteId,
       });
-      
+
       if (insertError) {
         console.error('Error adding like:', insertError);
         return {
@@ -242,18 +273,18 @@ const togglePaletteLike = async (paletteId: string) => {
           data: null,
         };
       }
-      
+
       isLiked = true;
     }
-    
+
     // Get updated count
     const { count } = await supabase
-    .from('user_palette_likes')
-    .select('*', { count: 'exact', head: true })
-    .eq('palette_id', paletteId);
-    
+      .from('user_palette_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('palette_id', paletteId);
+
     revalidatePath('/explore');
-    
+
     return {
       error: null,
       data: {
@@ -270,4 +301,12 @@ const togglePaletteLike = async (paletteId: string) => {
   }
 };
 
-export { addPalette, getUserPalettes, updatePaletteVisibility, deletePalette, getPublicPalettes, togglePaletteLike };
+export {
+  addPalette,
+  getUserPalettes,
+  updatePaletteVisibility,
+  deletePalette,
+  getPublicPalettes,
+  togglePaletteLike,
+  paginatedPalettes,
+};

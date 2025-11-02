@@ -12,6 +12,7 @@ interface ExplorePaletteGridProps {
 }
 
 export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: ExplorePaletteGridProps) => {
+
   // Show error message if there's an error
   if (error) {
     return (
@@ -25,30 +26,21 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: Explore
     );
   }
 
-  if (!palettes || palettes.length === 0) {
-    return (
-      <div className='text-center py-12'>
-        <p className='text-slate-400 text-lg'>No public palettes found. Be the first to share one!</p>
-      </div>
-    );
-  }
-
   return (
     <div className='columns-1 sm:columns-2 lg:columns-4 xl:columns-4 gap-6 space-y-6'>
-      {palettes.map((palette, index) => (
-        <div key={palette.id} className='break-inside-avoid mb-6'>
-          <ExploreCard
-            key={palette.id}
-            id={palette.id}
-            paletteName={palette.palette_name}
-            name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
-            colors={palette.colors}
-            likes={palette.likes_count}
-            isLiked={palette.is_liked_by_user}
-            isAuthenticated={isAuthenticated}
-            heightPattern={getHeightPattern(index)}
-          />
-        </div>
+      {palettes?.map((palette, index) => (
+        <ExploreCard
+          key={palette.id}
+          id={palette.id}
+          containerClassName='break-inside-avoid mb-6'
+          paletteName={palette.palette_name}
+          name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
+          colors={palette.colors}
+          likes={palette.likes_count}
+          isLiked={palette.is_liked_by_user}
+          isAuthenticated={isAuthenticated}
+          heightPattern={getHeightPattern(index)}
+        />
       ))}
     </div>
   );
