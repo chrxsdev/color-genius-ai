@@ -34,10 +34,11 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: Explore
   }
 
   return (
-    <div className='columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6'>
+    <div className='columns-1 sm:columns-2 lg:columns-4 xl:columns-4 gap-6 space-y-6'>
       {palettes.map((palette, index) => (
-        <div key={palette.id} className='break-inside-avoid'>
+        <div key={palette.id} className='break-inside-avoid mb-6'>
           <ExploreCard
+            key={palette.id}
             id={palette.id}
             paletteName={palette.palette_name}
             name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}

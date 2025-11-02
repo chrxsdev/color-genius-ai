@@ -1,9 +1,15 @@
 import { Suspense } from 'react';
-import { ExploreSuspenseSkeleton } from '@/presentation/components/explore';
-import { MdArrowDropDown } from 'react-icons/md';
+import { ExploreSuspenseSkeleton, ExploreFilter } from '@/presentation/components/explore';
 import { ExploreContent } from '../../../presentation/components/explore/ExploreContentWithSuspense';
 
-const ExplorePage = async () => {
+interface ExplorePageProps {
+  searchParams: Promise<{ sort?: string }>;
+}
+
+const ExplorePage = async ({ searchParams }: ExplorePageProps) => {
+  const params = await searchParams;
+  const sortBy = (params.sort === 'recent' ? 'recent' : 'mostLiked') as 'recent' | 'mostLiked';
+
   return (
     <div className='min-h-screen bg-background'>
       {/* Hero Section */}
@@ -18,28 +24,15 @@ const ExplorePage = async () => {
 
           {/* Search and Filters */}
           <div className='mt-8 flex flex-col sm:flex-row gap-4 max-w-7xl mx-auto justify-end'>
-            {/* Popular Dropdown */}
-            <div className='relative w-full sm:w-auto'>
-              <select
-                className='w-full sm:w-40 rounded-xl border-2 border-neutral-variant bg-background h-14 pl-4 pr-12 text-base text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none appearance-none transition-all cursor-pointer'
-                defaultValue='mostLiked'
-              >
-                <option value='recent'>Recent</option>
-                <option value='mostLiked'>Most Liked</option>
-              </select>
-              <MdArrowDropDown
-                size={25}
-                className='absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none'
-              />
-            </div>
+            <ExploreFilter />
           </div>
         </div>
       </div>
 
       {/* Palette Grid */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 mb-12'>
-        <Suspense fallback={<ExploreSuspenseSkeleton />}>
-          <ExploreContent />
+        <Suspense key={sortBy} fallback={<ExploreSuspenseSkeleton />}>
+          <ExploreContent sortBy={sortBy} />
         </Suspense>
       </div>
     </div>
