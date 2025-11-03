@@ -1,23 +1,16 @@
 import { ExplorePaletteGrid } from '@/presentation/components/explore';
-import { getPublicPalettes, paginatedPalettes } from '@/actions/palette.actions';
 import { getCurrentUser } from '@/actions/auth.actions';
-import { LoadMore } from './LoadMore';
+import { getAllPalettes } from '@/actions/palette.actions';
 
 interface ExploreContentProps {
   sortBy?: 'recent' | 'mostLiked';
 }
 
 export const ExploreContent = async ({ sortBy = 'recent' }: ExploreContentProps) => {
-  // const result = await getPublicPalettes(sortBy);
-  const palettes = await paginatedPalettes(1, 20);
+  const palettes = await getAllPalettes(1, 20, sortBy);
   const user = await getCurrentUser();
 
   const isAuthenticated = !!user;
 
-  return (
-    <>
-      <ExplorePaletteGrid palettes={palettes.data} error={palettes.error} isAuthenticated={isAuthenticated} />;
-      <LoadMore />
-    </>
-  );
+  return <ExplorePaletteGrid palettes={palettes.data} error={palettes.error} isAuthenticated={isAuthenticated} />;
 };

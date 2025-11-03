@@ -4,7 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 import { PaletteRequestSchema } from '@/infrastructure/schemas/palette.schema';
-import { PaletteRequest, PaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
+import {
+  ExplorePaletteResponse,
+  PaletteRequest,
+  PaletteResponse,
+} from '@/infrastructure/interfaces/palette-actions.interface';
 import { da } from 'zod/locales';
 
 const addPalette = async (palette: PaletteRequest) => {
@@ -97,34 +101,41 @@ const deletePalette = async (paletteId: string, userId: string) => {
   }
 };
 
-const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent', limit: number = 20) => {
+/**
+ * Fetch paginated public palettes
+ */
+const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recent' | 'mostLiked' = 'recent') => {
   try {
     const supabase = await createClient();
+
+    console.log(sortBy)
 
     // Get current user (may be null if not logged in)
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // First get all public palettes with profile info
+    // Setting the range for pagination
+    const from = (offset - 1) * limit;
+    const to = from + (limit - 1);
+
     const { data: palettes, error: palettesError } = await supabase
       .from('palettes')
       .select('*, user_id(full_name)')
       .eq('is_public', true)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .range(from, to)
+      .order('created_at', { ascending: false });
 
     if (palettesError) {
-      console.error('Error fetching public palettes:', palettesError);
       return {
-        error: 'Failed to fetch public palettes',
+        error: 'Failed to fetch palettes',
         data: null,
       };
     }
 
     // Get likes count and user's like status for each palette
     const palettesWithLikes = await Promise.all(
-      (palettes ?? []).map(async (palette) => {
+      palettes.map(async (palette) => {
         const { count } = await supabase
           .from('user_palette_likes')
           .select('*', { count: 'exact', head: true })
@@ -154,7 +165,7 @@ const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent', limi
       })
     );
 
-    // Sort based on the sortBy parameter
+    // Sort based on the sortedBy parameter
     if (sortBy === 'mostLiked') {
       palettesWithLikes.sort((a, b) => b.likes_count - a.likes_count);
     }
@@ -167,39 +178,10 @@ const getPublicPalettes = async (sortBy: 'recent' | 'mostLiked' = 'recent', limi
   } catch (error) {
     console.error({ error });
     return {
-      error: 'Something went wrong while fetching public palettes',
+      error: 'Something went wrong while fetching palettes',
       data: null,
     };
   }
-};
-
-/**
- * Fetch paginated public palettes
- */
-const paginatedPalettes = async (offset: number, perPage: number = 20, sortedBy: 'recent' | 'mostLiked' = 'recent') => {
-  const supabase = await createClient();
-
-  const from = (offset - 1) * perPage;
-  const to = from + perPage - 1;
-
-  const { data } = await supabase
-    .from('palettes')
-    .select('*, user_id(full_name)')
-    .eq('is_public', true)
-    .range(from, to)
-    .order('created_at', { ascending: false });
-    
-  return {
-    data: data
-      ? data?.map((palette) => ({
-          ...palette,
-          profile: {
-            full_name: palette.user_id?.full_name,
-          },
-        }))
-      : [],
-    error: null,
-  };
 };
 
 /**
@@ -306,7 +288,6 @@ export {
   getUserPalettes,
   updatePaletteVisibility,
   deletePalette,
-  getPublicPalettes,
   togglePaletteLike,
-  paginatedPalettes,
+  getAllPalettes,
 };

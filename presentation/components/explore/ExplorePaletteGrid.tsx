@@ -1,9 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useInView } from 'react-intersection-observer';
+
 import { ExplorePaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { ExploreCard } from './ExploreCard';
 import { AlertCircle } from 'lucide-react';
 import { getHeightPattern } from '@/utils/patterns';
+import { getAllPalettes } from '@/actions/palette.actions';
+import { Loader } from '../Loader';
 
 interface ExplorePaletteGridProps {
   palettes: ExplorePaletteResponse[] | null;
@@ -12,6 +17,28 @@ interface ExplorePaletteGridProps {
 }
 
 export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: ExplorePaletteGridProps) => {
+  const [currentPalettes, setCurrentPalettes] = useState<ExplorePaletteResponse[]>(palettes ?? []);
+  const [pagesLoaded, setPagesLoaded] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+
+  const { ref, inView } = useInView();
+
+  const loadMorePalettes = async () => {
+    const nextPage = pagesLoaded + 1;
+    const { data: newPalettes } = await getAllPalettes(nextPage);
+
+    if (!newPalettes || newPalettes.length === 0) {
+      setHasMore(false);
+      return;
+    }
+
+    setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...newPalettes]);
+    setPagesLoaded(nextPage);
+  };
+
+  useEffect(() => {
+    if (inView) loadMorePalettes();
+  }, [inView]);
 
   // Show error message if there's an error
   if (error) {
@@ -27,21 +54,28 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated }: Explore
   }
 
   return (
-    <div className='columns-1 sm:columns-2 lg:columns-4 xl:columns-4 gap-6 space-y-6'>
-      {palettes?.map((palette, index) => (
-        <ExploreCard
-          key={palette.id}
-          id={palette.id}
-          containerClassName='break-inside-avoid mb-6'
-          paletteName={palette.palette_name}
-          name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
-          colors={palette.colors}
-          likes={palette.likes_count}
-          isLiked={palette.is_liked_by_user}
-          isAuthenticated={isAuthenticated}
-          heightPattern={getHeightPattern(index)}
-        />
-      ))}
-    </div>
+    <>
+      <div className='columns-1 sm:columns-2 lg:columns-4 xl:columns-4 gap-6 space-y-6'>
+        {currentPalettes?.map((palette, index) => (
+          <ExploreCard
+            key={`${palette.id}-${index}`}
+            id={palette.id}
+            containerClassName='break-inside-avoid mb-6 explore-card'
+            paletteName={palette.palette_name}
+            name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
+            colors={palette.colors}
+            likes={palette.likes_count}
+            isLiked={palette.is_liked_by_user}
+            isAuthenticated={isAuthenticated}
+            heightPattern={getHeightPattern(index)}
+          />
+        ))}
+      </div>
+      {hasMore && (
+        <div className='flex justify-center items-center p-4' ref={ref}>
+          <Loader className='h-10 w-10' />
+        </div>
+      )}
+    </>
   );
 };
