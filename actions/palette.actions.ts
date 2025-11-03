@@ -9,7 +9,6 @@ import {
   PaletteRequest,
   PaletteResponse,
 } from '@/infrastructure/interfaces/palette-actions.interface';
-import { da } from 'zod/locales';
 
 const addPalette = async (palette: PaletteRequest) => {
   try {
@@ -104,82 +103,109 @@ const deletePalette = async (paletteId: string, userId: string) => {
 /**
  * Fetch paginated public palettes
  */
-const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recent' | 'mostLiked' = 'recent') => {
+const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recent' | 'mostLiked' = 'mostLiked') => {
   try {
     const supabase = await createClient();
-
-    console.log(sortBy)
 
     // Get current user (may be null if not logged in)
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // Setting the range for pagination
     const from = (offset - 1) * limit;
     const to = from + (limit - 1);
 
-    const { data: palettes, error: palettesError } = await supabase
-      .from('palettes')
-      .select('*, user_id(full_name)')
-      .eq('is_public', true)
-      .range(from, to)
-      .order('created_at', { ascending: false });
+    let palettesQuery = supabase.from('palettes_with_like_count').select('*').eq('is_public', true);
+
+    if (sortBy === 'mostLiked') {
+      palettesQuery = palettesQuery
+        .order('like_count', { ascending: false })
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
+    } else {
+      palettesQuery = palettesQuery.order('created_at', { ascending: false }).order('id', { ascending: false }); // desempate estable
+    }
+
+    const { data: palettes, error: palettesError } = await palettesQuery.range(from, to);
 
     if (palettesError) {
       return {
         error: 'Failed to fetch palettes',
         data: null,
+        hasMore: false,
       };
     }
 
-    // Get likes count and user's like status for each palette
-    const palettesWithLikes = await Promise.all(
-      palettes.map(async (palette) => {
-        const { count } = await supabase
-          .from('user_palette_likes')
-          .select('*', { count: 'exact', head: true })
-          .eq('palette_id', palette.id);
-
-        // Check if current user has liked this palette
-        let isLikedByUser = false;
-        if (user) {
-          const { data: userLike } = await supabase
-            .from('user_palette_likes')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('palette_id', palette.id)
-            .single();
-
-          isLikedByUser = !!userLike;
-        }
-
-        return {
-          ...palette,
-          profile: {
-            full_name: palette.user_id?.full_name,
-          },
-          likes_count: count ?? 0,
-          is_liked_by_user: isLikedByUser,
-        };
-      })
-    );
-
-    // Sort based on the sortedBy parameter
-    if (sortBy === 'mostLiked') {
-      palettesWithLikes.sort((a, b) => b.likes_count - a.likes_count);
+    if (!palettes || palettes.length === 0) {
+      return {
+        data: [],
+        error: null,
+        hasMore: false,
+      };
     }
-    // 'recent' is already sorted by created_at descending from the query
+
+    // TODO: Re-implement likes fetching and merging with palettes!
+    // const paletteIds = palettes.map((palette) => palette.id);
+
+    // let likedPaletteIds = new Set<string>();
+    // if (user && paletteIds.length > 0) {
+    //   const { data: likedRows, error: likedError } = await supabase
+    //     .from('user_palette_likes')
+    //     .select('palette_id')
+    //     .eq('user_id', user.id)
+    //     .in('palette_id', paletteIds);
+
+    //   if (likedError) {
+    //     return {
+    //       error: 'Failed to fetch palettes',
+    //       data: null,
+    //       hasMore: false,
+    //     };
+    //   }
+
+    //   likedPaletteIds = new Set(likedRows?.map((like) => like.palette_id) ?? []);
+    // }
+
+    // const palettesWithLikes: ExplorePaletteResponse[] = palettes.map((palette) => {
+    //   const basePalette = palette as {
+    //     user_palette_likes?: { count: number }[];
+    //     profile?: { full_name?: string | null } | null;
+    //   } & PaletteResponse;
+
+    //   const { user_palette_likes, profile: profileInfo, ...paletteFields } = basePalette;
+
+    //   const likesCount = user_palette_likes?.[0]?.count ?? 0;
+
+    //   return {
+    //     ...paletteFields,
+    //     profile: {
+    //       full_name: profileInfo?.full_name ?? '',
+    //     },
+    //     likes_count: likesCount,
+    //     is_liked_by_user: likedPaletteIds.has(basePalette.id),
+    //   };
+    // });
+
+    // const totalRecords = totalPalettes ?? palettesWithLikes.length;
+    // const computedHasMore = totalPalettes !== null ? to + 1 < totalRecords : palettesWithLikes.length === limit;
+
+    // console.log({
+    //   data: palettesWithLikes,
+    //   error: null,
+    //   hasMore: computedHasMore,
+    // });
 
     return {
-      data: palettesWithLikes,
+      data: palettes, // TODO: change back to palettesWithLikes
       error: null,
+      hasMore: true,
     };
   } catch (error) {
     console.error({ error });
     return {
       error: 'Something went wrong while fetching palettes',
       data: null,
+      hasMore: false,
     };
   }
 };
@@ -283,11 +309,4 @@ const togglePaletteLike = async (paletteId: string) => {
   }
 };
 
-export {
-  addPalette,
-  getUserPalettes,
-  updatePaletteVisibility,
-  deletePalette,
-  togglePaletteLike,
-  getAllPalettes,
-};
+export { addPalette, getUserPalettes, updatePaletteVisibility, deletePalette, togglePaletteLike, getAllPalettes };

@@ -6,11 +6,19 @@ interface ExploreContentProps {
   sortBy?: 'recent' | 'mostLiked';
 }
 
-export const ExploreContent = async ({ sortBy = 'recent' }: ExploreContentProps) => {
-  const palettes = await getAllPalettes(1, 20, sortBy);
+export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentProps) => {
+  const palettes = await getAllPalettes(1, 20, sortBy); // TODO: Make limit configurable
   const user = await getCurrentUser();
 
   const isAuthenticated = !!user;
 
-  return <ExplorePaletteGrid palettes={palettes.data} error={palettes.error} isAuthenticated={isAuthenticated} />;
+  return (
+    <ExplorePaletteGrid
+      palettes={palettes.data}
+      error={palettes.error}
+      isAuthenticated={isAuthenticated}
+      hasMore={palettes.hasMore}
+      sortBy={sortBy}
+    />
+  );
 };

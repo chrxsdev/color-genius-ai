@@ -43,3 +43,13 @@ export interface ProfileInfo {
   created_at?: Date;
   updated_at?: Date;
 }
+
+export interface PaletteLikesResponse {
+  error: string | null;
+  data: Likes[];
+}
+
+export interface Likes {
+  palette_id: string;
+  user_id: string;
+}
