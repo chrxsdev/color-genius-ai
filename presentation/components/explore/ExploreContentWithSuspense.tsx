@@ -7,7 +7,7 @@ interface ExploreContentProps {
 }
 
 export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentProps) => {
-  const palettes = await getAllPalettes(1, 20, sortBy); // TODO: Make limit configurable
+  const palettes = await getAllPalettes(1, 20, sortBy);
   const user = await getCurrentUser();
 
   const isAuthenticated = !!user;
@@ -17,7 +17,6 @@ export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentPro
       palettes={palettes.data}
       error={palettes.error}
       isAuthenticated={isAuthenticated}
-      hasMore={palettes.hasMore}
       sortBy={sortBy}
     />
   );

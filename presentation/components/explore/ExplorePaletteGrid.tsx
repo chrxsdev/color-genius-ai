@@ -14,30 +14,21 @@ interface ExplorePaletteGridProps {
   palettes: ExplorePaletteResponse[] | null;
   error: string | null;
   isAuthenticated: boolean;
-  hasMore: boolean;
   sortBy: 'recent' | 'mostLiked';
 }
 
-export const ExplorePaletteGrid = ({
-  palettes,
-  error,
-  isAuthenticated,
-  hasMore: initialHasMore,
-  sortBy,
-}: ExplorePaletteGridProps) => {
+export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }: ExplorePaletteGridProps) => {
   const [currentPalettes, setCurrentPalettes] = useState<ExplorePaletteResponse[]>(palettes ?? []);
   const [pagesLoaded, setPagesLoaded] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
+  const [hasMore, setHasMore] = useState<boolean>(true);
   const [activeSort, setActiveSort] = useState<'recent' | 'mostLiked'>(sortBy);
 
   const { ref, inView } = useInView();
 
   useEffect(() => {
-    setCurrentPalettes(palettes ?? []);
     setPagesLoaded(1);
-    setHasMore(initialHasMore);
     setActiveSort(sortBy);
-  }, [palettes, initialHasMore, sortBy]);
+  }, [palettes, sortBy]);
 
   const loadMorePalettes = async () => {
     if (!hasMore) {
@@ -46,13 +37,9 @@ export const ExplorePaletteGrid = ({
 
     const nextPage = pagesLoaded + 1;
 
-    const {
-      data: newPalettes,
-      error: fetchError,
-      hasMore: moreAvailable,
-    } = await getAllPalettes(nextPage, 20, activeSort);
+    const { data: newPalettes, error: fetchError } = await getAllPalettes(nextPage, 20, activeSort);
 
-    setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...(newPalettes as any /** TODO: Type this! */)]);
+    setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...(newPalettes as ExplorePaletteResponse[])]);
 
     if (fetchError) {
       setHasMore(false);
@@ -65,7 +52,7 @@ export const ExplorePaletteGrid = ({
     }
 
     setPagesLoaded(nextPage);
-    setHasMore(moreAvailable);
+    setHasMore(true);
   };
 
   useEffect(() => {
@@ -100,7 +87,7 @@ export const ExplorePaletteGrid = ({
             paletteName={palette.palette_name}
             name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
             colors={palette.colors}
-            likes={palette.likes_count}
+            likes={palette.like_count}
             isLiked={palette.is_liked_by_user}
             isAuthenticated={isAuthenticated}
             heightPattern={getHeightPattern(index)}

@@ -107,7 +107,7 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
   try {
     const supabase = await createClient();
 
-    // Get current user (may be null if not logged in)
+    // Get current user to determine the liked palettes
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -123,7 +123,7 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
         .order('created_at', { ascending: false })
         .order('id', { ascending: false });
     } else {
-      palettesQuery = palettesQuery.order('created_at', { ascending: false }).order('id', { ascending: false }); // desempate estable
+      palettesQuery = palettesQuery.order('created_at', { ascending: false }).order('id', { ascending: false });
     }
 
     const { data: palettes, error: palettesError } = await palettesQuery.range(from, to);
@@ -132,7 +132,6 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
       return {
         error: 'Failed to fetch palettes',
         data: null,
-        hasMore: false,
       };
     }
 
@@ -140,72 +139,48 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
       return {
         data: [],
         error: null,
-        hasMore: false,
       };
     }
 
-    // TODO: Re-implement likes fetching and merging with palettes!
-    // const paletteIds = palettes.map((palette) => palette.id);
+    const paletteIds = palettes.map((palette) => palette.id);
 
-    // let likedPaletteIds = new Set<string>();
-    // if (user && paletteIds.length > 0) {
-    //   const { data: likedRows, error: likedError } = await supabase
-    //     .from('user_palette_likes')
-    //     .select('palette_id')
-    //     .eq('user_id', user.id)
-    //     .in('palette_id', paletteIds);
+    let likedPaletteIds = new Set<string>();
 
-    //   if (likedError) {
-    //     return {
-    //       error: 'Failed to fetch palettes',
-    //       data: null,
-    //       hasMore: false,
-    //     };
-    //   }
+    if (user && paletteIds.length > 0) {
+      const { data: likedRows, error: likedError } = await supabase
+        .from('user_palette_likes')
+        .select('palette_id')
+        .eq('user_id', user.id)
+        .in('palette_id', paletteIds);
 
-    //   likedPaletteIds = new Set(likedRows?.map((like) => like.palette_id) ?? []);
-    // }
+      if (likedError) {
+        return {
+          error: 'Failed to fetch palettes',
+          data: null,
+        };
+      }
+      likedPaletteIds = new Set(likedRows?.map((like) => like.palette_id) ?? []);
+    }
 
-    // const palettesWithLikes: ExplorePaletteResponse[] = palettes.map((palette) => {
-    //   const basePalette = palette as {
-    //     user_palette_likes?: { count: number }[];
-    //     profile?: { full_name?: string | null } | null;
-    //   } & PaletteResponse;
-
-    //   const { user_palette_likes, profile: profileInfo, ...paletteFields } = basePalette;
-
-    //   const likesCount = user_palette_likes?.[0]?.count ?? 0;
-
-    //   return {
-    //     ...paletteFields,
-    //     profile: {
-    //       full_name: profileInfo?.full_name ?? '',
-    //     },
-    //     likes_count: likesCount,
-    //     is_liked_by_user: likedPaletteIds.has(basePalette.id),
-    //   };
-    // });
-
-    // const totalRecords = totalPalettes ?? palettesWithLikes.length;
-    // const computedHasMore = totalPalettes !== null ? to + 1 < totalRecords : palettesWithLikes.length === limit;
-
-    // console.log({
-    //   data: palettesWithLikes,
-    //   error: null,
-    //   hasMore: computedHasMore,
-    // });
+    const palettesWithLikes: ExplorePaletteResponse[] = palettes.map((palette) => {
+      return {
+        ...palette,
+        profile: {
+          full_name: palette.profile?.full_name ?? '',
+        },
+        is_liked_by_user: likedPaletteIds.has(palette.id),
+      };
+    });
 
     return {
-      data: palettes, // TODO: change back to palettesWithLikes
+      data: palettesWithLikes,
       error: null,
-      hasMore: true,
     };
   } catch (error) {
     console.error({ error });
     return {
       error: 'Something went wrong while fetching palettes',
       data: null,
-      hasMore: false,
     };
   }
 };

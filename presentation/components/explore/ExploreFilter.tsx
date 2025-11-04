@@ -28,8 +28,8 @@ export const ExploreFilter = () => {
         value={optimisticSort}
         onChange={handleSortChange}
       >
-        <option value='recent'>Recent</option>
         <option value='mostLiked'>Most Liked</option>
+        <option value='recent'>Recent</option>
       </select>
       <MdArrowDropDown
         size={25}

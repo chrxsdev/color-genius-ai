@@ -31,7 +31,7 @@ export interface PaletteResponse {
 
 export interface ExplorePaletteResponse extends PaletteResponse {
   profile: ProfileInfo | null;
-  likes_count: number;
+  like_count: number;
   is_liked_by_user: boolean;
 }
 
