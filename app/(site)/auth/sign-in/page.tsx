@@ -37,9 +37,13 @@ export const SignIn = () => {
             </span>
             Continue with Google
           </button>
-          <div>
+          <div className='flex justify-center items-center gap-x-2'>
             <Link prefetch={false} href='/' className='text-sm text-subtitle hover:text-white/70 underline'>
               Go back to Palette
+            </Link>
+            <span className='text-subtitle text-sm'>or</span>
+            <Link prefetch={false} href='/explore' className='text-sm text-subtitle hover:text-white/70 underline'>
+              Explore
             </Link>
           </div>
         </div>
