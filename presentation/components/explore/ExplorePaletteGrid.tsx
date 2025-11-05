@@ -9,37 +9,39 @@ import { AlertCircle } from 'lucide-react';
 import { getHeightPattern } from '@/utils/patterns';
 import { getAllPalettes } from '@/actions/palette.actions';
 import { Loader } from '../Loader';
+import { ExploreSortedBy } from '@/infrastructure/types/filters.types';
 
 interface ExplorePaletteGridProps {
   palettes: ExplorePaletteResponse[] | null;
   error: string | null;
   isAuthenticated: boolean;
-  sortBy: 'recent' | 'mostLiked';
+  sortBy: ExploreSortedBy;
 }
 
 export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }: ExplorePaletteGridProps) => {
   const [currentPalettes, setCurrentPalettes] = useState<ExplorePaletteResponse[]>(palettes ?? []);
   const [pagesLoaded, setPagesLoaded] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [activeSort, setActiveSort] = useState<'recent' | 'mostLiked'>(sortBy);
+  const [activeSort, setActiveSort] = useState<ExploreSortedBy>(sortBy);
 
   const { ref, inView } = useInView();
 
   useEffect(() => {
-    setPagesLoaded(1);
     setActiveSort(sortBy);
-  }, [palettes, sortBy]);
+  }, [sortBy]);
 
-  const loadMorePalettes = async () => {
+  const loadMorePalettes = useCallback(async () => {
     if (!hasMore) {
       return;
     }
 
     const nextPage = pagesLoaded + 1;
 
-    const { data: newPalettes, error: fetchError } = await getAllPalettes(nextPage, 20, activeSort);
-
-    setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...(newPalettes as ExplorePaletteResponse[])]);
+    const {
+      data: newPalettes,
+      error: fetchError,
+      hasMore: moreDataAvailable,
+    } = await getAllPalettes(nextPage, 20, activeSort);
 
     if (fetchError) {
       setHasMore(false);
@@ -51,9 +53,10 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
       return;
     }
 
+    setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...(newPalettes as ExplorePaletteResponse[])]);
     setPagesLoaded(nextPage);
-    setHasMore(true);
-  };
+    setHasMore(moreDataAvailable ?? false);
+  }, [hasMore, pagesLoaded, activeSort]);
 
   useEffect(() => {
     if (!inView || !hasMore) {

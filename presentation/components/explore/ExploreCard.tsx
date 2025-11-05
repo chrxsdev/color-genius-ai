@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Heart, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
-import { HeightPattern } from '@/infrastructure/types/height-patterns.types';
+import { HeightPattern } from '@/infrastructure/types/filters.types';
 import { heightClasses } from '@/utils/constants/height-patterns';
 import { togglePaletteLike } from '@/actions/palette.actions';
 import { ROUTES } from '@/utils/constants/routes';

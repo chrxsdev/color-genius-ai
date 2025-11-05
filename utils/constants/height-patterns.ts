@@ -1,4 +1,4 @@
-import { HeightPattern } from '@/infrastructure/types/height-patterns.types';
+import { HeightPattern } from '@/infrastructure/types/filters.types';
 
 // Map height patterns to Tailwind classes
 export const heightClasses: Record<HeightPattern, string> = {

@@ -1,14 +1,19 @@
 import { Suspense } from 'react';
 import { ExploreSuspenseSkeleton, ExploreFilter } from '@/presentation/components/explore';
 import { ExploreContent } from '../../../presentation/components/explore/ExploreContentWithSuspense';
+import { ExploreSortedBy } from '@/infrastructure/types/filters.types';
+
+interface ExploreParams {
+  sort?: ExploreSortedBy;
+}
 
 interface ExplorePageProps {
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<ExploreParams>;
 }
 
 const ExplorePage = async ({ searchParams }: ExplorePageProps) => {
   const params = await searchParams;
-  const sortBy = (params.sort === 'recent' ? 'recent' : 'mostLiked') as 'recent' | 'mostLiked';
+  const sortBy = (params.sort === 'recent' ? 'recent' : 'mostLiked') as ExploreSortedBy;
 
   return (
     <div className='min-h-screen bg-background'>

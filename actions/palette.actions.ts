@@ -113,7 +113,8 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
     } = await supabase.auth.getUser();
 
     const from = (offset - 1) * limit;
-    const to = from + (limit - 1);
+    // Request one extra item to check if there are more items
+    const to = from + limit;
 
     let palettesQuery = supabase.from('palettes_with_like_count').select('*').eq('is_public', true);
 
@@ -132,6 +133,7 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
       return {
         error: 'Failed to fetch palettes',
         data: null,
+        hasMore: false,
       };
     }
 
@@ -139,10 +141,16 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
       return {
         data: [],
         error: null,
+        hasMore: false,
       };
     }
 
-    const paletteIds = palettes.map((palette) => palette.id);
+    // Check if there are more items
+    const hasMore = palettes.length > limit;
+    // Only return the requested number of items
+    const palettesToReturn = hasMore ? palettes.slice(0, limit) : palettes;
+
+    const paletteIds = palettesToReturn.map((palette) => palette.id);
 
     let likedPaletteIds = new Set<string>();
 
@@ -157,16 +165,17 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
         return {
           error: 'Failed to fetch palettes',
           data: null,
+          hasMore: false,
         };
       }
       likedPaletteIds = new Set(likedRows?.map((like) => like.palette_id) ?? []);
     }
 
-    const palettesWithLikes: ExplorePaletteResponse[] = palettes.map((palette) => {
+    const palettesWithLikes: ExplorePaletteResponse[] = palettesToReturn.map((palette) => {
       return {
         ...palette,
         profile: {
-          full_name: palette.profile?.full_name ?? '',
+          full_name: palette.full_name,
         },
         is_liked_by_user: likedPaletteIds.has(palette.id),
       };
@@ -175,12 +184,14 @@ const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recen
     return {
       data: palettesWithLikes,
       error: null,
+      hasMore,
     };
   } catch (error) {
     console.error({ error });
     return {
       error: 'Something went wrong while fetching palettes',
       data: null,
+      hasMore: false,
     };
   }
 };

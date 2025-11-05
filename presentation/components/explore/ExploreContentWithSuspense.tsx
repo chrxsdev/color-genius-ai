@@ -1,9 +1,10 @@
 import { ExplorePaletteGrid } from '@/presentation/components/explore';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { getAllPalettes } from '@/actions/palette.actions';
+import { ExploreSortedBy } from '@/infrastructure/types/filters.types';
 
 interface ExploreContentProps {
-  sortBy?: 'recent' | 'mostLiked';
+  sortBy?: ExploreSortedBy;
 }
 
 export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentProps) => {
