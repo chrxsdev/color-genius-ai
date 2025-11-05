@@ -77,6 +77,11 @@ const PalettePage = () => {
         rationale: data.metadata?.rationale ?? null,
         tags: data.metadata?.tags ?? [],
         paletteName: data.paletteName ?? '',
+        colorOptionControl: {
+          brightness: 50,
+          saturation: 50,
+          warmth: 50,
+        },
       });
       setExistingNames([data.paletteName]);
     } catch (err) {
@@ -103,7 +108,8 @@ const PalettePage = () => {
       setExistingNames((prev) => [...prev, data.name].filter(Boolean));
     } catch (err) {
       const error = err as ApiError;
-      const errorMessage = error?.data?.error ?? error?.data?.message ?? error?.message ?? 'An unexpected error occurred';
+      const errorMessage =
+        error?.data?.error ?? error?.data?.message ?? error?.message ?? 'An unexpected error occurred';
       setError(errorMessage);
       console.error('Palette name regeneration error:', err);
     } finally {
@@ -137,7 +143,8 @@ const PalettePage = () => {
           colorOptionControl: { brightness, saturation, warmth },
         })
       );
-      return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
+
+      return redirect(`${ROUTES.auth.signIn}?next=home`);
     }
 
     // If user is logged, save the palette and redirecting to the dashboard and clean storage

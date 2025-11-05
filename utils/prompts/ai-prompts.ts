@@ -76,7 +76,7 @@ export const getPaletteGenerationSystemPrompt = (params: PaletteGenerationPrompt
   - Vary S and L strategically to create visual contrast while maintaining harmony.
   - Order colors logically (e.g., by hue progression, lightness gradient, or visual flow).
 
-  REMEMBER: Each color must be DISTINCTLY DIFFERENT from all others, with a distance of at least 30 in HSL space. Avoid subtle variations that look identical.
+  REMEMBER: Avoid subtle variations that look identical, but must keep consistency and harmony between colors.
   `;
 };
 

@@ -12,7 +12,9 @@ const signInWith =
   async (next: string = ROUTES.dashboard) => {
     const supabase = await createClient();
 
-    const authCallbackUrl = `${process.env.URI}/api/auth/callback?next=${next}`;
+    const nextRedirect = ROUTES[next as keyof typeof ROUTES] ?? ROUTES.dashboard;
+
+    const authCallbackUrl = `${process.env.URI}/api/auth/callback?next=${nextRedirect}`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
