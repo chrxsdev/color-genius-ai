@@ -20,6 +20,7 @@ interface ExploreCardProps {
   isAuthenticated: boolean;
   heightPattern?: HeightPattern;
   containerClassName?: string;
+  onUnlikeSuccess?: () => void;
 }
 
 export const ExploreCard = ({
@@ -32,9 +33,10 @@ export const ExploreCard = ({
   isAuthenticated,
   heightPattern = 'medium',
   containerClassName,
+  onUnlikeSuccess,
 }: ExploreCardProps) => {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likesCount, setLikesCount] = useState(initialLikes);
   const [animate, setAnimate] = useState(false);
@@ -62,11 +64,15 @@ export const ExploreCard = ({
     setIsLiked(newIsLiked);
     setLikesCount(newLikesCount);
 
+    
     // Use transition to batch the server update
     // This allows multiple clicks, but only the last action will be sent
     startTransition(async () => {
+      // If unliked and callback provided, trigger it
+      if (onUnlikeSuccess) onUnlikeSuccess();
+      
       const result = await togglePaletteLike(id);
-
+      
       if (result.error) {
         // Revert optimistic update on errors
         setIsLiked(!newIsLiked);
@@ -130,7 +136,8 @@ export const ExploreCard = ({
         <div className='absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300'>
           <button
             onClick={handleLike}
-            className='flex items-center gap-2 transition-colors cursor-pointer hover:scale-110'
+            disabled={isPending}
+            className='flex items-center gap-2 transition-colors cursor-pointer hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed'
             aria-label={isLiked ? 'Unlike palette' : 'Like palette'}
           >
             <Heart

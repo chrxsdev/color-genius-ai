@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { FaPalette, FaMagic, FaCompass } from 'react-icons/fa';
+import { FaPalette, FaMagic, FaCompass, FaHeart } from 'react-icons/fa';
 
 import { ROUTES } from '@/utils/constants/routes';
 import { Logo } from '../Logo';
@@ -35,6 +35,11 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
       label: 'My Palettes',
       icon: <FaPalette className='h-5 w-5' />,
       href: ROUTES.dashboard,
+    },
+    {
+      label: 'My Likes',
+      icon: <FaHeart className='h-5 w-5' />,
+      href: ROUTES.likes,
     },
     {
       label: 'Generator',

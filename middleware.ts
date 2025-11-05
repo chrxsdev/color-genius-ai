@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getUser, updateSession } from './lib/supabase/middleware';
 
 export const middleware = async (request: NextRequest) => {
-  const protectedRoutes = ['/dashboard', '/profile'];
+  const protectedRoutes = ['/dashboard', '/profile', '/likes'];
   const publicRoutes = ['/auth/sign-in'];
   const path = new URL(request.url).pathname;
 

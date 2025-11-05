@@ -279,6 +279,7 @@ const togglePaletteLike = async (paletteId: string) => {
       .eq('palette_id', paletteId);
 
     revalidatePath('/explore');
+    revalidatePath('/likes');
 
     return {
       error: null,
@@ -296,4 +297,97 @@ const togglePaletteLike = async (paletteId: string) => {
   }
 };
 
-export { addPalette, getUserPalettes, updatePaletteVisibility, deletePalette, togglePaletteLike, getAllPalettes };
+/**
+ * Get all palettes liked by the current user
+ */
+const getUserLikedPalettes = async () => {
+  try {
+    const supabase = await createClient();
+
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        error: 'You must be logged in to view liked palettes',
+        data: null,
+      };
+    }
+
+    // Get all palette IDs liked by the user
+    const { data: likedPalettes, error: likesError } = await supabase
+      .from('user_palette_likes')
+      .select('palette_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (likesError) {
+      console.error('Error fetching liked palettes:', likesError);
+      return {
+        error: 'Failed to fetch liked palettes',
+        data: null,
+      };
+    }
+
+    if (!likedPalettes || likedPalettes.length === 0) {
+      return {
+        data: [],
+        error: null,
+      };
+    }
+
+    const paletteIds = likedPalettes.map((like) => like.palette_id);
+
+    // Fetch full palette details with like count
+    const { data: palettes, error: palettesError } = await supabase
+      .from('palettes_with_like_count')
+      .select('*')
+      .in('id', paletteIds);
+
+    if (palettesError) {
+      console.error('Error fetching palette details:', palettesError);
+      return {
+        error: 'Failed to fetch palette details',
+        data: null,
+      };
+    }
+
+    // Map to include profile and is_liked_by_user flag
+    const palettesWithLikes: ExplorePaletteResponse[] = (palettes || []).map((palette) => ({
+      ...palette,
+      profile: {
+        full_name: palette.full_name,
+      },
+      is_liked_by_user: true, // All palettes here are liked by the user
+    }));
+
+    // Sort by the order of likedPalettes (most recently liked first)
+    const sortedPalettes = paletteIds
+      .map((id) => palettesWithLikes.find((p) => p.id === id))
+      .filter((p): p is ExplorePaletteResponse => p !== undefined);
+
+    return {
+      data: sortedPalettes,
+      error: null,
+    };
+  } catch (error) {
+    console.error('Error in getUserLikedPalettes:', error);
+    return {
+      error: 'Something went wrong while fetching liked palettes',
+      data: null,
+    };
+  }
+};
+
+export {
+  addPalette,
+  getUserPalettes,
+  updatePaletteVisibility,
+  deletePalette,
+  togglePaletteLike,
+  getAllPalettes,
+  getUserLikedPalettes,
+};
