@@ -13,7 +13,7 @@ interface ExplorePageProps {
 
 const ExplorePage = async ({ searchParams }: ExplorePageProps) => {
   const params = await searchParams;
-  const sortBy = (params.sort === 'recent' ? 'recent' : 'mostLiked') as ExploreSortedBy;
+  const sortBy = (params.sort === 'recent' ? 'recent' : 'popular') as ExploreSortedBy;
 
   return (
     <div className='min-h-screen bg-background'>

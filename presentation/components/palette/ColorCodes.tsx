@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { toast } from 'sonner';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
@@ -45,9 +46,12 @@ export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
   }, [activeTab, colors, format]);
 
   const handleCopy = async () => {
+    if (copied) return;
+
     await navigator.clipboard.writeText(styleCode[activeTab].code);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success('Code copied to clipboard', { duration: 3000 });
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (

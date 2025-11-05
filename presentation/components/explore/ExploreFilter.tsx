@@ -1,5 +1,6 @@
 'use client';
 
+import { ExploreSortedBy } from '@/infrastructure/types/filters.types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { startTransition, useOptimistic } from 'react';
 import { MdArrowDropDown } from 'react-icons/md';
@@ -7,7 +8,7 @@ import { MdArrowDropDown } from 'react-icons/md';
 export const ExploreFilter = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentSort = searchParams.get('sort') || 'mostLiked';
+  const currentSort = searchParams.get('sort') || ('popular' as ExploreSortedBy);
 
   const [optimisticSort, setOptimisticSort] = useOptimistic(currentSort);
 
@@ -28,7 +29,7 @@ export const ExploreFilter = () => {
         value={optimisticSort}
         onChange={handleSortChange}
       >
-        <option value='mostLiked'>Most Liked</option>
+        <option value='popular'>Popular</option>
         <option value='recent'>Recent</option>
       </select>
       <MdArrowDropDown

@@ -119,7 +119,7 @@ const getAllPalettes = async ({ offset, limit = 20, sortBy }: PaletteExploreRequ
 
     let palettesQuery = supabase.from('palettes_with_like_count').select('*').eq('is_public', true);
 
-    if (sortBy === 'mostLiked') {
+    if (sortBy === 'popular') {
       palettesQuery = palettesQuery
         .order('like_count', { ascending: false })
         .order('created_at', { ascending: false })

@@ -7,7 +7,7 @@ interface ExploreContentProps {
   sortBy?: ExploreSortedBy;
 }
 
-export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentProps) => {
+export const ExploreContent = async ({ sortBy = 'popular' }: ExploreContentProps) => {
   const palettes = await getAllPalettes({ offset: 1, sortBy });
   const user = await getCurrentUser();
 

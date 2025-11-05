@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { toast } from 'sonner';
 import { hexToRgb } from '@/utils/color-conversions/code-color-conversions';
 import { Format } from '@/infrastructure/types/format.types';
 
@@ -17,9 +18,12 @@ export const ColorCard = ({ color, name, format }: ColorCardProps) => {
   const colorValue = format === 'HEX' ? color.toLocaleUpperCase() : hexToRgb(color);
 
   const handleCopy = async () => {
+    if (copied) return;
+
     await navigator.clipboard.writeText(colorValue);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success('Color copied to clipboard', { duration: 3000 });
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (

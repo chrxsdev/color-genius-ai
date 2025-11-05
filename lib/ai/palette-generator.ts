@@ -11,6 +11,7 @@ import {
 } from '@/utils/prompts/ai-prompts';
 import { PaletteResponse, PaletteSchema } from '@/infrastructure/schemas/api-palette-response.schema';
 import { PaletteNameSchema } from '@/infrastructure/schemas/palette.schema';
+import { PromptValidationSchema } from '@/infrastructure/schemas/prompt-validation.schema';
 
 /**
  * PaletteGenerator class
@@ -34,7 +35,8 @@ export class PaletteGenerator {
    * Generate a color palette based on user prompt and harmony type
    */
   async generatePalette(prompt: string, harmony: string, colorCount: number = 5): Promise<PaletteResponse> {
-    const sanitizedPrompt = this.sanitizeInput(prompt);
+    // Validate prompt using Zod schema
+    const validatedPrompt = PromptValidationSchema.parse(prompt.trim());
 
     try {
       const result = await generateObject({
@@ -51,7 +53,7 @@ export class PaletteGenerator {
           },
           {
             role: 'user',
-            content: getPaletteGenerationUserPrompt(harmony, sanitizedPrompt),
+            content: getPaletteGenerationUserPrompt(harmony, validatedPrompt),
           },
         ],
         temperature: 0.7,
@@ -81,12 +83,11 @@ export class PaletteGenerator {
    */
   async regenerateName(params: { rationale: string; harmony: string; generatedNames: string[] }): Promise<string> {
     const { rationale, generatedNames, harmony } = params;
-    const sanitizedRationale = this.sanitizeInput(rationale);
     const timestamp = Date.now();
 
     try {
       return await this.generatePaletteName({
-        rationale: sanitizedRationale,
+        rationale: rationale.trim(),
         timestamp,
         harmony,
         generatedNames,
@@ -132,23 +133,6 @@ export class PaletteGenerator {
   private generateFallbackName(): string {
     const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `Geni ${randomId}`;
-  }
-
-  /**
-   * Sanitize user input to prevent prompt injection attacks
-   */
-  private sanitizeInput(input: string): string {
-    if (!input || typeof input !== 'string') {
-      throw new Error('Invalid input: must be a non-empty string');
-    }
-
-    return input
-      .trim()
-      .replace(/[<>"'`{}]/g, '') // Remove potential injection characters
-      .replace(/\b(system|assistant|user):/gi, '') // Remove role indicators
-      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-      .replace(/\[.*?\]\(.*?\)/g, '') // Remove markdown links
-      .substring(0, 200); // Limit length
   }
 
   /**

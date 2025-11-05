@@ -19,6 +19,14 @@ import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 import { ROUTES } from '@/utils/constants/routes';
 import { exportElementToPng } from '@/utils/export-to-png';
 
+interface ApiError {
+  data?: {
+    error?: string;
+    message?: string;
+  };
+  message?: string;
+}
+
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -72,8 +80,9 @@ const PalettePage = () => {
       });
       setExistingNames([data.paletteName]);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
+      const error = err as ApiError;
+      const errMessage = error?.data?.error ?? error?.data?.message ?? error?.message ?? 'Failed to generate palette';
+      setError(errMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -93,7 +102,8 @@ const PalettePage = () => {
       updateState({ paletteName: data.name });
       setExistingNames((prev) => [...prev, data.name].filter(Boolean));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const error = err as ApiError;
+      const errorMessage = error?.data?.error ?? error?.data?.message ?? error?.message ?? 'An unexpected error occurred';
       setError(errorMessage);
       console.error('Palette name regeneration error:', err);
     } finally {
@@ -164,7 +174,7 @@ const PalettePage = () => {
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8'>
       <div
-        className={`flex flex-col items-center mx-auto max-w-4xl ${
+        className={`flex flex-col items-center mx-auto max-w-5xl ${
           !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-12'
         } transition-all duration-75`}
       >
