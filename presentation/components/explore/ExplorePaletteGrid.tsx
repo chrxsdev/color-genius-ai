@@ -89,7 +89,7 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
         {currentPalettes?.map((palette, index) => {
           // Calculate the delay based on position within the current batch
           const indexInCurrentBatch = index - previousLoadedCount;
-          const delay = indexInCurrentBatch * 0.03;
+          const delay = indexInCurrentBatch * 0.04;
 
           return (
             <motion.div

@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { FaTrash, FaDownload } from 'react-icons/fa';
+import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
+import { toast } from 'sonner';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 
 interface PaletteCardProps {
@@ -24,6 +27,17 @@ export const PaletteCard = ({
   onDownload,
   onDelete,
 }: PaletteCardProps) => {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const handleCopyColor = async (colorHex: string, index: number) => {
+    if (copiedIndex === index) return;
+
+    await navigator.clipboard.writeText(colorHex.toUpperCase());
+    setCopiedIndex(index);
+    toast.success('Color copied to clipboard', { duration: 3000 });
+    setTimeout(() => setCopiedIndex(null), 3000);
+  };
+
   return (
     <div className='w-full rounded-xl border border-neutral-variant/50 overflow-hidden shadow-sm transition-shadow duration-300'>
       {/* Color Preview */}
@@ -31,10 +45,28 @@ export const PaletteCard = ({
         {colors.slice(0, 5).map((colorItem, index) => (
           <div
             key={index}
-            className='flex-1 h-full'
+            className='flex-1 h-full relative group'
             style={{ backgroundColor: colorItem.color }}
             title={colorItem.name}
-          />
+          >
+            {/* HEX Code and Copy Button - Shows on Hover */}
+            <div className='absolute bottom-0 inset-x-0 flex items-center justify-center gap-2 p-3 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+              <span className='text-sm font-mono font-medium text-white drop-shadow-lg'>
+                {colorItem.color.toUpperCase()}
+              </span>
+              <button
+                onClick={() => handleCopyColor(colorItem.color, index)}
+                className='flex items-center justify-center hover:scale-110 transition-transform cursor-pointer'
+                aria-label={`Copy ${colorItem.name}`}
+              >
+                {copiedIndex === index ? (
+                  <IoCheckmark className='text-xl text-white drop-shadow-lg' />
+                ) : (
+                  <IoCopyOutline className='text-xl text-white drop-shadow-lg' />
+                )}
+              </button>
+            </div>
+          </div>
         ))}
       </div>
 
