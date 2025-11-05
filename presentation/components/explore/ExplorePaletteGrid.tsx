@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { motion } from 'framer-motion';
 
 import { ExplorePaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { ExploreCard } from './ExploreCard';
@@ -23,6 +24,7 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
   const [pagesLoaded, setPagesLoaded] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [activeSort, setActiveSort] = useState<ExploreSortedBy>(sortBy);
+  const [previousLoadedCount, setPreviousLoadedCount] = useState<number>(0);
 
   const { ref, inView } = useInView();
 
@@ -41,7 +43,7 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
       data: newPalettes,
       error: fetchError,
       hasMore: moreDataAvailable,
-    } = await getAllPalettes(nextPage, 20, activeSort);
+    } = await getAllPalettes({ offset: nextPage, sortBy: activeSort });
 
     if (fetchError) {
       setHasMore(false);
@@ -53,6 +55,8 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
       return;
     }
 
+    // Track the count before adding new palettes
+    setPreviousLoadedCount((prev) => prev + 20);
     setCurrentPalettes((prev: ExplorePaletteResponse[]) => [...prev, ...(newPalettes as ExplorePaletteResponse[])]);
     setPagesLoaded(nextPage);
     setHasMore(moreDataAvailable ?? false);
@@ -82,20 +86,38 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
   return (
     <>
       <div className='columns-1 sm:columns-2 lg:columns-4 xl:columns-4 gap-6 space-y-6'>
-        {currentPalettes?.map((palette, index) => (
-          <ExploreCard
-            key={palette.id}
-            id={palette.id}
-            containerClassName='break-inside-avoid mb-6'
-            paletteName={palette.palette_name}
-            name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
-            colors={palette.colors}
-            likes={palette.like_count}
-            isLiked={palette.is_liked_by_user}
-            isAuthenticated={isAuthenticated}
-            heightPattern={getHeightPattern(index)}
-          />
-        ))}
+        {currentPalettes?.map((palette, index) => {
+          // Calculate the delay based on position within the current batch
+          const indexInCurrentBatch = index - previousLoadedCount;
+          const delay = indexInCurrentBatch * 0.03;
+
+          return (
+            <motion.div
+              key={palette.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.3,
+                delay,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+              className='break-inside-avoid'
+              style={{ marginBottom: '1.5rem' }}
+            >
+              <ExploreCard
+                id={palette.id}
+                containerClassName=''
+                paletteName={palette.palette_name}
+                name={palette.profile?.full_name?.trim().split(' ')[0] ?? 'Anonymous'}
+                colors={palette.colors}
+                likes={palette.like_count}
+                isLiked={palette.is_liked_by_user}
+                isAuthenticated={isAuthenticated}
+                heightPattern={getHeightPattern(index)}
+              />
+            </motion.div>
+          );
+        })}
       </div>
       {hasMore && (
         <div className='flex justify-center items-center p-4' ref={ref}>

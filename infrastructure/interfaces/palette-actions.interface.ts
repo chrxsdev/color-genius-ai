@@ -1,3 +1,4 @@
+import { ExploreSortedBy } from '../types/filters.types';
 import { Format } from '../types/format.types';
 import { HarmonyType } from '../types/harmony-types.types';
 import { ColorItem } from './color-harmony.interface';
@@ -52,4 +53,10 @@ export interface PaletteLikesResponse {
 export interface Likes {
   palette_id: string;
   user_id: string;
+}
+
+export interface PaletteExploreRequest {
+  offset: number;
+  limit?: number;
+  sortBy: ExploreSortedBy;
 }

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { PaletteRequestSchema } from '@/infrastructure/schemas/palette.schema';
 import {
   ExplorePaletteResponse,
+  PaletteExploreRequest,
   PaletteRequest,
   PaletteResponse,
 } from '@/infrastructure/interfaces/palette-actions.interface';
@@ -103,7 +104,7 @@ const deletePalette = async (paletteId: string, userId: string) => {
 /**
  * Fetch paginated public palettes
  */
-const getAllPalettes = async (offset: number, limit: number = 20, sortBy: 'recent' | 'mostLiked' = 'mostLiked') => {
+const getAllPalettes = async ({ offset, limit = 20, sortBy }: PaletteExploreRequest) => {
   try {
     const supabase = await createClient();
 

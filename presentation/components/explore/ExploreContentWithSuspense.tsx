@@ -8,7 +8,7 @@ interface ExploreContentProps {
 }
 
 export const ExploreContent = async ({ sortBy = 'mostLiked' }: ExploreContentProps) => {
-  const palettes = await getAllPalettes(1, 20, sortBy);
+  const palettes = await getAllPalettes({ offset: 1, sortBy });
   const user = await getCurrentUser();
 
   const isAuthenticated = !!user;
