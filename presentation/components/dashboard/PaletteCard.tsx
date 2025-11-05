@@ -5,6 +5,7 @@ import { FaTrash, FaDownload } from 'react-icons/fa';
 import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 import { toast } from 'sonner';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
+import { Loader } from '../Loader';
 
 interface PaletteCardProps {
   id: string;
@@ -12,6 +13,7 @@ interface PaletteCardProps {
   rationale?: string | null;
   colors: ColorItem[];
   isPublic: boolean;
+  isDeleting?: boolean;
   onToggleVisibility: (id: string, isPublic: boolean) => void;
   onDownload: (id: string) => void;
   onDelete: (id: string) => void;
@@ -23,6 +25,7 @@ export const PaletteCard = ({
   rationale,
   colors,
   isPublic,
+  isDeleting = false,
   onToggleVisibility,
   onDownload,
   onDelete,
@@ -103,10 +106,11 @@ export const PaletteCard = ({
             </button>
             <button
               onClick={() => onDelete(id)}
-              className='p-2 rounded-full hover:bg-error/20 transition-colors text-slate-500 dark:text-slate-400 hover:text-error cursor-pointer'
+              disabled={isDeleting}
+              className='p-2 rounded-full hover:bg-error/20 transition-colors text-slate-500 dark:text-slate-400 hover:text-error cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
               aria-label='Delete palette'
             >
-              <FaTrash className='text-base' />
+              {isDeleting ? <Loader className='w-4 h-4' /> : <FaTrash className='text-base' />}
             </button>
           </div>
         </div>

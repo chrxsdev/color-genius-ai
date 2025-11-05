@@ -8,7 +8,7 @@ const Loading = () => {
       </div>
 
       {/* Palette Cards Skeleton */}
-      <div className='grid grid-cols-1 gap-8'>
+      <div className='grid md:grid-cols-2 grid-cols-1 gap-8'>
         {[1, 2, 3].map((i) => (
           <div
             key={i}

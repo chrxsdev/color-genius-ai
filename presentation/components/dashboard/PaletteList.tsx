@@ -15,14 +15,13 @@ interface PaletteListProps {
   initialPalettes: PaletteResponse[];
 }
 
-type OptimisticAction =
-  | { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean }
-  | { type: 'DELETE'; id: string };
+type OptimisticAction = { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean } | { type: 'DELETE'; id: string };
 
 export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   const [, startTransition] = useTransition();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paletteToDelete, setPaletteToDelete] = useState<string | null>(null);
+  const [deletingPaletteId, setDeletingPaletteId] = useState<string | null>(null);
 
   const [optimisticPalettes, setOptimisticPalettes] = useOptimistic<PaletteResponse[], OptimisticAction>(
     initialPalettes,
@@ -78,13 +77,8 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   const confirmDelete = async () => {
     if (!paletteToDelete) return;
 
-    // Optimistically remove the palette
-    startTransition(() => {
-      setOptimisticPalettes({ type: 'DELETE', id: paletteToDelete });
-    });
-
-    // Show success toast immediately
-    toast.success('Palette deleted successfully');
+    // Set deleting state
+    setDeletingPaletteId(paletteToDelete);
 
     // Close dialog
     setDeleteDialogOpen(false);
@@ -93,16 +87,24 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
       const user = await getCurrentUser();
       if (!user) return;
 
+      startTransition(() => {
+        setOptimisticPalettes({ type: 'DELETE', id: paletteToDelete });
+      });
+
       const result = await deletePalette(paletteToDelete, user.id);
 
       if (!result.success) {
         console.error('Failed to delete palette:', result.error);
         toast.error('Failed to delete palette');
+        return;
       }
+
+      toast.success('Palette deleted successfully');
     } catch (err) {
       console.error('Error deleting palette:', err);
       toast.error('Failed to delete palette');
     } finally {
+      setDeletingPaletteId(null);
       setPaletteToDelete(null);
     }
   };
@@ -126,8 +128,8 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   }
 
   return (
-    <div className='grid grid-cols-1 gap-8'>
-      <AnimatePresence mode='popLayout'>
+    <div className='grid md:grid-cols-2 grid-cols-1 gap-8'>
+      <AnimatePresence mode='sync'>
         {optimisticPalettes.map((palette, index) => {
           const delay = index * 0.04;
 
@@ -149,6 +151,7 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
                 rationale={palette.rationale}
                 colors={palette.colors}
                 isPublic={palette.is_public}
+                isDeleting={deletingPaletteId === palette.id}
                 onToggleVisibility={handleToggleVisibility}
                 onDownload={handleDownload}
                 onDelete={handleDelete}
