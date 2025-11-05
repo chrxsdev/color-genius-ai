@@ -1,6 +1,8 @@
 'use client';
 
 import { useOptimistic, useTransition, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { updatePaletteVisibility, deletePalette } from '@/actions/palette.actions';
 import { PaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { getCurrentUser } from '@/actions/auth.actions';
@@ -13,7 +15,9 @@ interface PaletteListProps {
   initialPalettes: PaletteResponse[];
 }
 
-type OptimisticAction = { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean };
+type OptimisticAction =
+  | { type: 'UPDATE_VISIBILITY'; id: string; isPublic: boolean }
+  | { type: 'DELETE'; id: string };
 
 export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   const [, startTransition] = useTransition();
@@ -28,6 +32,8 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
           return state.map((palette) =>
             palette.id === action.id ? { ...palette, is_public: action.isPublic } : palette
           );
+        case 'DELETE':
+          return state.filter((palette) => palette.id !== action.id);
         default:
           return state;
       }
@@ -72,6 +78,17 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   const confirmDelete = async () => {
     if (!paletteToDelete) return;
 
+    // Optimistically remove the palette
+    startTransition(() => {
+      setOptimisticPalettes({ type: 'DELETE', id: paletteToDelete });
+    });
+
+    // Show success toast immediately
+    toast.success('Palette deleted successfully');
+
+    // Close dialog
+    setDeleteDialogOpen(false);
+
     try {
       const user = await getCurrentUser();
       if (!user) return;
@@ -80,11 +97,12 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
 
       if (!result.success) {
         console.error('Failed to delete palette:', result.error);
+        toast.error('Failed to delete palette');
       }
     } catch (err) {
       console.error('Error deleting palette:', err);
+      toast.error('Failed to delete palette');
     } finally {
-      setDeleteDialogOpen(false);
       setPaletteToDelete(null);
     }
   };
@@ -109,19 +127,36 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
 
   return (
     <div className='grid grid-cols-1 gap-8'>
-      {optimisticPalettes.map((palette) => (
-        <PaletteCard
-          key={palette.id}
-          id={palette.id}
-          name={palette.palette_name}
-          rationale={palette.rationale}
-          colors={palette.colors}
-          isPublic={palette.is_public}
-          onToggleVisibility={handleToggleVisibility}
-          onDownload={handleDownload}
-          onDelete={handleDelete}
-        />
-      ))}
+      <AnimatePresence mode='popLayout'>
+        {optimisticPalettes.map((palette, index) => {
+          const delay = index * 0.04;
+
+          return (
+            <motion.div
+              key={palette.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{
+                duration: 0.3,
+                delay,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+            >
+              <PaletteCard
+                id={palette.id}
+                name={palette.palette_name}
+                rationale={palette.rationale}
+                colors={palette.colors}
+                isPublic={palette.is_public}
+                onToggleVisibility={handleToggleVisibility}
+                onDownload={handleDownload}
+                onDelete={handleDelete}
+              />
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
 
       <ConfirmDialog
         open={deleteDialogOpen}
