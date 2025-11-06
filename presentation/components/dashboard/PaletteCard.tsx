@@ -45,7 +45,7 @@ export const PaletteCard = ({
     <div className='w-full rounded-xl border border-neutral-variant/50 overflow-hidden shadow-sm transition-shadow duration-300'>
       {/* Color Preview */}
       <div className='flex h-32' id={id}>
-        {colors.slice(0, 5).map((colorItem, index) => (
+        {colors.map((colorItem, index) => (
           <div
             key={index}
             className='flex-1 h-full relative group'
@@ -54,7 +54,7 @@ export const PaletteCard = ({
           >
             {/* HEX Code and Copy Button - Shows on Hover */}
             <div className='absolute bottom-0 inset-x-0 flex items-center justify-center gap-2 p-3 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-              <span className='text-sm font-mono font-medium text-white drop-shadow-lg'>
+              <span className='text-xs font-mono font-medium text-white drop-shadow-lg'>
                 {colorItem.color.toUpperCase()}
               </span>
               <button
@@ -63,9 +63,9 @@ export const PaletteCard = ({
                 aria-label={`Copy ${colorItem.name}`}
               >
                 {copiedIndex === index ? (
-                  <IoCheckmark className='text-xl text-white drop-shadow-lg' />
+                  <IoCheckmark className='text-sm text-white drop-shadow-lg' />
                 ) : (
-                  <IoCopyOutline className='text-xl text-white drop-shadow-lg' />
+                  <IoCopyOutline className='text-sm text-white drop-shadow-lg' />
                 )}
               </button>
             </div>
