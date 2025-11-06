@@ -16,8 +16,12 @@ const signInWith =
 
     const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.NEXT_PUBLIC_URI;
 
+    
     const authCallbackUrl = `${baseUrl}/api/auth/callback?next=${nextRedirect}`;
-
+    
+    // This is not a bug, we want to log these values for debugging purposes
+    console.warn({ baseUrl, nextRedirect, authCallbackUrl });
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: authCallbackUrl },
