@@ -14,7 +14,9 @@ const signInWith =
 
     const nextRedirect = ROUTES[next as keyof typeof ROUTES] ?? ROUTES.dashboard;
 
-    const authCallbackUrl = `${process.env.URI}/api/auth/callback?next=${nextRedirect}`;
+    const baseUrl = process.env.VERCEL_URL ?? process.env.URI;
+
+    const authCallbackUrl = `${baseUrl}/api/auth/callback?next=${nextRedirect}`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
