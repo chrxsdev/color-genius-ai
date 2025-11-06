@@ -59,7 +59,7 @@ export const useColorPalette = () => {
     paletteState.colorOptionControl.brightness,
     paletteState.colorOptionControl.saturation,
     paletteState.colorOptionControl.warmth,
-    paletteState.generatedColors
+    paletteState.generatedColors,
   ]);
 
   const updateColorControl = (controls: ControlColorOptions) => {
@@ -75,8 +75,6 @@ export const useColorPalette = () => {
   };
 
   const updateState = (updates: Partial<PaletteState>) => {
-    if (!recalculate) setRecalculate(true);
-
     setPaletteState((prev) => ({
       ...prev,
       ...updates,
