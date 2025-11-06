@@ -23,7 +23,7 @@ const LikesPage = async () => {
           My Likes
         </h1>
         <p className='mt-4 text-slate-500 dark:text-slate-400'>
-          Browse the color palettes you've liked from the community. Unlike a palette to remove it from this collection.
+          Browse the color palettes you&apos;ve liked from the community. Unlike a palette to remove it from this collection.
         </p>
       </div>
 

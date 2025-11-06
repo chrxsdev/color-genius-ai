@@ -21,7 +21,7 @@ const DashboardPage = async () => {
           My Saved Palettes
         </h1>
         <p className='mt-4 text-slate-500 dark:text-slate-400'>
-          Here are the color palettes you've saved. You can choose to make them public to share with the community.
+          Here are the color palettes you&apos;ve saved. You can choose to make them public to share with the community.
         </p>
       </div>
 

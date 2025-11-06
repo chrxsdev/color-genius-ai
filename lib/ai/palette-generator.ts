@@ -307,7 +307,7 @@ export class PaletteGenerator {
   ): Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }> {
     const maxIterations = 10; // Prevent infinite loops
     let iteration = 0;
-    let adjustedColors = [...colors];
+    const adjustedColors = [...colors];
 
     while (iteration < maxIterations) {
       const similarPairs = this.findSimilarColors(adjustedColors, harmony);
