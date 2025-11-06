@@ -7,6 +7,15 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ROUTES } from '@/utils/constants/routes';
 
+const getURL = () => {
+  let url = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.NEXT_PUBLIC_URI ?? 'http://localhost:3000';
+
+  // Make sure to include `https://` when not localhost.
+  url = url.startsWith('http') ? url : `https://${url}`;
+
+  return url;
+};
+
 const signInWith =
   (provider: Provider) =>
   async (next: string = ROUTES.dashboard) => {
@@ -14,14 +23,10 @@ const signInWith =
 
     const nextRedirect = ROUTES[next as keyof typeof ROUTES] ?? ROUTES.dashboard;
 
-    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.NEXT_PUBLIC_URI;
+    const baseUrl = getURL();
 
-    
     const authCallbackUrl = `${baseUrl}/api/auth/callback?next=${nextRedirect}`;
-    
-    // This is not a bug, we want to log these values for debugging purposes
-    console.warn({ baseUrl, nextRedirect, authCallbackUrl });
-    
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: authCallbackUrl },
