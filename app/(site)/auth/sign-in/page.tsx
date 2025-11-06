@@ -15,7 +15,7 @@ export const SignIn = () => {
   };
 
   return (
-    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12 animate__animated animate__fadeInDown'>
       <div className='min-h-[calc(100vh-250px)] flex flex-col justify-center items-center'>
         {/* Header Section */}
         <div className='text-center mb-14'>
@@ -37,9 +37,13 @@ export const SignIn = () => {
             </span>
             Continue with Google
           </button>
-          <div>
+          <div className='flex justify-center items-center gap-x-2'>
             <Link prefetch={false} href='/' className='text-sm text-subtitle hover:text-white/70 underline'>
               Go back to Palette
+            </Link>
+            <span className='text-subtitle text-sm'>or</span>
+            <Link prefetch={false} href='/explore' className='text-sm text-subtitle hover:text-white/70 underline'>
+              Explore
             </Link>
           </div>
         </div>

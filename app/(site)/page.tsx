@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { toPng } from 'html-to-image';
 import { redirect } from 'next/navigation';
 
 import { InputGenerator } from '@/presentation/components/palette/InputGenerator';
@@ -10,11 +9,23 @@ import { ColorVisualization } from '@/presentation/components/palette/ColorVisua
 import { GeneratedColors } from '@/presentation/components/palette/GeneratedColors';
 import { ColorControls } from '@/presentation/components/palette/ColorControls';
 import { ColorCodes } from '@/presentation/components/palette/ColorCodes';
+import { RegenerateInput } from '@/presentation/components/palette/RegenerateInput';
 import { DEFAULT_COLOR_COUNT } from '@/utils/constants/general-values';
 import { getCurrentUser } from '@/actions/auth.actions';
 import { useGeneratePaletteMutation, useRegenerateNameMutation } from '@/lib/redux/api/paletteApi';
 import { useColorPalette } from '@/presentation/hooks/useColorPalette';
+import { addPalette } from '@/actions/palette.actions';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 import { ROUTES } from '@/utils/constants/routes';
+import { exportElementToPng } from '@/utils/export-to-png';
+
+interface ApiError {
+  data?: {
+    error?: string;
+    message?: string;
+  };
+  message?: string;
+}
 
 const PalettePage = () => {
   const [prompt, setPrompt] = useState('');
@@ -39,6 +50,7 @@ const PalettePage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRegeneratingPaletteName, setIsRegeneratingPaletteName] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Color Reference to export
   const colorsGeneratedRef = useRef<HTMLDivElement>(null);
@@ -65,11 +77,17 @@ const PalettePage = () => {
         rationale: data.metadata?.rationale ?? null,
         tags: data.metadata?.tags ?? [],
         paletteName: data.paletteName ?? '',
+        colorOptionControl: {
+          brightness: 50,
+          saturation: 50,
+          warmth: 50,
+        },
       });
       setExistingNames([data.paletteName]);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
+      const error = err as ApiError;
+      const errMessage = error?.data?.error ?? error?.data?.message ?? error?.message ?? 'Failed to generate palette';
+      setError(errMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -89,7 +107,9 @@ const PalettePage = () => {
       updateState({ paletteName: data.name });
       setExistingNames((prev) => [...prev, data.name].filter(Boolean));
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const error = err as ApiError;
+      const errorMessage =
+        error?.data?.error ?? error?.data?.message ?? error?.message ?? 'An unexpected error occurred';
       setError(errorMessage);
       console.error('Palette name regeneration error:', err);
     } finally {
@@ -104,14 +124,11 @@ const PalettePage = () => {
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
+
     const currentUser = await getCurrentUser();
 
-    /**
-     * TODO:
-     * - [x] If user is not authenticated, save the current palette in redux state and then redirect to sign-in page and return with the previous values
-     * - [ ] If user is authenticated, save the palette and redirect to dashboard
-     */
-
+    // If user is not authenticated, redirect to auth
     if (!currentUser) {
       // Save palette in local storage for unauthenticated users
       localStorage.setItem(
@@ -126,31 +143,45 @@ const PalettePage = () => {
           colorOptionControl: { brightness, saturation, warmth },
         })
       );
-      return redirect(`${ROUTES.auth.signIn}?next=${ROUTES.home}`);
+
+      return redirect(`${ROUTES.auth.signIn}?next=home`);
+    }
+
+    // If user is logged, save the palette and redirecting to the dashboard and clean storage
+
+    const result = await addPalette({
+      palette_name: paletteName,
+      colors: adjustedColors,
+      color_format: colorFormat,
+      rationale,
+      tags,
+      harmony_type: harmony as HarmonyType,
+      color_control: { brightness, saturation, warmth },
+      user_id: currentUser.id,
+    });
+
+    if (result.success) {
+      localStorage.removeItem('user_palette');
+      return redirect(`${ROUTES.dashboard}`);
     }
   };
 
   const handleExportPNG = async () => {
     if (!colorsGeneratedRef.current) return;
 
-    const dataUrl = await toPng(colorsGeneratedRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      style: {
-        backgroundColor: '#1a1c19',
-      },
-    });
-
-    const link = document.createElement('a');
-    link.download = `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`;
-    link.href = dataUrl;
-    link.click();
+    try {
+      await exportElementToPng(colorsGeneratedRef.current, {
+        fileName: `${paletteName ?? 'color-palette'}_${new Date().getTime().toString()}.png`,
+      });
+    } catch (err) {
+      console.error('Error exporting palette:', err);
+    }
   };
 
   return (
     <div className='mx-auto px-4 sm:px-6 lg:px-8'>
       <div
-        className={`flex flex-col items-center mx-auto max-w-4xl ${
+        className={`flex flex-col items-center mx-auto max-w-5xl ${
           !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-12'
         } transition-all duration-75`}
       >
@@ -182,8 +213,17 @@ const PalettePage = () => {
           <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full`}>
             {isHydrated && generatedColors.length > 0 && (
               <div className='mt-2'>
+                <AiInsights rationale={rationale} tags={tags} containerClassName='my-5' />
                 <div className='border-2 rounded-xl border-neutral-variant my-5'>
-                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generated Palette</h3>
+                  <h3 className='text-xl font-bold text-white text-center mt-5'>Generate Palette Options</h3>
+
+                  <RegenerateInput
+                    paletteName={paletteName}
+                    isRegeneratingName={isRegeneratingPaletteName}
+                    rationale={rationale}
+                    onNameChange={(value) => updateState({ paletteName: value })}
+                    onRegenerateName={handleGenerateName}
+                  />
                   <ColorVisualization
                     colors={generatedColors}
                     brightness={brightness}
@@ -191,20 +231,15 @@ const PalettePage = () => {
                     warmth={warmth}
                     onColorChange={handleColorChange}
                   />
-                  <AiInsights rationale={rationale} tags={tags} containerClassName='mx-4 my-5' />
 
                   <GeneratedColors
                     colors={adjustedColors}
-                    paletteName={paletteName}
                     colorFormat={colorFormat}
-                    isRegeneratingName={isRegeneratingPaletteName}
-                    rationale={rationale}
-                    onNameChange={(value) => updateState({ paletteName: value })}
                     onFormatChange={(value) => updateState({ colorFormat: value })}
-                    onRegenerateName={handleGenerateName}
                     onSave={handleSave}
                     onExport={handleExportPNG}
                     colorsRef={colorsGeneratedRef}
+                    isSaving={isSaving}
                   />
 
                   <ColorControls
@@ -214,8 +249,8 @@ const PalettePage = () => {
                     onControlChange={updateColorControl}
                   />
 
-                  <div className='mt-10 p-6'>
-                    <h3 className='text-xl font-bold text-white my-5'>Color Codes</h3>
+                  <div className='px-6 pb-4'>
+                    <h3 className='text-xl font-bold text-white my-4'>Copy Color Codes</h3>
                     <ColorCodes colors={adjustedColors} format={colorFormat} />
                   </div>
                 </div>

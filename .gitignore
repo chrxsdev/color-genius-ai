@@ -10,9 +10,6 @@
 !.yarn/releases
 !.yarn/versions
 
-# github
-/.github
-
 # terminal
 WARP.md
 
@@ -37,7 +34,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
 
 # vercel
 .vercel

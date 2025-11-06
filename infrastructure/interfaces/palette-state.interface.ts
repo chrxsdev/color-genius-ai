@@ -1,6 +1,6 @@
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { Format } from '@/infrastructure/types/format.types';
-import { HarmonyType } from '@/infrastructure/types/harmony-types.type';
+import { HarmonyType } from '@/infrastructure/types/harmony-types.types';
 import { ColorControl } from '@/infrastructure/interfaces/palette-slice.interface';
 
 export interface PaletteState {

@@ -126,6 +126,199 @@ If we want to restore the richer pipeline (OKLCH, accessibility checks, persiste
 
 ---
 
+## 8. Database Implementation
+
+### Database Architecture Overview
+
+The application uses Supabase for data persistence with a focus on simplicity and performance. The database design follows a straightforward model with two main tables: `profiles` and `palettes`. The choice of using JSONB for color and control data maintains flexibility while providing good query performance.
+
+```mermaid
+erDiagram
+    auth_users ||--o{ profiles : "has one"
+    profiles ||--o{ palettes : "creates many"
+    profiles ||--o{ user_palette_likes : "gives"
+    palettes ||--o{ user_palette_likes : "receives"
+    
+    auth_users {
+        uuid id PK
+        string email
+        timestamp last_sign_in
+    }
+
+    profiles {
+        uuid id PK,FK
+        string username
+        string avatar_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    palettes {
+        uuid id PK
+        uuid user_id FK
+        string palette_name
+        string color_format
+        string harmony_type
+        jsonb colors
+        jsonb color_control
+        text rationale
+        text[] tags
+        boolean is_public
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    user_palette_likes {
+        uuid user_id FK,PK
+        uuid palette_id FK,PK
+        timestamp created_at
+    }
+```
+
+### Schema Definition
+
+```sql
+-- Profiles table (extends Supabase auth.users)
+CREATE TABLE color_genius_ai.profiles (
+    id uuid references auth.users primary key,
+    username text unique,
+    avatar_url text,
+    created_at timestamp with time zone default timezone('utc'::text, now()),
+    updated_at timestamp with time zone
+);
+
+-- Palettes table
+CREATE TABLE color_genius_ai.palettes (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid references color_genius_ai.profiles not null,
+    palette_name text not null,
+    color_format text not null,
+    harmony_type text not null,
+    colors jsonb not null,
+    color_control jsonb not null,
+    rationale text,
+    tags text[] not null,
+    is_public boolean not null default false,
+    created_at timestamp with time zone default timezone('utc'::text, now()),
+    updated_at timestamp with time zone,
+    
+    constraint valid_colors check (jsonb_array_length(colors) between 3 and 8),
+    constraint valid_color_control check (
+        color_control ? 'brightness' and 
+        color_control ? 'saturation' and 
+        color_control ? 'warmth'
+    )
+);
+
+-- Indexes for performance
+CREATE INDEX idx_palettes_user_id ON palettes(user_id);
+CREATE INDEX idx_palettes_tags ON palettes USING gin(tags);
+
+-- User Palette Likes table (tracks likes/favorites on public palettes)
+CREATE TABLE color_genius_ai.user_palette_likes (
+    user_id uuid NOT NULL,
+    palette_id uuid NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+
+    -- Composite primary key prevents duplicate likes for the same user-palette pair
+    CONSTRAINT user_palette_likes_pk PRIMARY KEY (user_id, palette_id),
+
+    -- Foreign keys with cascading deletes
+    CONSTRAINT fk_like_user FOREIGN KEY (user_id)
+        REFERENCES color_genius_ai.profiles (id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_like_palette FOREIGN KEY (palette_id)
+        REFERENCES color_genius_ai.palettes (id) ON DELETE CASCADE
+);
+
+-- Index for efficient lookup of palettes liked by a user
+CREATE INDEX idx_user_palette_likes_user_id ON color_genius_ai.user_palette_likes(user_id);
+-- Index for efficient lookup of likes on a palette
+CREATE INDEX idx_user_palette_likes_palette_id ON color_genius_ai.user_palette_likes(palette_id);
+```
+
+### Row Level Security Policies
+
+```sql
+-- Enable RLS
+ALTER TABLE color_genius_ai.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE color_genius_ai.palettes ENABLE ROW LEVEL SECURITY;
+
+-- color_genius_ai.profiles policies
+CREATE POLICY "Users can view own profile" 
+    ON color_genius_ai.profiles FOR SELECT 
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" 
+    ON color_genius_ai.profiles FOR UPDATE 
+    USING (auth.uid() = id);
+
+-- color_genius_ai.color_genius_ai.palettes policies
+CREATE POLICY "Users can view own color_genius_ai.color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can view public color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR SELECT 
+    USING (is_public = true);
+
+CREATE POLICY "Users can insert own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR INSERT 
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR UPDATE 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own color_genius_ai.palettes" 
+    ON color_genius_ai.palettes FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- color_genius_ai.user_palette_likes policies
+ALTER TABLE color_genius_ai.user_palette_likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view likes on public palettes" 
+    ON color_genius_ai.user_palette_likes FOR SELECT 
+    USING (
+        EXISTS (
+            SELECT 1 FROM color_genius_ai.palettes p
+            WHERE p.id = palette_id AND p.is_public = true
+        )
+    );
+
+CREATE POLICY "Authenticated users can insert likes" 
+    ON color_genius_ai.user_palette_likes FOR INSERT 
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own likes" 
+    ON color_genius_ai.user_palette_likes FOR DELETE 
+    USING (auth.uid() = user_id);
+```
+
+### Performance Considerations
+
+1. **JSONB Storage**
+   - Colors and controls stored as JSONB for flexibility
+   - Indexed visibility field for public palette queries
+   - GIN index on tags for fast tag searches
+
+2. **Query Optimization**
+   - User_id index for fast user palette retrieval
+   - Visibility condition pushed to index scan
+   - Array overlap operator (&&) for efficient tag searches
+
+3. **Data Integrity**
+   - Check constraints ensure valid color arrays
+   - Check constraints validate control object structure
+   - Foreign key constraints maintain referential integrity
+
+### Migration Strategy
+
+The schema supports future extensions through:
+- JSONB fields for flexible color and control data
+- Array type for tags allowing easy additions
+- Visibility JSONB object for extended privacy controls
+
 This document has been updated to reflect the code currently present in the repository. If you want me to also align other docs, tests, or add a short README snippet showing how to run the API locally (env vars to set), tell me and I will add it.
 
 ### Authentication and Authorization Model
@@ -317,7 +510,7 @@ _Acceptance Criteria:_
 
 ### Epic 3: User Interface Development (21 story points)
 
-**Task 3.1: Main Palette Generator Component** (6 points)
+#### Task 3.1: Main Palette Generator Component (6 points)
 
 - Build prompt input interface with harmony selection
 - Create loading states and error handling
@@ -330,7 +523,7 @@ _Acceptance Criteria:_
 - Real-time validation feedback on user input
 - Responsive design works on mobile and desktop
 
-**Task 3.2: Color Visualization Components** (4 points)
+#### Task 3.2: Color Visualization Components (4 points)
 
 - Build interactive color wheel display
 - Create color contrast visualization tools
@@ -340,7 +533,7 @@ _Acceptance Criteria:_
 - Color wheel accurately represents hue relationships
 - Accessibility badges show correct WCAG levels
 
-**Task 3.3: Perceptual Control Sliders** (4 points)
+#### Task 3.3: Perceptual Control Sliders (4 points)
 
 - Implement brightness, saturation, and warmth sliders
 - Create visual feedback for slider adjustments
@@ -352,7 +545,7 @@ _Acceptance Criteria:_
 - Slider adjustments feel immediate (< 100ms response)
 - Visual changes correspond to perceptual expectations
 
-**Task 3.4: Export and Sharing Features** (3 points)
+#### Task 3.4: Export and Sharing Features (3 points)
 
 - Build copy-to-clipboard for multiple formats
 - Create shareable palette URLs
@@ -366,12 +559,38 @@ _Acceptance Criteria:_
 - User preferences persist across sessions
 - Visibility settings allow users to control palette privacy and explore visibility
 
-**Task 3.5: Explore Section and Discovery** (4 points)
+
+#### Task 3.5: Profile Module (3 story points)
+
+- Sidebar: user profile area and sign-out flow with confirmation dialog have been implemented in the app UI.
+- Alert dialog (shadcn / Radix-based) was integrated and is used for destructive and confirmation flows (palette deletion, sign-out).
+- Dashboard: the palettes list and per-palette actions (toggle visibility, delete with confirmation, download placeholder) are implemented and wired to the API/actions.
+
+#### Task 3.6: Profile Module (3 story points)
+
+Add a small profile editing module that allows authenticated users to update their full name and upload a new avatar image. This is a focused UI/API task that improves account management UX.
+
+Key items
+
+- Update `profiles.username` (or `full_name`) with a simple form input.
+- Upload avatar images to a Supabase storage bucket (e.g. `avatars/{userId}/{timestamp}-{filename}`) and update `profiles.avatar_url` with the returned URL or signed URL.
+- Provide client-side validation (file type/size), loading states, and success/error feedback.
+
+Acceptance criteria
+
+- Profile edit UI exists and updates the DB without a full page reload.
+- Avatar uploads use Supabase Storage API and update the profile record atomically.
+- UI reflects the new name and avatar immediately after a successful update.
+
+Estimated effort
+
+- 1–2 days (frontend form, Supabase Storage upload wiring, DB update, and basic validation/UX)
+
+#### Task 3.7: Explore Section and Discovery (4 points)
 
 - Build public palette browsing interface
-- Implement tag-based filtering and search
-- Add pagination and infinite scroll
 - Create palette discovery algorithms using tags
+- Display like counts
 
 _Acceptance Criteria:_
 
@@ -379,10 +598,28 @@ _Acceptance Criteria:_
 - Tag filtering works efficiently with large datasets
 - Search functionality finds relevant palettes quickly
 - Discovery algorithms surface interesting and diverse palettes
+- Trending/popular palettes (by like count) are highlighted
 
-**Total Estimate: 47 story points (approximately 9-10 weeks with 1 developer)**
+**Total Estimate: 52 story points (approximately 10-11 weeks with 1 developer)**
 
-_Note: Simplified AI approach with single provider (GPT-4o mini) reduces complexity and development time while maintaining core functionality._
+#### Task 3.8: Palette Liking System and Public Discovery (5 story points)
+
+- Implement like/favorite functionality for public palettes
+- Add like count display on palette cards
+- Create user's liked palettes collection view
+- Build API routes for like/unlike operations
+- Add like animations and feedback UI
+- Implement tag-based filtering and search
+- Add pagination and infinite scroll
+
+_Acceptance Criteria:_
+
+- Users can like/unlike public palettes from other creators
+- Like counts update in real-time on palette cards
+- Liked palettes are tracked in user's profile
+- Unauthenticated users can browse but cannot like
+- Like operations are idempotent and handle concurrent requests
+- Database maintains referential integrity with cascading deletes
 
 ## 7. Open Questions and Decisions to Confirm
 
@@ -449,7 +686,7 @@ _Note: Simplified AI approach with single provider (GPT-4o mini) reduces complex
 
 10. **AI Provider Dependencies**: Simplified single provider approach
 
-    - **Single Provider**: OpenAI GPT-4o mini (reliable, cost-effective at $0.15/1M tokens)
+    - **Single Provider**: Gemini (reliable, cost-effective at $0.15/1M tokens)
     - **Fallback Strategy**: Static pre-generated palettes for API failures
     - **Monitoring**: Track success rates, response times, and costs
     - **Reliability**: 99%+ uptime expected from OpenAI infrastructure
@@ -457,14 +694,12 @@ _Note: Simplified AI approach with single provider (GPT-4o mini) reduces complex
 11. **Environment Variables Management**:
 
     ```bash
-    # Supabase Edge Function Environment
-    OPENAI_API_KEY=sk-proj-xxx           # GPT-4o mini API key
-    SUPABASE_URL=https://xxx.supabase.co
-    SUPABASE_SERVICE_ROLE_KEY=xxx
+    GOOGLE_GENERATIVE_AI_API_KEY=sk-proj-xxx           # Gemini API key
+    SUPABASE_ENVS
     ```
 
 12. **Third-party Dependencies**: Risk assessment for critical libraries?
     - **AI Libraries**: Vercel AI SDK (actively maintained, TypeScript-first)
     - **Color Libraries**: Culori for OKLCH conversions (battle-tested)
     - **Validation**: Zod for runtime type safety (essential for AI outputs)
-    - **Contingency**: All dependencies have fallback implementations
+  - **Contingency**: All dependencies have fallback implementations

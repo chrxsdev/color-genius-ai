@@ -22,16 +22,18 @@ const DEFAULT_STATE: PaletteState = {
 export const useColorPalette = () => {
   const [paletteState, setPaletteState] = useState<PaletteState>(DEFAULT_STATE);
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
-
+  const [recalculate, setRecalculate] = useState<boolean>(false);
 
   useEffect(() => {
     const rawUserPalette = localStorage.getItem('user_palette');
-    
+
     if (!rawUserPalette) {
       setIsHydrated(true);
       return;
     }
-    
+
+    setRecalculate(false);
+
     const parsed = JSON.parse(rawUserPalette) as PaletteState;
     setPaletteState((prev) => ({
       ...prev,
@@ -39,27 +41,30 @@ export const useColorPalette = () => {
     }));
     setIsHydrated(true);
   }, []);
-  
-  const adjustedColors = useMemo(
-    () =>
-      paletteState.generatedColors.map((item) => ({
-        ...item,
-        color: applySliderAdjustments(
-          item.color,
-          paletteState.colorOptionControl.brightness,
-          paletteState.colorOptionControl.saturation,
-          paletteState.colorOptionControl.warmth
-        ),
-      })),
-    [
-      paletteState.generatedColors,
-      paletteState.colorOptionControl.brightness,
-      paletteState.colorOptionControl.saturation,
-      paletteState.colorOptionControl.warmth,
-    ]
-  );
+
+  const adjustedColors = useMemo(() => {
+    // if recalculate is true, apply adjustments
+    if (!recalculate) return paletteState.generatedColors;
+
+    return paletteState.generatedColors.map((item) => ({
+      ...item,
+      color: applySliderAdjustments(
+        item.color,
+        paletteState.colorOptionControl.brightness,
+        paletteState.colorOptionControl.saturation,
+        paletteState.colorOptionControl.warmth
+      ),
+    }));
+  }, [
+    paletteState.colorOptionControl.brightness,
+    paletteState.colorOptionControl.saturation,
+    paletteState.colorOptionControl.warmth,
+    paletteState.generatedColors,
+  ]);
 
   const updateColorControl = (controls: ControlColorOptions) => {
+    if (!recalculate) setRecalculate(true);
+
     setPaletteState((prev) => ({
       ...prev,
       colorOptionControl: {
@@ -82,6 +87,6 @@ export const useColorPalette = () => {
     adjustedColors,
     updateColorControl,
     updateState,
-    setIsHydrated
+    setIsHydrated,
   };
 };
