@@ -14,7 +14,7 @@ const signInWith =
 
     const nextRedirect = ROUTES[next as keyof typeof ROUTES] ?? ROUTES.dashboard;
 
-    const baseUrl = process.env.VERCEL_URL ?? process.env.URI;
+    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.NEXT_PUBLIC_URI;
 
     const authCallbackUrl = `${baseUrl}/api/auth/callback?next=${nextRedirect}`;
 
