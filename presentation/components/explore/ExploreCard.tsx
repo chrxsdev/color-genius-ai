@@ -137,7 +137,7 @@ export const ExploreCard = ({
           <button
             onClick={handleLike}
             disabled={isPending}
-            className='flex items-center gap-2 transition-colors cursor-pointer hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed'
+            className='flex items-center gap-2 transition-colors cursor-pointer hover:scale-110'
             aria-label={isLiked ? 'Unlike palette' : 'Like palette'}
           >
             <Heart

@@ -1,2 +1,2 @@
-export type HeightPattern = 'short' | 'medium' | 'tall' | 'extra_tall';
+export type HeightPattern = 'medium' | 'tall';
 export type ExploreSortedBy = 'recent' | 'popular';
