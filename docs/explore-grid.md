@@ -20,7 +20,7 @@ The Explore grid powers the Pinterest-style palette browsing experience. Every c
 
 ### 2. Height Pattern Utility (`utils/patterns.ts`)
 
-- Exposes `getHeightPattern(index)` which alternates `medium` and `short` heights.
+- Exposes `getHeightPattern(index)` which alternates `medium` and `tall` heights.
 - **Why this pattern:** A simple cadence keeps the layout varied without randomness. By basing it solely on the insertion order, heights are deterministic, eliminating SSR/CSR drift.
 - **Why it lives in `utils`:** Keeping layout logic shared and reusable makes future components consistent and avoids duplicating logic in the grid itself.
 
@@ -40,7 +40,7 @@ The component maintains several state variables to orchestrate layout, paginatio
 
 - **`latestBatchStartIndex`**: Number marking the start index of the most recently loaded batch. Used to calculate animation delays—only cards with `positionIndex >= latestBatchStartIndex` get staggered entry animations, keeping previously loaded cards stable.
 
-- **`columnCount`**: Number of columns to display, calculated from viewport width. Starts at `1` to match SSR output, then updates client-side via resize listener to reflect responsive breakpoints (1 for mobile, 2 for tablet, 4 for desktop).
+- **`columnCount`**: Number of columns to display, calculated from viewport width. Starts at `4` to match SSR output, then updates client-side via resize listener to reflect responsive breakpoints (1 for mobile, 2 for tablet, 4 for desktop).
 
 #### Effects
 
