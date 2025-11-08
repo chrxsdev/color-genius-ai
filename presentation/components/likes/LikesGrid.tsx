@@ -2,11 +2,12 @@
 
 import { useState, useOptimistic } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ExplorePaletteResponse } from '@/infrastructure/interfaces/palette-actions.interface';
 import { ExploreCard } from '../explore/ExploreCard';
+import { MobileTapHint } from '../ui/MobileTapHint';
 
 interface LikesGridProps {
   initialPalettes: ExplorePaletteResponse[] | null;
@@ -56,8 +57,11 @@ export const LikesGrid = ({ initialPalettes, error, isAuthenticated }: LikesGrid
   }
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-      <AnimatePresence mode='popLayout'>
+    <>
+      <MobileTapHint show={optimisticPalettes.length > 0} />
+
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <AnimatePresence mode='popLayout'>
         {optimisticPalettes.map((palette, index) => {
           const delay = index * 0.04;
 
@@ -89,6 +93,7 @@ export const LikesGrid = ({ initialPalettes, error, isAuthenticated }: LikesGrid
           );
         })}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };

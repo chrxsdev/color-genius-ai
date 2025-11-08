@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { HeightPattern } from '@/infrastructure/types/filters.types';
 import { heightClasses } from '@/utils/constants/height-patterns';
 import { togglePaletteLike } from '@/actions/palette.actions';
 import { ROUTES } from '@/utils/constants/routes';
+import { useMobile } from '@/presentation/hooks/useMobile';
 
 interface ExploreCardProps {
   id: string;
@@ -40,7 +41,29 @@ export const ExploreCard = ({
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likesCount, setLikesCount] = useState(initialLikes);
   const [animate, setAnimate] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
   const pendingActionRef = useRef<'like' | 'unlike' | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const { isMobile } = useMobile();
+
+  // Close overlay when clicking outside on mobile
+  useEffect(() => {
+    if (!isMobile || !showOverlay) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setShowOverlay(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobile, showOverlay]);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -108,8 +131,17 @@ export const ExploreCard = ({
     }
   };
 
+  const handleCardClick = () => {
+    // On mobile, toggle overlay visibility
+    if (isMobile) {
+      setShowOverlay((prev) => !prev);
+    }
+  };
+
   return (
     <div
+      ref={cardRef}
+      onClick={handleCardClick}
       className={`group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer ${heightClasses[heightPattern]} ${containerClassName}`}
     >
       {/* Color Stripes Background */}
@@ -124,16 +156,28 @@ export const ExploreCard = ({
         ))}
       </div>
 
-      {/* Hover Overlay */}
-      <div className='absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 rounded-2xl border-2 border-white'>
+      {/* Hover Overlay (Desktop) / Tap Overlay (Mobile) */}
+      <div className={`absolute inset-0 bg-black/80 transition-opacity duration-300 flex flex-col justify-between p-4 rounded-2xl border-2 border-white ${
+        isMobile 
+          ? (showOverlay ? 'opacity-100' : 'opacity-0 pointer-events-none')
+          : 'opacity-0 group-hover:opacity-100'
+      }`}>
         {/* Top Section: Palette Name & Username */}
-        <div className='absolute top-0 left-0 right-0 p-6 transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-300'>
+        <div className={`absolute top-0 left-0 right-0 p-6 transition-transform duration-300 ${
+          isMobile
+            ? (showOverlay ? 'translate-y-0' : '-translate-y-4')
+            : 'transform -translate-y-4 group-hover:translate-y-0'
+        }`}>
           <h3 className='text-xl font-bold text-white mb-1 drop-shadow-lg'>{paletteName}</h3>
           <p className='text-sm text-slate-200 drop-shadow-md'>by {name}</p>
         </div>
 
         {/* Bottom Section: Likes & Copy */}
-        <div className='absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300'>
+        <div className={`absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between transition-transform duration-300 ${
+          isMobile
+            ? (showOverlay ? 'translate-y-0' : 'translate-y-4')
+            : 'transform translate-y-4 group-hover:translate-y-0'
+        }`}>
           <button
             onClick={handleLike}
             disabled={isPending}

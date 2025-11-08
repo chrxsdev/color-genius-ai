@@ -10,6 +10,7 @@ import { PaletteCard } from './PaletteCard';
 import { IoIosColorPalette } from 'react-icons/io';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { exportPaletteCardToPng } from '@/utils/export-to-png';
+import { MobileTapHint } from '../ui/MobileTapHint';
 
 interface PaletteListProps {
   initialPalettes: PaletteResponse[];
@@ -128,8 +129,9 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
   }
 
   return (
-    <div className='grid md:grid-cols-2 grid-cols-1 gap-8'>
-      <AnimatePresence mode='sync'>
+    <>
+      <div className='grid md:grid-cols-2 grid-cols-1 gap-8'>
+        <AnimatePresence mode='sync'>
         {optimisticPalettes.map((palette, index) => {
           const delay = index * 0.04;
 
@@ -171,6 +173,7 @@ export const PaletteList = ({ initialPalettes }: PaletteListProps) => {
         cancelText='Cancel'
         variant='destructive'
       />
-    </div>
+      </div>
+    </>
   );
 };

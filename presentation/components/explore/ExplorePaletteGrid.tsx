@@ -12,6 +12,7 @@ import { Loader } from '../Loader';
 import type { ExploreSortedBy, HeightPattern } from '@/infrastructure/types/filters.types';
 import { getHeightPattern } from '@/utils/patterns';
 import { getResponsiveColumnCount } from '@/utils/utils';
+import { MobileTapHint } from '../ui/MobileTapHint';
 
 interface PaletteLayoutItem {
   data: ExplorePaletteResponse;
@@ -42,7 +43,7 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
   const [hasMore, setHasMore] = useState<boolean>((palettes?.length ?? 0) > 0);
   const [activeSort, setActiveSort] = useState<ExploreSortedBy>(sortBy);
   const [latestBatchStartIndex, setLatestBatchStartIndex] = useState<number>(0);
-  const [columnCount, setColumnCount] = useState<number>(4);
+  const [columnCount, setColumnCount] = useState<number>(2);
 
   const { ref, inView } = useInView();
 
@@ -167,6 +168,8 @@ export const ExplorePaletteGrid = ({ palettes, error, isAuthenticated, sortBy }:
 
   return (
     <>
+      <MobileTapHint show={currentPalettes.length > 0} />
+
       <div className='flex w-full gap-6'>
         {columns.map((column, columnIndex) => (
           <div key={`explore-column-${columnIndex}`} className='flex min-w-0 flex-1 flex-col gap-6'>
