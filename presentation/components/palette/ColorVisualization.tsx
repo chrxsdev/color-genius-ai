@@ -17,10 +17,9 @@ export const ColorVisualization = ({
   onColorChange,
 }: ColorVisualizationProps) => {
   return (
-    <div className='mt-2 space-y-8 p-6'>
+    <div className='mt-2 space-y-8 p-4 sm:p-6'>
       <ColorWheel
         colors={colors.map((item) => item.color)}
-        size={400}
         onColorChange={onColorChange}
         brightness={brightness}
         saturation={saturation}

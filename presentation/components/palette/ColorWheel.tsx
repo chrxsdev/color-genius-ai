@@ -6,7 +6,6 @@ import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustme
 
 interface ColorWheelProps {
   colors: string[];
-  size?: number;
   onColorChange: (index: number, newColor: string) => void;
   brightness?: number;
   saturation?: number;
@@ -22,7 +21,6 @@ interface ColorPosition {
 
 export const ColorWheel = ({
   colors,
-  size = 400,
   onColorChange,
   brightness = 50,
   saturation = 50,
@@ -30,8 +28,10 @@ export const ColorWheel = ({
 }: ColorWheelProps) => {
   const [colorPositions, setColorPositions] = useState<ColorPosition[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [wheelSize, setWheelSize] = useState(400);
   const isDraggingRef = useRef(false);
   const previousColorsRef = useRef<string[]>([]);
+  const wheelRef = useRef<HTMLDivElement>(null);
 
   // Sync color positions when colors prop changes (new palette generated) but NOT when user is dragging)
   useEffect(() => {
@@ -57,30 +57,53 @@ export const ColorWheel = ({
     setColorPositions(newPositions);
   }, [colors]); // Re-run when colors array changes
 
-  const maxRadius = size / 2;
+  // Update wheel size when component mounts or resizes
+  useEffect(() => {
+    const updateSize = () => {
+      if (wheelRef.current) {
+        const rect = wheelRef.current.getBoundingClientRect();
+        setWheelSize(rect.width);
+      }
+    };
 
-  const handleMouseDown = (index: number) => {
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(updateSize, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  const handlePointerDown = (index: number) => {
     setDraggingIndex(index);
     isDraggingRef.current = true;
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (draggingIndex === null) return;
+
+    // Prevent scrolling on mobile while dragging
+    e.preventDefault();
 
     const rect = e.currentTarget.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const mouseX = e.clientX - rect.left - centerX;
-    const mouseY = e.clientY - rect.top - centerY;
+    const pointerX = e.clientX - rect.left - centerX;
+    const pointerY = e.clientY - rect.top - centerY;
 
     // Calculate distance from center
-    const distance = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
+    const distance = Math.sqrt(pointerX * pointerX + pointerY * pointerY);
+    const maxRadius = rect.width / 2;
 
     // Clamp distance to stay within the wheel
     const clampedDistance = Math.min(distance, maxRadius);
 
     // Calculate angle (0° = top, clockwise)
-    const angle = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
+    const angle = Math.atan2(pointerY, pointerX) * (180 / Math.PI);
     const normalizedAngle = (angle + 90 + 360) % 360;
 
     // Calculate radius as percentage (0-1)
@@ -105,7 +128,7 @@ export const ColorWheel = ({
     onColorChange(draggingIndex, newColor);
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     setDraggingIndex(null);
     isDraggingRef.current = false;
   };
@@ -113,19 +136,18 @@ export const ColorWheel = ({
   // Don't render if no colors available yet
   if (colorPositions.length === 0) {
     return (
-      <div className='flex items-center justify-center' style={{ width: size, height: size }}>
+      <div className='flex items-center justify-center w-full aspect-square max-w-md mx-auto'>
         <div className='text-subtitle text-sm'>Waiting for colors...</div>
       </div>
     );
   }
 
   return (
-    <div className='flex items-center justify-center'>
+    <div className='flex items-center justify-center w-full'>
       <div
-        className='relative rounded-full select-none'
+        ref={wheelRef}
+        className='relative rounded-full select-none w-full aspect-square max-w-md touch-none'
         style={{
-          width: size,
-          height: size,
           background: `conic-gradient(
             from 0deg,
             hsl(0, 100%, 50%),
@@ -137,11 +159,14 @@ export const ColorWheel = ({
             hsl(360, 100%, 50%)
           )`,
         }}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
       >
         {colorPositions.map((position, index) => {
+          // Get current wheel dimensions
+          const maxRadius = wheelSize / 2;
+
           // Convert hue angle to radians (0° = top, clockwise)
           const angleRad = ((position.hue - 90) * Math.PI) / 180;
 
@@ -170,14 +195,14 @@ export const ColorWheel = ({
               />
               {/* Draggable color marker */}
               <div
-                className='absolute w-6 h-6 top-1/2 left-1/2 rounded-full border-2 border-white shadow-lg cursor-grab active:cursor-grabbing transition-shadow hover:shadow-xl'
+                className='absolute w-6 h-6 top-1/2 left-1/2 rounded-full border-2 border-white shadow-lg cursor-grab active:cursor-grabbing transition-shadow hover:shadow-xl touch-none'
                 style={{
                   backgroundColor: displayColor,
                   transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
                   boxShadow: draggingIndex === index ? '0 4px 12px rgba(0, 0, 0, 0.7)' : '0 2px 8px rgba(0, 0, 0, 0.5)',
                   zIndex: draggingIndex === index ? 10 : 1,
                 }}
-                onMouseDown={() => handleMouseDown(index)}
+                onPointerDown={() => handlePointerDown(index)}
               />
             </div>
           );

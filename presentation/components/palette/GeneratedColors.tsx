@@ -28,7 +28,7 @@ export const GeneratedColors = ({
     <div className='mt-2 px-6 py-4'>
       <h3 className='text-xl font-bold text-white'>Colors</h3>
 
-      <div className='flex items-center justify-between my-4'>
+      <div className='flex items-center justify-between my-4 gap-x-2'>
         <div className='relative'>
           <select
             value={colorFormat}

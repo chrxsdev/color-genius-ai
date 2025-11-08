@@ -6,6 +6,7 @@ import { IoCopyOutline, IoCheckmark } from 'react-icons/io5';
 import { toast } from 'sonner';
 import { ColorItem } from '@/infrastructure/interfaces/color-harmony.interface';
 import { Loader } from '../Loader';
+import { useMobile } from '@/presentation/hooks/useMobile';
 
 interface PaletteCardProps {
   id: string;
@@ -31,14 +32,31 @@ export const PaletteCard = ({
   onDelete,
 }: PaletteCardProps) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showColorInfo, setShowColorInfo] = useState<number | null>(null);
+  const { isMobile } = useMobile();
 
-  const handleCopyColor = async (colorHex: string, index: number) => {
+  const handleCopyColor = async (e: React.MouseEvent, colorHex: string, index: number) => {
+    e.stopPropagation();
+
+    // On mobile, only copy if the color info is already shown
+    if (isMobile && showColorInfo !== index) {
+      setShowColorInfo(index);
+      return;
+    }
+    
+    // Avoid duplicate copy actions
     if (copiedIndex === index) return;
 
     await navigator.clipboard.writeText(colorHex.toUpperCase());
     setCopiedIndex(index);
     toast.success('Color copied to clipboard', { duration: 3000 });
     setTimeout(() => setCopiedIndex(null), 3000);
+  };
+
+  const handleColorClick = (index: number) => {
+    if (isMobile) {
+      setShowColorInfo((prev) => (prev === index ? null : index));
+    }
   };
 
   return (
@@ -48,17 +66,22 @@ export const PaletteCard = ({
         {colors.map((colorItem, index) => (
           <div
             key={index}
-            className='flex-1 h-full relative group'
+            onClick={() => handleColorClick(index)}
+            className='flex-1 h-full relative group cursor-pointer'
             style={{ backgroundColor: colorItem.color }}
             title={colorItem.name}
           >
-            {/* HEX Code and Copy Button - Shows on Hover */}
-            <div className='absolute bottom-0 inset-x-0 flex items-center justify-center gap-2 p-3 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-              <span className='text-xs font-mono font-medium text-white drop-shadow-lg'>
+            {/* HEX Code and Copy Button - Shows on Hover (Desktop) or Tap (Mobile) */}
+            <div
+              className={`absolute bottom-0 inset-x-0 flex items-center justify-center gap-2 p-3 bg-black/50 transition-opacity duration-200 ${
+                isMobile ? (showColorInfo === index ? 'opacity-100' : 'opacity-0') : 'opacity-0 group-hover:opacity-100'
+              }`}
+            >
+              <span className='text-xs font-mono font-medium text-white drop-shadow-lg hidden md:block'>
                 {colorItem.color.toUpperCase()}
               </span>
               <button
-                onClick={() => handleCopyColor(colorItem.color, index)}
+                onClick={(e) => handleCopyColor(e, colorItem.color, index)}
                 className='flex items-center justify-center hover:scale-110 transition-transform cursor-pointer'
                 aria-label={`Copy ${colorItem.name}`}
               >
