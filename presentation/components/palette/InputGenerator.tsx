@@ -116,7 +116,7 @@ export const InputGenerator = ({
         </div>
       </div>
 
-      <div className='flex flex-col my-6'>
+      <div className='flex flex-col mt-4 mb-2'>
         <button
           onClick={onGenerate}
           disabled={isDisabled}

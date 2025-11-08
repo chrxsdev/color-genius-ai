@@ -6,7 +6,6 @@ import { applySliderAdjustments } from '@/utils/color-conversions/color-adjustme
 
 interface ColorWheelProps {
   colors: string[];
-  size?: number;
   onColorChange: (index: number, newColor: string) => void;
   brightness?: number;
   saturation?: number;
@@ -22,7 +21,6 @@ interface ColorPosition {
 
 export const ColorWheel = ({
   colors,
-  size = 400,
   onColorChange,
   brightness = 50,
   saturation = 50,
@@ -30,8 +28,10 @@ export const ColorWheel = ({
 }: ColorWheelProps) => {
   const [colorPositions, setColorPositions] = useState<ColorPosition[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [wheelSize, setWheelSize] = useState(400);
   const isDraggingRef = useRef(false);
   const previousColorsRef = useRef<string[]>([]);
+  const wheelRef = useRef<HTMLDivElement>(null);
 
   // Sync color positions when colors prop changes (new palette generated) but NOT when user is dragging)
   useEffect(() => {
@@ -57,7 +57,26 @@ export const ColorWheel = ({
     setColorPositions(newPositions);
   }, [colors]); // Re-run when colors array changes
 
-  const maxRadius = size / 2;
+  // Update wheel size when component mounts or resizes
+  useEffect(() => {
+    const updateSize = () => {
+      if (wheelRef.current) {
+        const rect = wheelRef.current.getBoundingClientRect();
+        setWheelSize(rect.width);
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    
+    // Small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(updateSize, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   const handleMouseDown = (index: number) => {
     setDraggingIndex(index);
@@ -75,6 +94,7 @@ export const ColorWheel = ({
 
     // Calculate distance from center
     const distance = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
+    const maxRadius = rect.width / 2;
 
     // Clamp distance to stay within the wheel
     const clampedDistance = Math.min(distance, maxRadius);
@@ -113,19 +133,18 @@ export const ColorWheel = ({
   // Don't render if no colors available yet
   if (colorPositions.length === 0) {
     return (
-      <div className='flex items-center justify-center' style={{ width: size, height: size }}>
+      <div className='flex items-center justify-center w-full aspect-square max-w-md mx-auto'>
         <div className='text-subtitle text-sm'>Waiting for colors...</div>
       </div>
     );
   }
 
   return (
-    <div className='flex items-center justify-center'>
+    <div className='flex items-center justify-center w-full'>
       <div
-        className='relative rounded-full select-none'
+        ref={wheelRef}
+        className='relative rounded-full select-none w-full aspect-square max-w-md'
         style={{
-          width: size,
-          height: size,
           background: `conic-gradient(
             from 0deg,
             hsl(0, 100%, 50%),
@@ -142,6 +161,9 @@ export const ColorWheel = ({
         onMouseLeave={handleMouseUp}
       >
         {colorPositions.map((position, index) => {
+          // Get current wheel dimensions
+          const maxRadius = wheelSize / 2;
+
           // Convert hue angle to radians (0° = top, clockwise)
           const angleRad = ((position.hue - 90) * Math.PI) / 180;
 
