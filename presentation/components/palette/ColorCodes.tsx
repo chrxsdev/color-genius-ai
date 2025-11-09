@@ -55,12 +55,12 @@ export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
   };
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-4 w-full'>
       {/* Tabs */}
-      <div className='flex items-center gap-2 border-b border-neutral-variant/30'>
+      <div className='flex items-center gap-1 sm:gap-2 border-b border-neutral-variant/30 overflow-x-auto'>
         <button
           onClick={() => setActiveTab(CodeStyleFormat.TailwindV4)}
-          className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
+          className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors cursor-pointer relative whitespace-nowrap ${
             activeTab === CodeStyleFormat.TailwindV4 ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
@@ -71,7 +71,7 @@ export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
         </button>
         <button
           onClick={() => setActiveTab(CodeStyleFormat.TailwindV3)}
-          className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
+          className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors cursor-pointer relative whitespace-nowrap ${
             activeTab === CodeStyleFormat.TailwindV3 ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
@@ -82,7 +82,7 @@ export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
         </button>
         <button
           onClick={() => setActiveTab(CodeStyleFormat.CSS)}
-          className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer relative ${
+          className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors cursor-pointer relative whitespace-nowrap ${
             activeTab === CodeStyleFormat.CSS ? 'text-primary' : 'text-control-text hover:text-white'
           }`}
         >
@@ -92,28 +92,38 @@ export const ColorCodes = ({ colors, format }: ColorCodesProps) => {
       </div>
 
       {/* Code Block */}
-      <div className='relative rounded-xl bg-neutral/20 border border-neutral-variant/30 py-4 px-6'>
+      <div className='relative rounded-xl bg-neutral/20 border border-neutral-variant/30 py-4 px-2 sm:px-3 md:px-6 w-full min-w-0'>
         {/* Copy Button */}
         <button
           onClick={handleCopy}
-          className='absolute right-4 top-4 flex items-center justify-center w-8 h-8 rounded-lg bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
+          className='absolute right-2 sm:right-4 top-4 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer z-10'
         >
           {copied ? (
-            <IoCheckmark className='text-base text-primary' />
+            <IoCheckmark className='text-sm sm:text-base text-primary' />
           ) : (
-            <IoCopyOutline className='text-base text-white' />
+            <IoCopyOutline className='text-sm sm:text-base text-white' />
           )}
         </button>
 
         {/* Code Content */}
-
-        <SyntaxHighlighter
-          language={styleCode[activeTab as CodeStyleFormat].language}
-          style={vscDarkPlus}
-          customStyle={{ border: 2, borderRadius: '0.5rem', backgroundColor: 'transparent', margin: 0, padding: 0 }}
-        >
-          {styleCode[activeTab as CodeStyleFormat].code}
-        </SyntaxHighlighter>
+        <div className='overflow-x-auto'>
+          <SyntaxHighlighter
+            language={styleCode[activeTab as CodeStyleFormat].language}
+            style={vscDarkPlus}
+            customStyle={{ 
+              border: 12, 
+              borderRadius: '0.5rem', 
+              backgroundColor: 'transparent', 
+              margin: 0,
+              padding: 0, 
+              fontSize: '0.12rem',
+              overflowX: 'auto'
+            }}
+            wrapLongLines={false}
+          >
+            {styleCode[activeTab as CodeStyleFormat].code}
+          </SyntaxHighlighter>
+        </div>
       </div>
     </div>
   );

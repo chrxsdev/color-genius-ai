@@ -25,15 +25,15 @@ export const GeneratedColors = ({
   isSaving = false,
 }: GeneratedColorsProps) => {
   return (
-    <div className='mt-2 px-6 py-4'>
+    <div className='mt-2 px-3 sm:px-6 py-4'>
       <h3 className='text-xl font-bold text-white'>Colors</h3>
 
-      <div className='flex items-center justify-between my-4 gap-x-2'>
-        <div className='relative'>
+      <div className='flex flex-col md:flex-row items-stretch md:items-center justify-between my-4 gap-2'>
+        <div className='relative w-full md:w-auto'>
           <select
             value={colorFormat}
             onChange={(e) => onFormatChange(e.target.value as 'HEX' | 'RGB')}
-            className='md:w-32 rounded-xl border-2 border-neutral-variant bg-background h-10 pl-4 pr-10 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none appearance-none transition-all cursor-pointer'
+            className='w-full md:w-32 rounded-xl border-2 border-neutral-variant bg-background h-10 pl-4 pr-10 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none appearance-none transition-all cursor-pointer'
           >
             <option value='HEX'>HEX</option>
             <option value='RGB'>RGB</option>
@@ -44,11 +44,11 @@ export const GeneratedColors = ({
           />
         </div>
 
-        <div className='flex items-center gap-3'>
+        <div className='flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto'>
           <button
             onClick={onSave}
             disabled={isSaving}
-            className={`flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 transition-colors cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-neutral-variant/20 transition-colors cursor-pointer w-full md:w-auto ${
               isSaving ? 'bg-neutral-variant/50' : 'bg-neutral-variant/20 hover:bg-neutral-variant/30'
             }`}
           >
@@ -57,7 +57,7 @@ export const GeneratedColors = ({
           </button>
           <button
             onClick={onExport}
-            className='flex items-center gap-2 px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer'
+            className='flex items-center justify-center gap-2 px-3 sm:px-4 h-10 rounded-xl bg-neutral-variant/20 hover:bg-neutral-variant/30 transition-colors cursor-pointer w-full md:w-auto'
           >
             <IoImageOutline className='text-lg text-white' />
             <span className='text-sm font-medium text-white'>Export PNG</span>
@@ -65,10 +65,10 @@ export const GeneratedColors = ({
         </div>
       </div>
 
-      <div className='my-4 p-2'>
+      <div className='my-4 p-2 w-full overflow-hidden'>
         <div
           ref={colorsRef}
-          className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2'
+          className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-y-10 gap-x-2 md:gap-x-2 lg:gap-x-2 min-w-0 w-full'
         >
           {colors.map((colorItem, index) => (
             <ColorCard key={index} color={colorItem.color} name={colorItem.name} format={colorFormat} />

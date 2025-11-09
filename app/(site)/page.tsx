@@ -179,16 +179,16 @@ const PalettePage = () => {
   };
 
   return (
-    <div className='mx-auto px-4 sm:px-6 lg:px-8'>
+    <div className='mx-auto px-2 sm:px-4 md:px-6 lg:px-8 w-full min-w-0'>
       <div
-        className={`flex flex-col items-center mx-auto max-w-5xl ${
-          !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-12'
+        className={`flex flex-col items-center mx-auto max-w-5xl w-full min-w-0 ${
+          !isMounted || !isHydrated || generatedColors.length === 0 ? 'min-h-[80dvh] justify-center' : 'py-8 sm:py-12'
         } transition-all duration-75`}
       >
         <div className={`w-full animate__animated ${isMounted ? 'animate__fadeInDown' : 'opacity-0'}`}>
           <div className='text-center mb-12'>
-            <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
-            <p className='text-2lg text-subtitle mx-auto font-light'>
+            <h1 className='md:text-5xl text-4xl font-bold tracking-tight text-white mb-4'>AI Color Palette Generator</h1>
+            <p className='text-base text-subtitle mx-auto font-light'>
               Describe the feeling or vibe you want to capture, and let Geni create a palette that matches your vision.
             </p>
           </div>
@@ -210,11 +210,11 @@ const PalettePage = () => {
         </div>
 
         {
-          <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full`}>
+          <div className={`animate__animated ${isMounted ? 'animate__fadeInUp' : 'opacity-0'} w-full min-w-0`}>
             {isHydrated && generatedColors.length > 0 && (
-              <div className='mt-2'>
+              <div className='mt-2 w-full min-w-0'>
                 <AiInsights rationale={rationale} tags={tags} containerClassName='my-5' />
-                <div className='border-2 rounded-xl border-neutral-variant my-5'>
+                <div className='border-2 rounded-xl border-neutral-variant my-5 w-full min-w-0 overflow-hidden'>
                   <h3 className='text-xl font-bold text-white text-center mt-5'>Generate Palette Options</h3>
 
                   <RegenerateInput
@@ -249,7 +249,7 @@ const PalettePage = () => {
                     onControlChange={updateColorControl}
                   />
 
-                  <div className='px-6 pb-4'>
+                  <div className='px-2 sm:px-3 md:px-6 pb-4'>
                     <h3 className='text-xl font-bold text-white my-4'>Copy Color Codes</h3>
                     <ColorCodes colors={adjustedColors} format={colorFormat} />
                   </div>

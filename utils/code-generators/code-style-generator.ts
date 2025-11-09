@@ -7,11 +7,11 @@ export class CodeStyleGenerator {
     const colorVariables = colors
       .map((color) => {
         const { name, colorCode } = getColorValues(color, format);
-        return `\t--color-${name}: ${colorCode};`;
+        return `  --color-${name}: ${colorCode};`;
       })
       .join('\n');
 
-    return ['@import "tailwindcss";', '', '@theme inline {', colorVariables, '}'].join('\n');
+    return `@import 'tailwindcss';\n\n@theme inline {\n${colorVariables}\n}`;
   };
 
   static generateTailwindV3Code = (colors: ColorItem[], format: Format): string => {
