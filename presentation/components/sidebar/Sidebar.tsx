@@ -90,20 +90,19 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
           fixed top-0 left-0 h-screen w-64 flex-shrink-0 
           bg-background dark:bg-background-dark 
           border-r border-neutral-variant/30
-          p-6 flex flex-col justify-between
+          p-6 flex flex-col
           transition-transform duration-300 ease-in-out
           z-50 md:z-auto
-          overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
-        {/* Logo & Navigation */}
-        <div>
+        {/* Logo & Navigation - Scrollable Section */}
+        <div className='flex-1 overflow-y-auto overflow-x-hidden min-h-0'>
           <div className='flex items-center justify-center mb-10'>
             <Logo />
           </div>
 
-          <nav className='flex flex-col gap-2'>
+          <nav className='flex flex-col gap-2 pb-4'>
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -126,9 +125,9 @@ export const Sidebar = ({ user, isOpen = true, onClose }: SidebarProps) => {
           </nav>
         </div>
 
-        {/* User Profile Section */}
+        {/* User Profile Section - Fixed at Bottom */}
         {user && (
-          <div className='flex items-center gap-4 border-t border-neutral-variant/30 pt-6'>
+          <div className='flex-shrink-0 flex items-center gap-4 border-t border-neutral-variant/30 pt-6 mt-4'>
             <div className='relative h-10 w-10 rounded-full overflow-hidden bg-neutral-variant/30'>
               {user.avatar_url ? (
                 <Image
