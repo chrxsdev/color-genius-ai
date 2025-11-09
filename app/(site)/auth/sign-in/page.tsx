@@ -15,20 +15,20 @@ export const SignIn = () => {
   };
 
   return (
-    <div className='mx-auto px-4 sm:px-6 lg:px-8 py-12 animate__animated animate__fadeInDown'>
+    <div className='mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-12 animate__animated animate__fadeInDown'>
       <div className='min-h-[calc(100vh-250px)] flex flex-col justify-center items-center'>
         {/* Header Section */}
-        <div className='text-center mb-14'>
-          <h1 className='text-5xl font-bold tracking-tight text-white mb-4'>Welcome!</h1>
-          <p className='text-2lg text-subtitle mx-auto font-light'>
+        <div className='text-center md:mb-10 mb-8 px-2'>
+          <h1 className='text-4xl md:text-5xl font-bold tracking-tight text-white mb-3 sm:mb-4'>Welcome!</h1>
+          <p className='text-base text-subtitle mx-auto font-light max-w-md'>
             Sign in to save your palettes, access them anywhere, and share with the community.
           </p>
         </div>
 
         {/* Sign In Section */}
-        <div className='space-y-8 text-center'>
+        <div className='space-y-6 sm:space-y-8 text-center w-full max-w-md px-4'>
           <button
-            className='flex flex-row justify-center items-center w-96 bg-primary p-4 gap-x-2 rounded-2xl text-white font-bold hover:bg-primary/90 cursor-pointer'
+            className='flex flex-row justify-center items-center w-full bg-primary p-3 sm:p-4 gap-x-2 rounded-2xl text-white text-sm sm:text-base font-bold hover:bg-primary/90 cursor-pointer'
             onClick={handleGoogleSignIn}
             type='button'
           >
@@ -37,12 +37,12 @@ export const SignIn = () => {
             </span>
             Continue with Google
           </button>
-          <div className='flex justify-center items-center gap-x-2'>
-            <Link prefetch={false} href='/' className='text-sm text-subtitle hover:text-white/70 underline'>
+          <div className='flex justify-center items-center gap-x-2 flex-wrap'>
+            <Link prefetch={false} href='/' className='text-xs sm:text-sm text-subtitle hover:text-white/70 underline'>
               Go back to Palette
             </Link>
-            <span className='text-subtitle text-sm'>or</span>
-            <Link prefetch={false} href='/explore' className='text-sm text-subtitle hover:text-white/70 underline'>
+            <span className='text-subtitle text-xs sm:text-sm'>or</span>
+            <Link prefetch={false} href='/explore' className='text-xs sm:text-sm text-subtitle hover:text-white/70 underline'>
               Explore
             </Link>
           </div>

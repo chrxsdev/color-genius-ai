@@ -9,9 +9,9 @@ interface ColorControlsProps {
 
 export const ColorControls = ({ brightness, saturation, warmth, onControlChange }: ColorControlsProps) => {
   return (
-    <div className='space-y-4 py-6 px-6'>
+    <div className='space-y-4 py-6 px-3 sm:px-6'>
       <h3 className='text-xl font-bold text-white'>Palette Controls</h3>
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8'>
         {/* Brightness Slider */}
         <div className='space-y-3'>
           <div className='flex justify-between items-center'>

@@ -27,29 +27,29 @@ export const ColorCard = ({ color, name, format }: ColorCardProps) => {
   };
 
   return (
-    <div className='flex flex-col items-center gap-3'>
+    <div className='flex flex-col items-center gap-2 sm:gap-3 w-full min-w-0'>
       {/* Color Circle */}
       <div
-        className='w-32 h-32 rounded-full shadow-lg duration-200 ease-in-out hover:scale-105'
+        className='w-30 h-30 md:w-32 md:h-32 rounded-full shadow-lg duration-200 ease-in-out hover:scale-105 flex-shrink-0'
         style={{ backgroundColor: color }}
       />
 
       {/* Color Name with Regenerate Button */}
-      <div className='flex items-center gap-2'>
-        <p className='text-sm font-medium text-white'>{name}</p>
+      <div className='flex items-center gap-2 w-full min-w-0 max-w-full'>
+        <p className='text-xs sm:text-sm font-medium text-white text-center line-clamp-2 w-full min-w-0 px-1 break-words'>{name}</p>
       </div>
 
       {/* Color Code with Copy Button */}
-      <div className='flex items-center gap-2 '>
-        <span className='text-xs text-control-text font-mono'>{colorValue}</span>
+      <div className='flex items-center gap-1 sm:gap-2 w-full min-w-0 max-w-full justify-center px-1'>
+        <span className='text-xs text-control-text font-mono break-all text-center min-w-0'>{colorValue}</span>
         <button
           onClick={handleCopy}
-          className='flex items-center justify-center w-5 h-5 hover:text-primary transition-colors cursor-pointer'
+          className='flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 hover:text-primary transition-colors cursor-pointer flex-shrink-0'
         >
           {copied ? (
-            <IoCheckmark className='text-sm text-primary' />
+            <IoCheckmark className='text-xs sm:text-sm text-primary' />
           ) : (
-            <IoCopyOutline className='text-sm text-control-text' />
+            <IoCopyOutline className='text-xs sm:text-sm text-control-text' />
           )}
         </button>
       </div>
