@@ -4,7 +4,7 @@ This module implements a Strategy Pattern for supporting multiple AI providers i
 
 ## Overview
 
-The AI provider system allows you to seamlessly switch between different AI providers (Google, OpenAI) for color palette generation.
+The AI provider system allows you to seamlessly switch between Google Gemini and OpenAI for color palette generation, or easily add custom providers using the strategy pattern.
 
 ## Architecture
 
@@ -14,15 +14,15 @@ lib/ai/
 ├── palette-generator.ts            # Main palette generator class
 ├── ai-provider.factory.ts          # Factory for creating provider strategies
 └── strategies/
-    ├── google-ai.strategy.ts       # Google AI implementation
-    ├── openai.strategy.ts          # OpenAI implementation
+    ├── google-ai.strategy.ts       # Google Gemini implementation (default)
+    └── openai.strategy.ts          # OpenAI implementation
 ```
 
 ## Components
 
 ### 1. AiProvider Enum (`infrastructure/enums/ai-provider.enum.ts`)
-Defines available AI providers:
-- `Google` - Google's Gemini models
+Defines available AI providers (extensible):
+- `Google` - Google's Gemini models (default)
 - `OpenAI` - OpenAI's GPT models
 
 ### 2. AiProviderStrategy Interface (`infrastructure/interfaces/ai-provider-strategy.interface.ts`)
@@ -35,115 +35,121 @@ interface AiProviderStrategy {
 ```
 
 ### 3. Concrete Strategies (`lib/ai/strategies/`)
-Each provider has its own strategy implementation:
-- **GoogleAiStrategy** - Uses `gemini-2.0-flash-exp`
-- **OpenAiStrategy** - Uses `gpt-5-mini` (requires `@ai-sdk/openai`)
+Current implementations:
+- **GoogleAiStrategy** - Uses `gemini-2.0-flash-exp` (included by default)
+- **OpenAiStrategy** - Uses `gpt-4o` (requires `pnpm add @ai-sdk/openai`)
 
 ### 4. Factory (`lib/ai/ai-provider.factory.ts`)
 Creates the appropriate provider strategy based on the enum value.
 
-## Usage
-
-### Basic Usage (Default Provider)
-```typescript
-import { PaletteGenerator } from '@/lib/ai';
-
-// Uses default provider from environment (AI_PROVIDER)
-const generator = new PaletteGenerator();
-const palette = await generator.generatePalette('sunset vibes', 'complementary');
-```
-
-### Explicit Provider Selection
-```typescript
-import { PaletteGenerator, AiProvider } from '@/lib/ai';
-
-// Use Google AI explicitly
-const googleGenerator = new PaletteGenerator(AiProvider.Google);
-
-// Use OpenAI explicitly
-const openaiGenerator = new PaletteGenerator(AiProvider.OpenAI);
-```
-
-### Dynamic Provider Selection
-```typescript
-import { PaletteGenerator, AiProvider } from '@/lib/ai';
-
-const getGenerator = (provider: AiProvider) => {
-  return new PaletteGenerator(provider);
-};
-
-const generator = getGenerator(AiProvider.OpenAI);
-```
-
-## Environment Variables
-
-### Required for Each Provider
-
-**Google AI (Default)**
-```env
-GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
-```
-
-**OpenAI** (requires installation: `pnpm add @ai-sdk/openai`)
-```env
-OPENAI_API_KEY=your_api_key_here
-```
-
+## Adding a New AI Provider
 ### Default Provider Selection
 ```env
 # Set default provider (optional, defaults to 'google')
-AI_PROVIDER=google  # or 'openai' or 'anthropic'
+AI_PROVIDER=google  # Options: 'google' or 'openai'
 ```
 
-## Installation
-
-### Core Package (Installed)
-```bash
-pnpm add ai @ai-sdk/google @ai-sdk/openai
-```
-
-## Adding a New Provider
-
-To add a new AI provider:
-
-1. **Update the enum** (`infrastructure/enums/ai-provider.enum.ts`):
+1. **Add provider to enum** (`infrastructure/enums/ai-provider.enum.ts`):
 ```typescript
 export enum AiProvider {
   Google = 'google',
   OpenAI = 'openai',
-  NewProvider = 'newprovider', // Add here
+  YourProvider = 'yourprovider',  // Add your provider
 }
 ```
 
-2. **Create strategy class** (`lib/ai/strategies/newprovider.strategy.ts`):
+2. **Install the provider SDK** (if not already included):
+```bash
+# Example for Anthropic
+pnpm add @ai-sdk/anthropic
+
+# Example for Cohere
+pnpm add @ai-sdk/cohere
+```
+
+3. **Create strategy class** (`lib/ai/strategies/yourprovider.strategy.ts`):
 ```typescript
 import type { LanguageModel } from 'ai';
 import type { AiProviderStrategy } from '@/infrastructure/interfaces/ai-provider-strategy.interface';
 
-export class NewProviderStrategy implements AiProviderStrategy {
+export class YourProviderStrategy implements AiProviderStrategy {
   private readonly model: LanguageModel;
 
   constructor() {
-    if (!process.env.NEWPROVIDER_API_KEY) {
-      throw new Error('Missing NEWPROVIDER_API_KEY');
+    if (!process.env.YOUR_PROVIDER_API_KEY) {
+      throw new Error('Missing YOUR_PROVIDER_API_KEY environment variable');
     }
-    // Initialize your model here
+
+    // Example for Anthropic:
+    // const { anthropic } = require('@ai-sdk/anthropic');
+    // this.model = anthropic('claude-3-5-sonnet-20241022');
+
+    // Example for Cohere:
+    // const { cohere } = require('@ai-sdk/cohere');
+    // this.model = cohere('command-r-plus');
   }
 
   getModel = (): LanguageModel => this.model;
-  getProviderName = (): string => 'New Provider';
+  getProviderName = (): string => 'Your Provider Name';
 }
 ```
 
-3. **Update factory** (`lib/ai/ai-provider.factory.ts`):
+4. **Update factory** (`lib/ai/ai-provider.factory.ts`):
+
+Add the import at the top:
 ```typescript
-case AiProvider.NewProvider:
-  return new NewProviderStrategy();
+import { YourProviderStrategy } from './strategies/yourprovider.strategy';
 ```
 
-4. **Export** (`lib/ai/index.ts`):
+Update the `getAiProviderStrategy` function:
 ```typescript
-export { NewProviderStrategy } from './strategies/newprovider.strategy';
+export const getAiProviderStrategy = (provider: AiProvider): AiProviderStrategy => {
+  switch (provider) {
+    case AiProvider.Google:
+      return new GoogleAiStrategy();
+    case AiProvider.OpenAI:
+      return new OpenAiStrategy();
+    case AiProvider.YourProvider:  // Add your case
+      return new YourProviderStrategy();
+    default:
+      throw new Error(`Unsupported AI provider: ${provider}`);
+  }
+};
+```
+
+Update the `getDefaultAiProvider` function:
+```typescript
+export const getDefaultAiProvider = (): AiProvider => {
+  const envProvider = process.env.AI_PROVIDER?.toLowerCase();
+  switch (envProvider) {
+    case AiProvider.OpenAI:
+      return AiProvider.OpenAI;
+    case 'yourprovider':  // Add your case
+      return AiProvider.YourProvider;
+    case AiProvider.OpenAI:
+    default:
+      return AiProvider.Google;
+  }
+};
+```
+
+5. **Export from index** (`lib/ai/index.ts`):
+```typescript
+export { YourProviderStrategy } from './strategies/yourprovider.strategy';
+```
+
+6. **Set environment variables**:
+```bash
+AI_PROVIDER=yourprovider
+YOUR_PROVIDER_API_KEY=your_api_key
+```
+
+7. **Test your implementation**:
+```typescript
+import { PaletteGenerator, AiProvider } from '@/lib/ai';
+
+const generator = new PaletteGenerator(AiProvider.YourProvider);
+const palette = await generator.generatePalette('sunset colors', 'complementary');
 ```
 
 ## Benefits of This Pattern
@@ -157,7 +163,9 @@ export { NewProviderStrategy } from './strategies/newprovider.strategy';
 
 ## Notes
 
-- Google AI is the default provider and comes pre-configured
+- **Google Gemini and OpenAI** comes pre-configured
+- **Other models** requires additional package installation: `pnpm add @ai-sdk/<provider>`
 - All providers share the same interface for consistent usage
 - Provider selection can be done at runtime or via environment variables
-- Each provider may have different rate limits and costs
+- Each provider may have different rate limits, costs, and response characteristics
+- The system automatically falls back to Google if the specified provider is unavailable

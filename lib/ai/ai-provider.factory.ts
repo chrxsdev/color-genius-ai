@@ -27,12 +27,12 @@ export const getAiProviderStrategy = (provider: AiProvider): AiProviderStrategy 
  * Falls back to Google if not specified
  */
 export const getDefaultAiProvider = (): AiProvider => {
-  const envProvider = process.env.AI_PROVIDER?.toLowerCase();
+  const envProvider = process.env.AI_PROVIDER?.toLowerCase() as AiProvider;
   
   switch (envProvider) {
-    case 'openai':
+    case AiProvider.OpenAI:
       return AiProvider.OpenAI;
-    case 'google':
+    case AiProvider.Google:
     default:
       return AiProvider.Google;
   }
