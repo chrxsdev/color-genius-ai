@@ -484,7 +484,7 @@ _Acceptance Criteria:_
 
 **Task 2.1: AI Integration with Vercel AI SDK** (4 points)
 
-- Implement PaletteGenerator class using Vercel AI SDK and GPT-4o mini
+- Implement PaletteGenerator class using Vercel AI SDK and GPT
 - Set up structured JSON output using Zod schemas with `generateObject`
 - Add comprehensive input sanitization and prompt injection protection
 - Implement static fallback mechanism for API failures
@@ -627,7 +627,7 @@ _Acceptance Criteria:_
 
 1. **LLM Provider Selection**: Simplified AI SDK approach selected
 
-   - **Single Provider**: GPT-4o mini via OpenAI API (cost-effective at $0.15/1M tokens)
+   - **Single Provider**: Gemini / GPT via OpenAI API 
    - **Architecture**: Vercel AI SDK with `generateObject` for structured JSON
    - **Fallback Strategy**: Static palette fallbacks on API failures
    - **Security**: Input sanitization, Zod schema validation, rate limiting

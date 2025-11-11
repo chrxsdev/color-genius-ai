@@ -63,7 +63,6 @@ export class PaletteGenerator {
             content: getPaletteGenerationUserPrompt(harmony, validatedPrompt),
           },
         ],
-        temperature: 0.7,
         maxRetries: 2,
       });
 
@@ -312,7 +311,7 @@ export class PaletteGenerator {
     colors: Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }>,
     harmony: string
   ): Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }> {
-    const maxIterations = 10; // Prevent infinite loops
+    const maxIterations = 2; // Prevent infinite loops
     let iteration = 0;
     const adjustedColors = [...colors];
 

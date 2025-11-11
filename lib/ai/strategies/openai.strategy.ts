@@ -16,7 +16,6 @@ export class OpenAiStrategy implements AiProviderStrategy {
     }
 
     try {
-      // Using GPT-4o as it's good for creative tasks
       this.model = openai('gpt-4o');
     } catch (error) {
       throw new Error(
@@ -30,6 +29,6 @@ export class OpenAiStrategy implements AiProviderStrategy {
   };
 
   getProviderName = (): string => {
-    return 'OpenAI (GPT-4o)';
+    return 'OpenAI';
   };
 }

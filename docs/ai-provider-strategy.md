@@ -37,7 +37,7 @@ interface AiProviderStrategy {
 ### 3. Concrete Strategies (`lib/ai/strategies/`)
 Current implementations:
 - **GoogleAiStrategy** - Uses `gemini-2.0-flash-exp` (included by default)
-- **OpenAiStrategy** - Uses `gpt-4o` (requires `pnpm add @ai-sdk/openai`)
+- **OpenAiStrategy** - Uses `gpt` (requires `pnpm add @ai-sdk/openai`)
 
 ### 4. Factory (`lib/ai/ai-provider.factory.ts`)
 Creates the appropriate provider strategy based on the enum value.

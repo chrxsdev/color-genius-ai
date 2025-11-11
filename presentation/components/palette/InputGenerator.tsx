@@ -133,7 +133,7 @@ export const InputGenerator = ({
         </button>
 
         {error && !validationError && (
-          <div className='flex flex-row items-start p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 text-red-400'>
+          <div className='flex flex-row items-start p-4 rounded-xl bg-red-500/10 border-2 border-red-500/50 text-red-400 mt-4'>
             <BiSolidError className='text-base mx-2 mt-0.5 flex-shrink-0' />
             <span>{error}</span>
           </div>
