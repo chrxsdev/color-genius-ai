@@ -313,6 +313,7 @@ The application is production-ready with:
 - **Social authentication** – GitHub OAuth and magic link sign-in
 - **Collaboration features** – Comments, version history, and team workspaces
 - **Advanced export formats** – SCSS, Figma tokens, and more framework integrations
+- **Customize the Model** – Allow users to select specific AI models or versions, for example if openai is selected, allow users to choose between gpt-5-mini, gpt-4, etc.
 
 ### Known Limitations
 - AI generation requires active internet connection
