@@ -17,7 +17,8 @@ Built for modern workflows, Color Genius AI bridges the gap between creative vis
 
 ## Features
 
-- **AI-driven palette generation** – Generate 6 colors from natural language prompts using AI models (Google Gemini 2.0 Flash)
+- **AI-driven palette generation** – Generate colors from natural language prompts using AI models (Google Gemini or OpenAI)
+- **Multiple AI provider support** – Switch between Google Gemini and OpenAI, or easily add custom providers
 - **Color harmony validation** – Automatic conformity checks for analogous, complementary, triadic, monochromatic, split-complementary, and tetradic schemes
 - **Perceptual color controls** – Adjust brightness, saturation, and warmth using OKLCH color space for natural-feeling modifications
 - **Interactive visualizations** – View colors on a color wheel, preview gradients, and see swatches with accessibility badges
@@ -56,13 +57,22 @@ color-genius-ai/
 │   ├── design-doc/
 │   └── palette-rules/
 ├── infrastructure/             # Type definitions, schemas, and enums
-│   ├── enums/                  # Code style and format enums
+│   ├── enums/                  # Code style, format, and AI provider enums
+│   │   ├── ai-provider.enum.ts # AI provider enum (Google, OpenAI)
+│   │   └── code-style-format.enum.ts
 │   ├── interfaces/             # TypeScript interfaces for core data structures
+│   │   ├── ai-provider-strategy.interface.ts # AI provider strategy interface
+│   │   └── ...
 │   ├── schemas/                # Zod validation schemas for API and data
 │   └── types/                  # Type definitions for filters, formats, and harmonies
 ├── lib/                        # Core libraries and utilities
-│   ├── ai/                     # AI palette generator using Gemini API
-│   │   └── palette-generator.ts
+│   ├── ai/                     # AI palette generator with multi-provider support
+│   │   ├── strategies/         # AI provider strategy implementations
+│   │   │   ├── google-ai.strategy.ts   # Google Gemini provider
+│   │   │   └── openai.strategy.ts      # OpenAI provider
+│   │   ├── ai-provider.factory.ts      # Factory for provider selection
+│   │   ├── palette-generator.ts        # Main palette generator
+│   │   └── index.ts            # Barrel exports
 │   ├── redux/                  # Redux store, hooks, and RTK Query API
 │   │   ├── api/
 │   │   ├── hooks.ts
@@ -105,7 +115,7 @@ color-genius-ai/
 - **UI Library:** React 19.1.0
 - **State Management:** Redux Toolkit with RTK Query
 - **Styling:** Tailwind CSS 4, Framer Motion for animations
-- **AI/ML:** Google Gemini 2.0 Flash via AI SDK
+- **AI/ML:** Google Gemini (default) or OpenAI via Vercel AI SDK with strategy pattern
 - **Database:** Supabase (PostgreSQL 15) with Row Level Security
 - **Authentication:** Supabase SSR
 - **Validation:** Zod schemas
@@ -123,7 +133,7 @@ color-genius-ai/
 
 - Node.js >= 20
 - pnpm (recommended) or npm
-- Google Gemini API key
+- AI Provider API key (Google Gemini or OpenAI)
 - Supabase project (for authentication and persistence)
 
 ### Installation
@@ -152,8 +162,14 @@ cp .env.example .env
 # Project URL (for callbacks and redirects)
 URI=http://localhost:3000
 
-# Required: Google Gemini API Key for AI palette generation
+# AI Provider Selection (optional, defaults to 'google')
+AI_PROVIDER=google  # Options: 'google' or 'openai'
+
+# Google Gemini API Key (required if using Google)
 GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key_here
+
+# OpenAI API Key (required if using OpenAI)
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Required: Supabase project credentials
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
@@ -164,7 +180,7 @@ SUPABASE_DB_SCHEMA=public
 ### Run Development Server
 
 ```bash
-pnpm dev
+pnpm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -180,11 +196,12 @@ pnpm start
 
 ### Generating a Palette
 
-1. Navigate to the dashboard at `/dashboard`
+1. Navigate to the dashboard at `/`
 2. Enter a natural language description (e.g., "ocean sunset with warm tones")
 3. Select a color harmony type (analogous, complementary, triadic, etc.)
-4. Choose the number of colors (3-8, default is 5)
-5. Click "Generate" to create your palette
+4. Click "Generate" to create your palette
+5. View the generated colors, rationale, and export options
+6. Modify (if desired) and Save the palette to your profile or share it in the explore section
 
 ### API Example
 
@@ -195,7 +212,7 @@ curl -X POST http://localhost:3000/api/generate-palette \
   -d '{
     "prompt": "modern tech dashboard with blues",
     "harmony": "analogous",
-    "colorCount": 5
+    "colorCount": 6
   }'
 ```
 
@@ -212,9 +229,7 @@ Response:
     "harmony": "analogous",
     "rationale": "A professional palette...",
     "tags": ["tech", "modern", "blue"],
-    "generatedAt": "2025-11-05T...",
-    "model": "gemini-2.0-flash-exp",
-    "provider": "google"
+    "generatedAt": "2025-11-05T..."
   }
 }
 ```
@@ -223,11 +238,43 @@ Response:
 
 ### Environment Variables
 
+**Core Configuration:**
 - `URI` – Application base URL for OAuth callbacks and redirects
-- `GOOGLE_GENERATIVE_AI_API_KEY` – **Required** API key for Google Gemini AI model
+- `AI_PROVIDER` – AI provider to use: `google` (default) or `openai`
+
+**AI Provider Keys (configure based on your AI_PROVIDER selection):**
+- `GOOGLE_GENERATIVE_AI_API_KEY` – API key for Google Gemini (required if `AI_PROVIDER=google`)
+- `OPENAI_API_KEY` – API key for OpenAI (required if `AI_PROVIDER=openai`)
+
+**Database:**
 - `NEXT_PUBLIC_SUPABASE_URL` – Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` – Supabase anonymous/public key
 - `SUPABASE_DB_SCHEMA` – Database schema name (default: `public`)
+
+> **Note:** Both Google Gemini (`@ai-sdk/google`) and OpenAI (`@ai-sdk/openai`) SDKs are already included when you run `pnpm install`. No additional installation is required to use either provider.
+
+### Switching Between AI Providers
+
+The application supports two AI providers out of the box:
+
+**Google Gemini (Default):**
+```bash
+AI_PROVIDER=google
+GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
+```
+
+**OpenAI:**
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_openai_api_key
+```
+
+Simply set the `AI_PROVIDER` environment variable and provide the corresponding API key. The system will automatically use the selected provider.
+
+### Adding a Custom AI Provider
+
+The application uses a **Strategy Pattern** for AI provider support. Both Google Gemini and OpenAI are already implemented and installed. To add a new provider (e.g., Anthropic, Cohere, etc.) see the developer guide: [AI provider strategy docs](docs/ai-provider-strategy.md) for full step-by-step instructions, example strategy implementations, and factory updates.
+
 
 ### Configuration Files
 
@@ -266,6 +313,7 @@ The application is production-ready with:
 - **Social authentication** – GitHub OAuth and magic link sign-in
 - **Collaboration features** – Comments, version history, and team workspaces
 - **Advanced export formats** – SCSS, Figma tokens, and more framework integrations
+- **Customize the Model** – Allow users to select specific AI models or versions, for example if openai is selected, allow users to choose between gpt-5-mini, gpt-4, etc.
 
 ### Known Limitations
 - AI generation requires active internet connection

@@ -1,5 +1,4 @@
 import { generateObject, LanguageModel } from 'ai';
-import { google } from '@ai-sdk/google';
 
 import { hslToHex } from '@/utils/color-conversions/code-color-conversions';
 import {
@@ -12,23 +11,31 @@ import {
 import { PaletteResponse, PaletteSchema } from '@/infrastructure/schemas/api-palette-response.schema';
 import { PaletteNameSchema } from '@/infrastructure/schemas/palette.schema';
 import { PromptValidationSchema } from '@/infrastructure/schemas/prompt-validation.schema';
+import type { AiProviderStrategy } from '@/infrastructure/interfaces/ai-provider-strategy.interface';
+import { getAiProviderStrategy, getDefaultAiProvider } from './ai-provider.factory';
+import { AiProvider } from '@/infrastructure/enums/ai-provider.enum';
 
 /**
- * PaletteGenerator class
  * Handles AI-powered color palette generation with security and validation
+ * Supports multiple AI providers through strategy pattern
  */
 export class PaletteGenerator {
   private readonly model: LanguageModel;
+  private readonly providerStrategy: AiProviderStrategy;
 
   // Color distance weights for perceptual similarity
   private readonly HUE_WEIGHT = 2.0;
   private readonly SATURATION_WEIGHT = 1.0;
   private readonly LIGHTNESS_WEIGHT = 1.0;
 
-  constructor() {
-    // Check for API key
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) throw new Error('Missing GOOGLE_GENERATIVE_AI_API_KEY');
-    this.model = google('gemini-2.0-flash-exp');
+  /**
+   * Constructor for PaletteGenerator
+   * @param provider - Optional AI provider enum. If not provided, uses default from environment
+   */
+  constructor(provider?: AiProvider) {
+    const selectedProvider = provider ?? getDefaultAiProvider();
+    this.providerStrategy = getAiProviderStrategy(selectedProvider);
+    this.model = this.providerStrategy.getModel();
   }
 
   /**
@@ -56,7 +63,6 @@ export class PaletteGenerator {
             content: getPaletteGenerationUserPrompt(harmony, validatedPrompt),
           },
         ],
-        temperature: 0.7,
         maxRetries: 2,
       });
 
@@ -305,7 +311,7 @@ export class PaletteGenerator {
     colors: Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }>,
     harmony: string
   ): Array<{ name: string; hex: string; hsl: { h: number; s: number; l: number } }> {
-    const maxIterations = 10; // Prevent infinite loops
+    const maxIterations = 2; // Prevent infinite loops
     let iteration = 0;
     const adjustedColors = [...colors];
 

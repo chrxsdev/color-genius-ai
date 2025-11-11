@@ -59,8 +59,9 @@ export const getPaletteGenerationSystemPrompt = (params: PaletteGenerationPrompt
   - Names should be creative, funny, and descriptive (with not offensive sarcasm).
   - Provide a palette general name (strictly 3–25 characters) as paletteName.
   - Rationale MUST be <70 words, describing the palette WITHOUT mentioning the harmony style, must be funny with not offensive sarcasm descriptive names.
-  - Include 3–8 relevant tags for discoverability.
+  - Include 5–8 relevant tags for discoverability.
   - Consider web accessibility (WCAG contrast) and modern design trends.
+  - For each HEX, output a 7-character string starting with #, followed by 6 uppercase hex digits, for example #FF8C00
     
   DIVERSITY ENFORCEMENT (MANDATORY):
   - NO TWO COLORS may be visually similar or near-duplicates.
